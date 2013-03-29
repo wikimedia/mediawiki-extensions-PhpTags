@@ -41,6 +41,6 @@ class Foxway {
 	}
 
 	public static function render($input, array $args, Parser $parser, PPFrame $frame) {
-		return Foxway\Interpreter::run($input, true);
+		return Foxway\Interpreter::run( $input, isset($args['debug']) );
 	}
 }
