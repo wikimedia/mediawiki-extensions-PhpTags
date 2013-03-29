@@ -217,7 +217,7 @@ class Interpreter {
 		}
 
 		if( $is_debug ) {
-			$return = implode('', $debug) . '<HR>' . $return;
+			$return = implode('', $debug) . "<HR>\n" . $return;
 		}
 		return $return;
 	}
