@@ -174,7 +174,7 @@ class Interpreter {
 						if( $expectCurlyClose ) {
 							$expected = array( '}' );
 						} else {
-							$expected = array( ';' );
+							$expected = array( ';', T_ENCAPSED_AND_WHITESPACE );
 						}
 						if( $expectListParams ) {
 							$expected[] = ',';

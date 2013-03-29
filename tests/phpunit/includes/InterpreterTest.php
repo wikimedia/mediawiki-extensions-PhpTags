@@ -46,6 +46,14 @@ echo "foo is $foo"; // foo is foobar'),
 				'foo is foobar'
 				);
 		$this->assertEquals(
+				Interpreter::run('echo "foo is {$foo}.";'),
+				'foo is foobar.'
+				);
+		$this->assertEquals(
+				Interpreter::run('echo "foo is $foo\n\n";'),
+				"foo is foobar\n\n"
+				);
+		$this->assertEquals(
 				Interpreter::run('echo \'foo is $foo\';'),
 				'foo is $foo'
 				);
