@@ -52,28 +52,35 @@ class Runtime {
 			switch ( $this->lastOperator ) {
 				case '.':
 					$this->lastParam .= $param;
-					$this->lastOperator = false;
 					break;
 				case '*':
 					$this->lastParam *= $param;
-					$this->lastOperator = false;
 					break;
 				case '/':
 					$this->lastParam /= $param;
-					$this->lastOperator = false;
 					break;
 				case '+':
 				case '-':
 					$this->mathMemory = array($this->lastParam, $this->lastOperator);
 					$this->lastParam = $param;
-					$this->lastOperator = false;
 					break;
 				default:
 					// TODO
 					\MWDebug::log( 'Error! Unknown operator "' . htmlspecialchars($this->lastOperator) . '" in ' . __METHOD__ );
 					break;
 			}
+			$this->lastOperator = false;
 		} else {
+			if( $this->mathMemory ) {
+				if( $this->mathMemory[1] == '+' ) {
+					$this->lastParam = $this->mathMemory[0] + $this->lastParam;
+				} elseif ( $this->mathMemory[1] == '-' ) {
+					$this->lastParam = $this->mathMemory[0] - $this->lastParam;
+				} else { // $this->mathMemory[1] == '.'
+					$this->lastParam = $this->mathMemory[0] . $this->lastParam;
+				}
+				$this->mathMemory = false;
+			}
 			if( !is_null($this->lastParam) ) {
 				$this->listParams[] = $this->lastParam;
 			}
@@ -85,8 +92,10 @@ class Runtime {
 		if( $this->mathMemory && ($operator=='+'||$operator=='-') ){
 			if( $this->mathMemory[1] == '+' ) {
 				$this->lastParam = $this->mathMemory[0] + $this->lastParam;
-			} else { // $this->mathMemory[1] == '-'
+			} elseif ( $this->mathMemory[1] == '-' ) {
 				$this->lastParam = $this->mathMemory[0] - $this->lastParam;
+			} else { // $this->mathMemory[1] == '.'
+				$this->lastParam = $this->mathMemory[0] . $this->lastParam;
 			}
 			$this->mathMemory = false;
 		}
@@ -97,8 +106,10 @@ class Runtime {
 		if( $this->mathMemory ) {
 			if( $this->mathMemory[1] == '+' ) {
 				$this->lastParam = $this->mathMemory[0] + $this->lastParam;
-			} else { // $this->mathMemory[1] == '-'
+			} elseif ( $this->mathMemory[1] == '-' ) {
 				$this->lastParam = $this->mathMemory[0] - $this->lastParam;
+			} else { // $this->mathMemory[1] == '.'
+				$this->lastParam = $this->mathMemory[0] . $this->lastParam;
 			}
 			$this->mathMemory = false;
 		}

@@ -69,6 +69,9 @@ class Interpreter {
 						$expectQuotesClose = true;
 						$expected = array(T_ENCAPSED_AND_WHITESPACE, T_CURLY_OPEN, T_VARIABLE, '"');
 					}
+					if($expectListParams){
+						$expected[] = ',';
+					}
 					break;
 				case ';':
 					$return .= $runtime->getCommandResult($debug);
@@ -128,7 +131,7 @@ class Interpreter {
 							T_VARIABLE,
 							T_CURLY_OPEN,
 							'"',
-							';',
+							//';',
 							);
 					} else {
 						$return .= '<br><span class="error">' . wfMessage( 'foxway-php-syntax-error-unexpected', '\' } \'', $line )->escaped() . '</span>';
@@ -180,6 +183,9 @@ class Interpreter {
 					}
 					$runtime->addParam( $text );
 					$expected = array(';', '.', '+', '-', '*', '/');
+					if($expectListParams){
+						$expected[] = ',';
+					}
 					break;
 				case T_ENCAPSED_AND_WHITESPACE:
 					if($is_debug) {

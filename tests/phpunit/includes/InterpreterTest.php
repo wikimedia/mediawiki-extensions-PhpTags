@@ -100,6 +100,10 @@ echo "foo is $foo"; // foo is foobar'),
 				Interpreter::run('echo "start" . $foo . "end";'),
 				'startfoobarend'
 				);
+		$this->assertEquals(
+				Interpreter::run('echo "This ", \'string \', "was $foo ", \'with multiple parameters.\';'),
+				'This string was foobar with multiple parameters.'
+				);
 	}
 
 	public function testRun_echo_escaping() {
@@ -132,6 +136,13 @@ echo "foo is $foo"; // foo is foobar'),
 		$this->assertEquals(
 				Interpreter::run('echo 10 * 10 + "20" * \'20\' - 30 * 30 + 40 / 9;'),
 				'-395.55555555556'
+				);
+	}
+
+	public function testRun_echo_math_params() {
+		$this->assertEquals(
+				Interpreter::run('echo \'10 + 5 * 5 = \', 10 + 5 * 5, "\n\n";'),
+				"10 + 5 * 5 = 35\n\n"
 				);
 	}
 }
