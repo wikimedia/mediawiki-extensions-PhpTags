@@ -7,33 +7,56 @@ namespace Foxway;
  */
 class InterpreterTest extends \PHPUnit_Framework_TestCase {
 
-	public function testRun_echo() {
+	public function testRun_echo_apostrophe() {
 		$this->assertEquals(
 				Interpreter::run('echo "Hello!";'),
 				'Hello!'
 				);
+	}
+
+	public function testRun_echo_quotes() {
 		$this->assertEquals(
 				Interpreter::run("echo 'Hello!';"),
 				'Hello!'
 				);
+	}
+
+	public function testRun_echo_union() {
 		$this->assertEquals(
 				Interpreter::run('echo "String" . "Union";'),
 				'StringUnion'
 				);
 		$this->assertEquals(
+				Interpreter::run('echo \'This \' . \'string \' . \'was \' . \'made \' . \'with concatenation.\' . "\n";'),
+				"This string was made with concatenation.\n"
+				);
+	}
+
+	public function testRun_echo_parameters() {
+		$this->assertEquals(
 				Interpreter::run('echo "Parameter1","Parameter2" , "Parameter3";'),
 				'Parameter1Parameter2Parameter3'
 				);
-		/*$this->assertEquals(
+		$this->assertEquals(
+				Interpreter::run('echo \'This \', \'string \', \'was \', \'made \', \'with multiple parameters.\';'),
+				'This string was made with multiple parameters.'
+				);
+	}
+
+	public function testRun_echo_multiline() {
+		$this->assertEquals(
 				Interpreter::run('echo "This spans
 multiple lines. The newlines will be
 output as well";'),
 				"This spans\nmultiple lines. The newlines will be\noutput as well"
-				);*/
+				);
 		$this->assertEquals(
 				Interpreter::run('echo "Again: This spans\nmultiple lines. The newlines will be\noutput as well.";'),
 				"Again: This spans\nmultiple lines. The newlines will be\noutput as well."
 				);
+	}
+
+	public function testRun_echo_variables() {
 		$this->assertEquals(
 				Interpreter::run('
 $foo = "foobar";
@@ -62,17 +85,53 @@ echo "foo is $foo"; // foo is foobar'),
 				'foobarbarbaz'
 				);
 		$this->assertEquals(
-				Interpreter::run('echo \'This \', \'string \', \'was \', \'made \', \'with multiple parameters.\';'),
-				'This string was made with multiple parameters.'
+				Interpreter::run('echo "$foo$bar";'),
+				'foobarbarbaz'
 				);
 		$this->assertEquals(
-				Interpreter::run('echo \'This \' . \'string \' . \'was \' . \'made \' . \'with concatenation.\' . "\n";'),
-				"This string was made with concatenation.\n"
+				Interpreter::run('echo "s{$foo}l{$bar}e";'),
+				'sfoobarlbarbaze'
 				);
+		$this->assertEquals(
+				Interpreter::run('echo "s{$foo}l$bar";'),
+				'sfoobarlbarbaz'
+				);
+		$this->assertEquals(
+				Interpreter::run('echo "start" . $foo . "end";'),
+				'startfoobarend'
+				);
+	}
+
+	public function testRun_echo_escaping() {
 		$this->assertEquals(
 				Interpreter::run('echo \'s\\\\\\\'e\';'),	// echo 's\\\'e';
 				's\\\'e'									// s\'e
 				);
+		$this->assertEquals(
+				Interpreter::run('echo "s\\\\\\"e";'),	// echo "s\\\"e";
+				's\\"e'									// s\"e
+				);
 	}
 
+	public function testRun_echo_digit() {
+		$this->assertEquals(
+				Interpreter::run('echo 5;'),
+				'5'
+				);
+	}
+
+	public function testRun_echo_math() {
+		$this->assertEquals(
+				Interpreter::run('echo 5 + 5 * 10;'),
+				'55'
+				);
+		$this->assertEquals(
+				Interpreter::run('echo 5 + 5 / 10 + 50/100;'),
+				'6'
+				);
+		$this->assertEquals(
+				Interpreter::run('echo 10 * 10 + "20" * \'20\' - 30 * 30 + 40 / 9;'),
+				'-395.55555555556'
+				);
+	}
 }

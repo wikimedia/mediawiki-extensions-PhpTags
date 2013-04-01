@@ -43,6 +43,8 @@ class Interpreter {
 				break;
 			}
 
+			//\MWDebug::log( var_export($token,true) );
+
 			switch ($id) {
 				case T_COMMENT:
 				case T_DOC_COMMENT:
@@ -62,8 +64,10 @@ class Interpreter {
 					}
 					if( $expectQuotesClose ) {
 						$expectQuotesClose = false;
+						$expected = array('.', ';');
 					} else {
 						$expectQuotesClose = true;
+						$expected = array(T_ENCAPSED_AND_WHITESPACE, T_CURLY_OPEN, T_VARIABLE, '"');
 					}
 					break;
 				case ';':
@@ -76,27 +80,37 @@ class Interpreter {
 					$expected = array(
 						T_CONSTANT_ENCAPSED_STRING,
 						T_ENCAPSED_AND_WHITESPACE,
+						T_LNUMBER,
+						T_DNUMBER,
 						T_VARIABLE,
 						T_CURLY_OPEN,
 						'"',
-						';',
+						//';',
 						);
 					break;
 				case '.':
+				case '+':
+				case '-':
+				case '*':
+				case '/':
 					$expected = array(
 						T_CONSTANT_ENCAPSED_STRING,
 						T_ENCAPSED_AND_WHITESPACE,
+						T_LNUMBER,
+						T_DNUMBER,
 						T_VARIABLE,
 						T_CURLY_OPEN,
 						'"',
-						';',
+						//';',
 						);
-						$runtime->addOperator('.');
+						$runtime->addOperator( $id );
 					break;
 				case ',':
 					$expected = array(
 						T_CONSTANT_ENCAPSED_STRING,
 						T_ENCAPSED_AND_WHITESPACE,
+						T_LNUMBER,
+						T_DNUMBER,
 						T_VARIABLE,
 						T_CURLY_OPEN,
 						'"',
@@ -109,6 +123,8 @@ class Interpreter {
 						$expected = array(
 							T_CONSTANT_ENCAPSED_STRING,
 							T_ENCAPSED_AND_WHITESPACE,
+							//T_LNUMBER,
+							//T_DNUMBER,
 							T_VARIABLE,
 							T_CURLY_OPEN,
 							'"',
@@ -129,8 +145,6 @@ class Interpreter {
 					//@todo:
 					/*$expected = array(
 						T_START_HEREDOC,
-						T_DNUMBER,
-						T_LNUMBER,
 						T_STRING_CAST,
 						T_INT_CAST,
 						T_FUNCTION,
@@ -139,6 +153,8 @@ class Interpreter {
 					$expected = array(
 						T_CONSTANT_ENCAPSED_STRING,
 						T_ENCAPSED_AND_WHITESPACE,
+						T_LNUMBER,
+						T_DNUMBER,
 						T_VARIABLE,
 						T_CURLY_OPEN,
 						'"',
@@ -152,13 +168,18 @@ class Interpreter {
 					$is_apostrophe = substr($text, 0, 1) == '\'' ? true : false;
 					$string = substr($text, 1, -1);
 					$runtime->addParam( self::process_slashes($string, $is_apostrophe) );
-					$expected = array(
-						';',
-						'.',
-						);
+					$expected = array( ';', '.', '+', '-', '*', '/'	);
 					if($expectListParams){
 						$expected[] = ',';
 					}
+					break;
+				case T_LNUMBER:
+				case T_DNUMBER:
+					if($is_debug) {
+						$debug[] = '<span style="color:#FF00FF" title="'. token_name($id) . '">' . htmlspecialchars($text) . '</span>';
+					}
+					$runtime->addParam( $text );
+					$expected = array(';', '.', '+', '-', '*', '/');
 					break;
 				case T_ENCAPSED_AND_WHITESPACE:
 					if($is_debug) {
@@ -174,12 +195,13 @@ class Interpreter {
 						if( $expectCurlyClose ) {
 							$expected = array( '}' );
 						} else {
-							$expected = array( ';', T_ENCAPSED_AND_WHITESPACE );
+							$expected = array( ';', '.', '+', '-', '*', '/', T_ENCAPSED_AND_WHITESPACE );
 						}
 						if( $expectListParams ) {
 							$expected[] = ',';
 						}
 						if( $expectQuotesClose ) {
+							$expected[] = T_VARIABLE; //echo "$s$s";
 							$expected[] = '"';
 						}
 						if($is_debug) {

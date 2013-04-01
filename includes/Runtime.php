@@ -15,15 +15,14 @@ class Runtime {
 	private $lastParam = null;
 	private $listParams = array();
 	private $lastOperator = false;
-	private $lastVariable = false;
-	private $listVariables = array();
-	private $lastVariableOperator = false;
+	private $variableOperator = false;
+	private $mathMemory = false;
 
 	private $stack = array();
 	private static $variables = array();
 
 	private function pushStack() {
-		$this->stack[] = array($this->lastCommand, $this->lastDebug, $this->lastParam, $this->listParams, $this->lastOperator, $this->lastVariable, $this->listVariables, $this->lastVariableOperator);
+		$this->stack[] = array($this->lastCommand, $this->lastDebug, $this->lastParam, $this->listParams, $this->lastOperator, $this->variableOperator, $this->mathMemory);
 	}
 
 	public function popStack() {
@@ -33,11 +32,10 @@ class Runtime {
 			$this->lastParam = null;
 			$this->listParams = array();
 			$this->lastOperator = false;
-			$this->lastVariable = false;
-			$this->listVariables = array();
-			$this->lastVariableOperator = false;
+			$this->variableOperator = false;
+			$this->mathMemory = false;
 		} else {
-			list($this->lastCommand, $this->lastDebug, $this->lastParam, $this->listParams, $this->lastOperator, $this->lastVariable, $this->listVariables, $this->lastVariableOperator) = array_pop($this->stack);
+			list($this->lastCommand, $this->lastDebug, $this->lastParam, $this->listParams, $this->lastOperator, $this->variableOperator, $this->mathMemory) = array_pop($this->stack);
 		}
 	}
 
@@ -53,7 +51,21 @@ class Runtime {
 		if( $this->lastOperator ) {
 			switch ( $this->lastOperator ) {
 				case '.':
-					$this->lastParam = $this->lastParam . $param;
+					$this->lastParam .= $param;
+					$this->lastOperator = false;
+					break;
+				case '*':
+					$this->lastParam *= $param;
+					$this->lastOperator = false;
+					break;
+				case '/':
+					$this->lastParam /= $param;
+					$this->lastOperator = false;
+					break;
+				case '+':
+				case '-':
+					$this->mathMemory = array($this->lastParam, $this->lastOperator);
+					$this->lastParam = $param;
 					$this->lastOperator = false;
 					break;
 				default:
@@ -70,10 +82,26 @@ class Runtime {
 	}
 
 	public function addOperator( $operator ) {
+		if( $this->mathMemory && ($operator=='+'||$operator=='-') ){
+			if( $this->mathMemory[1] == '+' ) {
+				$this->lastParam = $this->mathMemory[0] + $this->lastParam;
+			} else { // $this->mathMemory[1] == '-'
+				$this->lastParam = $this->mathMemory[0] - $this->lastParam;
+			}
+			$this->mathMemory = false;
+		}
 		$this->lastOperator = $operator;
 	}
 
 	public function getCommandResult( &$debug ) {
+		if( $this->mathMemory ) {
+			if( $this->mathMemory[1] == '+' ) {
+				$this->lastParam = $this->mathMemory[0] + $this->lastParam;
+			} else { // $this->mathMemory[1] == '-'
+				$this->lastParam = $this->mathMemory[0] - $this->lastParam;
+			}
+			$this->mathMemory = false;
+		}
 		$this->listParams[] = $this->lastParam;
 		$return = null;
 
@@ -87,7 +115,7 @@ class Runtime {
 			default:
 				$lastCommand = $this->lastCommand;
 				if( substr($lastCommand, 0, 1) == '$' ) {
-					switch ($this->lastVariableOperator) {
+					switch ($this->variableOperator) {
 						case '=':
 							if( $this->lastDebug !== false ) {
 								$debug[$this->lastDebug] = '<span style="color:#6D3206" title="'.token_name(T_VARIABLE).' set '.htmlspecialchars( var_export($this->lastParam, true) ).'">' . $lastCommand . '</span>';
@@ -96,7 +124,7 @@ class Runtime {
 							break;
 						default:
 							// TODO exception
-							$return = 'Error! Unknown operator "' . htmlspecialchars($this->lastVariableOperator) . '" in ' . __METHOD__;
+							$return = 'Error! Unknown operator "' . htmlspecialchars($this->variableOperator) . '" in ' . __METHOD__;
 							\MWDebug::log($return);
 							break;
 					}
@@ -116,7 +144,7 @@ class Runtime {
 	}
 
 	public function setVariableOperator( $operator ) {
-		$this->lastVariableOperator = $operator;
+		$this->variableOperator = $operator;
 	}
 
 	public function getVariable( $name ) {
