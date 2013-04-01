@@ -192,7 +192,6 @@ class Interpreter {
 						$debug[] = '<span style="color:#CE7B00" title="'. token_name($id) . '">' . htmlspecialchars($text) . '</span>';
 					}
 					$runtime->addParam( self::process_slashes($text, false) );
-					$runtime->addOperator('.');
 					break;
 				case T_VARIABLE:
 					if( $expected && in_array(T_VARIABLE, $expected) ) {
@@ -256,8 +255,8 @@ class Interpreter {
 			$pattern = array('/(\\\\\\\\)*+\\\\\'/', '/\\\\\\\\/');
 			$replacement = array('$1\'', '\\');
 		} else {
-			//						(\\)*+\"			\n			\r			\t		\v			\$			\\
-			$pattern = array('/(\\\\\\\\)*+\\\\"/',  '/\\\\n/', '/\\\\r/', '/\\\\t/', '/\\\\v/', '/\\\\$/', '/\\\\\\\\/');
+			//						(\\)*+\"				(\\)*+\n				(\\)*+\r				(\\)*+\t			(\\)*+\v				(\\)*+\$			\\
+			$pattern = array('/(\\\\\\\\)*+\\\\"/',  '/(\\\\\\\\)*+\\\\n/', '/(\\\\\\\\)*+\\\\r/', '/(\\\\\\\\)*+\\\\t/', '/(\\\\\\\\)*+\\\\v/', '/(\\\\\\\\)*+\\\\\$/', '/\\\\\\\\/');
 			$replacement = array('$1"', "\n", "\r", "\t", "\v", '$', '\\');
 		}
 		return preg_replace($pattern, $replacement, $string);

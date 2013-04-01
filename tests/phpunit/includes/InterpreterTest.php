@@ -145,4 +145,18 @@ echo "foo is $foo"; // foo is foobar'),
 				"10 + 5 * 5 = 35\n\n"
 				);
 	}
+
+	public function testRun_echo_math_variables() {
+		$this->assertEquals(
+				Interpreter::run('
+$foo = 100;
+$bar = \'5\';
+echo "\$foo * \$bar = $foo * $bar = ", $foo * $bar, "\n\n";'),
+				"\$foo * \$bar = 100 * 5 = 500\n\n"
+				);
+		$this->assertEquals(
+				Interpreter::run('echo "\$foo / \$bar = $foo / $bar = ", $foo / $bar, "\n\n";'),
+				"\$foo / \$bar = 100 / 5 = 20\n\n"
+				);
+	}
 }
