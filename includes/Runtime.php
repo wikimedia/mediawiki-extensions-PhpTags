@@ -50,15 +50,13 @@ class Runtime {
 	public function addParam( $param ) {
 		if( $this->lastOperator ) {
 			switch ( $this->lastOperator ) {
-				case '.':
-					$this->lastParam .= $param;
-					break;
 				case '*':
 					$this->lastParam *= $param;
 					break;
 				case '/':
 					$this->lastParam /= $param;
 					break;
+				case '.':
 				case '+':
 				case '-':
 					$this->mathMemory = array($this->lastParam, $this->lastOperator);
@@ -89,7 +87,7 @@ class Runtime {
 	}
 
 	public function addOperator( $operator ) {
-		if( $this->mathMemory && ($operator=='+'||$operator=='-') ){
+		if( $this->mathMemory && ($operator=='+'||$operator=='-'||$operator=='.') ){
 			if( $this->mathMemory[1] == '+' ) {
 				$this->lastParam = $this->mathMemory[0] + $this->lastParam;
 			} elseif ( $this->mathMemory[1] == '-' ) {

@@ -130,6 +130,10 @@ echo "foo is $foo"; // foo is foobar'),
 				'55'
 				);
 		$this->assertEquals(
+				Interpreter::run('echo 5 + 5 + 10 + 20 - 50 - 5;'),
+				'-15'
+				);
+		$this->assertEquals(
 				Interpreter::run('echo 5 + 5 / 10 + 50/100;'),
 				'6'
 				);
@@ -157,6 +161,21 @@ echo "\$foo * \$bar = $foo * $bar = ", $foo * $bar, "\n\n";'),
 		$this->assertEquals(
 				Interpreter::run('echo "\$foo / \$bar = $foo / $bar = ", $foo / $bar, "\n\n";'),
 				"\$foo / \$bar = 100 / 5 = 20\n\n"
+				);
+	}
+
+	public function testRun_echo_math_union() {
+		$this->assertEquals(
+				Interpreter::run('echo 10 + 5 . 5;'),
+				'155'
+				);
+		$this->assertEquals(
+				Interpreter::run('echo 10 + 5 . 5  * 9;'),
+				'1545'
+				);
+		$this->assertEquals(
+				Interpreter::run('echo 10 + 5 . 5  * 9 . 4 - 5 . 8;'),
+				'154498'
 				);
 	}
 }
