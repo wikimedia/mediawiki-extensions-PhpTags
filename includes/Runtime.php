@@ -15,29 +15,66 @@ class Runtime {
 	private $lastParam = null;
 	private $listParams = array();
 	private $lastOperator = false;
+	private $lastNegative = null;
 	private $variableOperator = false;
-	private $mathMemory = false;
+	private $mathMemory = array();
 
 	private $stack = array();
 	private static $variables = array();
 
-	private function pushStack() {
-		$this->stack[] = array($this->lastCommand, $this->lastDebug, $this->lastParam, $this->listParams, $this->lastOperator, $this->variableOperator, $this->mathMemory);
+	// @see http://www.php.net/manual/ru/language.operators.precedence.php
+	private $operatorsPrecedence = array(
+		array('--', '++'),
+		array('!'),
+		array('*', '/', '%'),
+		array('+', '-', '.'),
+		array('<<', '>>'),
+		array('<', '<=', '>', '>='),
+		array('==', '!=', '===', '!==', '<>'),
+		array('&'),
+		array('^'),
+		array('|'),
+		array('&&'),
+		array('||'),
+		array('?', ':'),
+	);
+
+	private function getOperatorPrecedence( $operator ) {
+		$precendence = 0;
+		foreach ($this->operatorsPrecedence as $operators) {
+			if( in_array($operator, $operators) ) {
+				break;
+			}
+			$precendence ++;
+		}
+		return $precendence;
 	}
 
-	public function popStack() {
+	private function pushStack() {
+		$this->stack[] = array($this->lastCommand, $this->lastDebug, $this->lastParam, $this->listParams, $this->lastOperator, $this->lastNegative, $this->variableOperator, $this->mathMemory);
+		$this->resetRegisters();
+	}
+
+	private function popStack() {
 		if( count($this->stack) == 0 ) {
-			$this->lastCommand = false;
-			$this->lastDebug = false;
-			$this->lastParam = null;
-			$this->listParams = array();
-			$this->lastOperator = false;
-			$this->variableOperator = false;
-			$this->mathMemory = false;
+			$this->resetRegisters();
 		} else {
-			list($this->lastCommand, $this->lastDebug, $this->lastParam, $this->listParams, $this->lastOperator, $this->variableOperator, $this->mathMemory) = array_pop($this->stack);
+			list($this->lastCommand, $this->lastDebug, $this->lastParam, $this->listParams, $this->lastOperator, $this->lastNegative, $this->variableOperator, $this->mathMemory) = array_pop($this->stack);
 		}
 	}
+
+	private function resetRegisters() {
+		$this->lastCommand = false;
+		$this->lastDebug = false;
+		$this->lastParam = null;
+		$this->listParams = array();
+		$this->lastOperator = false;
+		$this->lastNegative = null;
+		$this->variableOperator = false;
+		$this->mathMemory = array();
+	}
+
+
 
 	public function addCommand( $name, $debug ) {
 		if( $this->lastCommand ) {
@@ -48,68 +85,115 @@ class Runtime {
 	}
 
 	public function addParam( $param ) {
+//\MWDebug::log( "function addParam( '$param' ) @ lastOperator=" . var_export($this->lastOperator, true) . " lastNegative=" . var_export($this->lastNegative, true));
+		if( $this->lastNegative === true) {
+			$param = -$param;
+			$this->lastNegative = null;
+		}
+
 		if( $this->lastOperator ) {
-			switch ( $this->lastOperator ) {
-				case '*':
-					$this->lastParam *= $param;
-					break;
-				case '/':
-					$this->lastParam /= $param;
-					break;
-				case '.':
-				case '+':
-				case '-':
-					$this->mathMemory = array($this->lastParam, $this->lastOperator);
-					$this->lastParam = $param;
-					break;
-				default:
-					// TODO
-					\MWDebug::log( 'Error! Unknown operator "' . htmlspecialchars($this->lastOperator) . '" in ' . __METHOD__ );
-					break;
-			}
+			$precedence = $this->getOperatorPrecedence( $this->lastOperator );
+			$this->mathMemory[$precedence] = array($this->lastOperator, $this->lastParam);
+			$this->lastParam = $this->lastNegative === true ? -$param : $param;
+			$this->lastNegative = null;
 			$this->lastOperator = false;
 		} else {
-			if( $this->mathMemory ) {
-				if( $this->mathMemory[1] == '+' ) {
-					$this->lastParam = $this->mathMemory[0] + $this->lastParam;
-				} elseif ( $this->mathMemory[1] == '-' ) {
-					$this->lastParam = $this->mathMemory[0] - $this->lastParam;
-				} else { // $this->mathMemory[1] == '.'
-					$this->lastParam = $this->mathMemory[0] . $this->lastParam;
-				}
-				$this->mathMemory = false;
-			}
 			if( !is_null($this->lastParam) ) {
 				$this->listParams[] = $this->lastParam;
 			}
 			$this->lastParam = $param;
 		}
+//\MWDebug::log("lastParam = $this->lastParam, lastOperator = $this->lastOperator, mathMemory = " . var_export($this->mathMemory, true) );
+	}
+
+	public function separateParams() {
+//\MWDebug::log("function separateParams()");
+		while( count($this->mathMemory) != 0 ) {
+			$mathMemory = array_pop($this->mathMemory);
+			$this->doOperation($mathMemory[0], $mathMemory[1]);
+		}
+		$this->listParams[] = $this->lastParam;
+		$this->lastParam = null;
 	}
 
 	public function addOperator( $operator ) {
-		if( $this->mathMemory && ($operator=='+'||$operator=='-'||$operator=='.') ){
-			if( $this->mathMemory[1] == '+' ) {
-				$this->lastParam = $this->mathMemory[0] + $this->lastParam;
-			} elseif ( $this->mathMemory[1] == '-' ) {
-				$this->lastParam = $this->mathMemory[0] - $this->lastParam;
-			} else { // $this->mathMemory[1] == '.'
-				$this->lastParam = $this->mathMemory[0] . $this->lastParam;
+//\MWDebug::log("function addOperator( $operator ) @ lastOperator = '$this->lastOperator', lastParam = '$this->lastParam'" );
+		// For negative operator
+		if( $this->lastOperator || is_null($this->lastParam) ) {
+			if( $operator == '-' ) {
+				//					  false or null
+				$this->lastNegative = !$this->lastNegative ? true : false;
+//\MWDebug::log( "lastNegative = " . var_export($this->lastNegative, true) );
 			}
-			$this->mathMemory = false;
+		} else {
+			//doOperation for higher precedence
+			$precedence = $this->getOperatorPrecedence( $operator );
+			if( $precedence == 0 && !is_null($this->lastParam) ) {
+				$this->doOperation($operator);
+			} else {
+				for($n = 0; $n <= $precedence; $n++) {
+					if( isset($this->mathMemory[$n]) ) {
+						$this->doOperation($this->mathMemory[$n][0], $this->mathMemory[$n][1]);
+						unset($this->mathMemory[$n]);
+					}
+				}
+			}
+			$this->lastOperator = $operator;
 		}
-		$this->lastOperator = $operator;
+	}
+
+	private function doOperation($operator, $param = null) {
+		switch ($operator) {
+			case '++':
+				$this->lastParam++;
+				break;
+			case '--':
+				$this->lastParam--;
+				break;
+			case '.':
+				$this->lastParam = $param . $this->lastParam;
+				break;
+			case '+':
+				$this->lastParam += $param;
+				break;
+			case '-':
+				$this->lastParam = $param - $this->lastParam;
+				break;
+			case '*':
+				$this->lastParam *= $param;
+				break;
+			case '/':
+				$this->lastParam = $param / $this->lastParam;
+				break;
+			case '%':
+				$this->lastParam = $param % $this->lastParam;
+				break;
+			case '&':
+				$this->lastParam &= $param;
+				break;
+			case '|':
+				$this->lastParam = $param | $this->lastParam;
+				break;
+			case '^':
+				$this->lastParam = $param ^ $this->lastParam;
+				break;
+			case T_SL: // <<
+				$this->lastParam = $param << $this->lastParam;
+				break;
+			case T_SR: // >>
+				$this->lastParam = $param >> $this->lastParam;
+				break;
+			default:
+				\MWDebug::log( __METHOD__ . " unknown operator '$operator'" );
+				break;
+		}
+//\MWDebug::log( "function doOperation('$operator', '$param') @ '$this->lastParam'");
 	}
 
 	public function getCommandResult( &$debug ) {
-		if( $this->mathMemory ) {
-			if( $this->mathMemory[1] == '+' ) {
-				$this->lastParam = $this->mathMemory[0] + $this->lastParam;
-			} elseif ( $this->mathMemory[1] == '-' ) {
-				$this->lastParam = $this->mathMemory[0] - $this->lastParam;
-			} else { // $this->mathMemory[1] == '.'
-				$this->lastParam = $this->mathMemory[0] . $this->lastParam;
-			}
-			$this->mathMemory = false;
+		while( count($this->mathMemory) != 0 ) {
+			$mathMemory = array_pop($this->mathMemory);
+			$this->doOperation($mathMemory[0], $mathMemory[1]);
 		}
 		$this->listParams[] = $this->lastParam;
 		$return = null;
@@ -124,18 +208,52 @@ class Runtime {
 			default:
 				$lastCommand = $this->lastCommand;
 				if( substr($lastCommand, 0, 1) == '$' ) {
+					$varName = substr($lastCommand, 1);
 					switch ($this->variableOperator) {
 						case '=':
-							if( $this->lastDebug !== false ) {
-								$debug[$this->lastDebug] = '<span style="color:#6D3206" title="'.token_name(T_VARIABLE).' set '.htmlspecialchars( var_export($this->lastParam, true) ).'">' . $lastCommand . '</span>';
-							}
-							self::$variables[ substr($lastCommand, 1) ] = $this->lastParam;
+							self::$variables[$varName] = $this->lastParam;
+							break;
+						case T_CONCAT_EQUAL:// .=
+							self::$variables[$varName] .= $this->lastParam;
+							break;
+						case T_PLUS_EQUAL:// +=
+							self::$variables[$varName] += $this->lastParam;
+							break;
+						case T_MINUS_EQUAL:// -=
+							self::$variables[$varName] -= $this->lastParam;
+							break;
+						case T_MUL_EQUAL: // *=
+							self::$variables[$varName] *= $this->lastParam;
+							break;
+						case T_DIV_EQUAL: // /=
+							self::$variables[$varName] /= $this->lastParam;
+							break;
+						case T_MOD_EQUAL: // %=
+							self::$variables[$varName] %= $this->lastParam;
+							break;
+						case T_AND_EQUAL:// &=
+							self::$variables[$varName] &= $this->lastParam;
+							break;
+						case T_OR_EQUAL:// |=
+							self::$variables[$varName] |= $this->lastParam;
+							break;
+						case T_XOR_EQUAL:// ^=
+							self::$variables[$varName] ^= $this->lastParam;
+							break;
+						case T_SL_EQUAL:// <<=
+							self::$variables[$varName] <<= $this->lastParam;
+							break;
+						case T_SR_EQUAL:// >>=
+							self::$variables[$varName] >>= $this->lastParam;
 							break;
 						default:
 							// TODO exception
 							$return = 'Error! Unknown operator "' . htmlspecialchars($this->variableOperator) . '" in ' . __METHOD__;
 							\MWDebug::log($return);
-							break;
+							break 2;
+					}
+					if( $this->lastDebug !== false ) {
+						$debug[$this->lastDebug] = '<span style="color:#6D3206" title="'.token_name(T_VARIABLE).' set '.htmlspecialchars( var_export(self::$variables[$varName], true) ).'">' . $lastCommand . '</span>';
 					}
 
 				} else {
