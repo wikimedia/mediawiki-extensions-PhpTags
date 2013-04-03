@@ -30,9 +30,6 @@ class Interpreter {
 		foreach ($tokens as $token) {
 			if ( is_string($token) ) {
 				$id = $token;
-				if($is_debug) {
-					$debug[] = $token;
-				}
 			} else {
 				list($id, $text, $line) = $token;
 			}
@@ -46,97 +43,38 @@ class Interpreter {
 			//\MWDebug::log( var_export($token,true) );
 
 			switch ($id) {
-				case T_COMMENT:
-				case T_DOC_COMMENT:
-					if($is_debug) {
-						$debug[] = '<span style="color:#969696" title="'. token_name($id) . '">' . str_replace("\n", "<br />\n", htmlspecialchars($text) ) . '</span>';
-					}
-					break;
-				case T_WHITESPACE:
-					if($is_debug) {
-						$debug[] = str_replace("\n", "<br />\n", $text);
-					}
-					break;
-				case '"':
-					if($is_debug) {
-						array_pop($debug);
-						$debug[] = '<span style="color:#CE7B00">"</span>';
-					}
-					if( $expectQuotesClose ) {
-						$expectQuotesClose = false;
-						$expected = array('.', ';');
-					} else {
-						$expectQuotesClose = true;
-						$expected = array(T_ENCAPSED_AND_WHITESPACE, T_CURLY_OPEN, T_VARIABLE, '"');
-					}
-					if($expectListParams){
-						$expected[] = ',';
-					}
-					break;
 				case ';':
 					$return .= $runtime->getCommandResult($debug);
-					$expectListParams = false;
-					$expected = false;
+					break;
+				case ',':
+					$runtime->separateParams();
 					break;
 				case '=':
-					$runtime->setVariableOperator('=');
-					$expected = array(
-						T_CONSTANT_ENCAPSED_STRING,
-						T_ENCAPSED_AND_WHITESPACE,
-						T_LNUMBER,
-						T_DNUMBER,
-						T_VARIABLE,
-						T_CURLY_OPEN,
-						'"',
-						//';',
-						);
+				case T_CONCAT_EQUAL:	// .=
+				case T_PLUS_EQUAL:		// +=
+				case T_MINUS_EQUAL:		// -=
+				case T_MUL_EQUAL:		// *=
+				case T_DIV_EQUAL:		// /=
+				case T_MOD_EQUAL:		// %=
+				case T_AND_EQUAL:		// &=
+				case T_OR_EQUAL:		// |=
+				case T_XOR_EQUAL:		// ^=
+				case T_SL_EQUAL:		// <<
+				case T_SR_EQUAL:		// >>
+					$runtime->setVariableOperator( $id );
 					break;
 				case '.':
 				case '+':
 				case '-':
 				case '*':
 				case '/':
-					$expected = array(
-						T_CONSTANT_ENCAPSED_STRING,
-						T_ENCAPSED_AND_WHITESPACE,
-						T_LNUMBER,
-						T_DNUMBER,
-						T_VARIABLE,
-						T_CURLY_OPEN,
-						'"',
-						//';',
-						);
+				case '%':
+				case '&':
+				case '|':
+				case '^':
+				case T_SL: // <<
+				case T_SR: // >>
 						$runtime->addOperator( $id );
-					break;
-				case ',':
-					$expected = array(
-						T_CONSTANT_ENCAPSED_STRING,
-						T_ENCAPSED_AND_WHITESPACE,
-						T_LNUMBER,
-						T_DNUMBER,
-						T_VARIABLE,
-						T_CURLY_OPEN,
-						'"',
-						// ';',
-						);
-					break;
-				case '}':
-					if( $expectCurlyClose ) {
-						$expectCurlyClose = false;
-						$expected = array(
-							T_CONSTANT_ENCAPSED_STRING,
-							T_ENCAPSED_AND_WHITESPACE,
-							//T_LNUMBER,
-							//T_DNUMBER,
-							T_VARIABLE,
-							T_CURLY_OPEN,
-							'"',
-							//';',
-							);
-					} else {
-						$return .= '<br><span class="error">' . wfMessage( 'foxway-php-syntax-error-unexpected', '\' } \'', $line )->escaped() . '</span>';
-						break 2;
-					}
 					break;
 				case T_ECHO:
 					if($is_debug) {
@@ -145,62 +83,31 @@ class Interpreter {
 						$i = false;
 					}
 					$runtime->addCommand('echo', $i);
-					//@todo:
-					/*$expected = array(
-						T_START_HEREDOC,
-						T_STRING_CAST,
-						T_INT_CAST,
-						T_FUNCTION,
-						);*/
-					$expectListParams = true;
-					$expected = array(
-						T_CONSTANT_ENCAPSED_STRING,
-						T_ENCAPSED_AND_WHITESPACE,
-						T_LNUMBER,
-						T_DNUMBER,
-						T_VARIABLE,
-						T_CURLY_OPEN,
-						'"',
-						';',
-						);
 					break;
 				case T_CONSTANT_ENCAPSED_STRING:
-					if($is_debug) {
-						$debug[] = '<span style="color:#CE7B00" title="'. token_name($id) . '">' . htmlspecialchars($text) . '</span>';
-					}
 					$is_apostrophe = substr($text, 0, 1) == '\'' ? true : false;
 					$string = substr($text, 1, -1);
 					$runtime->addParam( self::process_slashes($string, $is_apostrophe) );
-					$expected = array( ';', '.', '+', '-', '*', '/'	);
-					if($expectListParams){
-						$expected[] = ',';
-					}
 					break;
 				case T_LNUMBER:
+					$runtime->addParam( (integer)$text );
+					break;
 				case T_DNUMBER:
-					if($is_debug) {
-						$debug[] = '<span style="color:#FF00FF" title="'. token_name($id) . '">' . htmlspecialchars($text) . '</span>';
-					}
-					$runtime->addParam( $text );
-					$expected = array(';', '.', '+', '-', '*', '/');
-					if($expectListParams){
-						$expected[] = ',';
-					}
+					$runtime->addParam( (float)$text );
 					break;
 				case T_ENCAPSED_AND_WHITESPACE:
-					if($is_debug) {
-						$debug[] = '<span style="color:#CE7B00" title="'. token_name($id) . '">' . htmlspecialchars($text) . '</span>';
+					if( $expectQuotesClose ) {
+						$runtime->addOperator('.');
 					}
 					$runtime->addParam( self::process_slashes($text, false) );
 					break;
 				case T_VARIABLE:
 					if( $expected && in_array(T_VARIABLE, $expected) ) {
 						$value = $runtime->getVariable( substr($text, 1) );
-						$runtime->addParam($value);
 						if( $expectCurlyClose ) {
 							$expected = array( '}' );
 						} else {
-							$expected = array( ';', '.', '+', '-', '*', '/', T_ENCAPSED_AND_WHITESPACE );
+							$expected = array( ';', '.', '+', '-', '*', '/', '%', '&', '|', '^', T_SL, T_SR, T_ENCAPSED_AND_WHITESPACE );
 						}
 						if( $expectListParams ) {
 							$expected[] = ',';
@@ -208,7 +115,9 @@ class Interpreter {
 						if( $expectQuotesClose ) {
 							$expected[] = T_VARIABLE; //echo "$s$s";
 							$expected[] = '"';
+							$runtime->addOperator('.');
 						}
+						$runtime->addParam($value);
 						if($is_debug) {
 							if( is_null($value) ) {
 								$debug[] = '<span style="color:red" title="'.token_name($id).' = '.htmlspecialchars( var_export($value, true) ).'">' . $text . '</span>';
@@ -223,28 +132,154 @@ class Interpreter {
 							$i = false;
 						}
 						$runtime->setVariable($text, $i);
-						$expected = array('=');
+						$expected = array(
+							'=',
+							T_CONCAT_EQUAL,
+							T_PLUS_EQUAL,
+							T_MINUS_EQUAL,
+							T_MUL_EQUAL,
+							T_DIV_EQUAL,
+							T_MOD_EQUAL,
+							T_AND_EQUAL,
+							T_OR_EQUAL,
+							T_XOR_EQUAL,
+							T_SL_EQUAL,
+							T_SR_EQUAL,
+							);
 					}
 					break;
-				case T_CURLY_OPEN:
-					if($is_debug) {
-						$debug[] = '{';
+			}
+
+			switch ($id) {
+				case ';':
+					$expectListParams = false;
+					$expected = false;
+					break;
+				case '"':
+					if( $expectQuotesClose === false ) {
+						$runtime->addParam('');
+						$expectQuotesClose = true;
+						$expected = array(T_ENCAPSED_AND_WHITESPACE, T_CURLY_OPEN, T_VARIABLE, '"');
+						break;
+					} else {
+						$expectQuotesClose = false;
 					}
+					// break is not necessary here
+				case T_CONSTANT_ENCAPSED_STRING:
+				case T_LNUMBER:
+				case T_DNUMBER:
+					$expected = array( ';', '.', '+', '-', '*', '/', '%', '&', '|', '^', T_SL, T_SR );
+					if($expectListParams){
+						$expected[] = ',';
+					}
+					break;
+				case T_ECHO:
+					$expectListParams = true;
+					// break is not necessary here
+				case ',':
+				case '=':
+				case T_CONCAT_EQUAL:	// .=
+				case T_PLUS_EQUAL:		// +=
+				case T_MINUS_EQUAL:		// -=
+				case T_MUL_EQUAL:		// *=
+				case T_DIV_EQUAL:		// /=
+				case T_MOD_EQUAL:		// %=
+				case T_AND_EQUAL:		// &=
+				case T_OR_EQUAL:		// |=
+				case T_XOR_EQUAL:		// ^=
+				case T_SL_EQUAL:		// <<=
+				case T_SR_EQUAL:		// >>=
+				case '.':
+				case '+':
+				case '-':
+				case '*':
+				case '/':
+				case '%':
+				case '&':
+				case '|':
+				case '^':
+				case T_SL: // <<
+				case T_SR: // >>
+					$expected = array(
+						T_CONSTANT_ENCAPSED_STRING,
+						T_ENCAPSED_AND_WHITESPACE,
+						T_LNUMBER,
+						T_DNUMBER,
+						T_VARIABLE,
+						T_CURLY_OPEN,
+						'"',
+						'-',
+						'+',
+						);
+					break;
+				case T_CURLY_OPEN:
 					$expectCurlyClose = true;
 					$expected = array(
 						T_VARIABLE,
+						'-',
+						'+',
 						);
 					break;
-				default:
-					if($is_debug) {
-						$debug[] = '<span title="'. token_name($id) . '">' . htmlspecialchars($text) . '</span>';
+				case '}':
+					if( $expectCurlyClose ) {
+						$expectCurlyClose = false;
+						$expected = array(
+							T_CONSTANT_ENCAPSED_STRING,
+							T_ENCAPSED_AND_WHITESPACE,
+							//T_LNUMBER,
+							//T_DNUMBER,
+							T_VARIABLE,
+							T_CURLY_OPEN,
+							'"',
+							);
+					} else {
+						$return .= '<br><span class="error">' . wfMessage( 'foxway-php-syntax-error-unexpected', '\' } \'', $line )->escaped() . '</span>';
+						break 2;
 					}
 					break;
+			}
+
+			// Debug info
+			if($is_debug) {
+				switch ($id) {
+					case T_COMMENT:
+					case T_DOC_COMMENT:
+						$debug[] = '<span style="color:#969696" title="'. token_name($id) . '">' . str_replace("\n", "<br />\n", htmlspecialchars($text) ) . '</span>';
+						break;
+					case T_WHITESPACE:
+						$debug[] = str_replace("\n", "<br />\n", $text);
+						break;
+					case '"':
+						$text = '"';
+						// break is not necessary here
+					case T_CONSTANT_ENCAPSED_STRING:
+					case T_ENCAPSED_AND_WHITESPACE:
+						$debug[] = '<span style="color:#CE7B00" title="'. token_name($id) . '">' . htmlspecialchars($text) . '</span>';
+						break;
+					case T_LNUMBER:
+					case T_DNUMBER:
+						$debug[] = '<span style="color:#FF00FF" title="'. token_name($id) . '">' . htmlspecialchars($text) . '</span>';
+						break;
+					case T_CURLY_OPEN:
+					case T_AND_EQUAL:
+						$debug[] = '<span style="color:#000000" title="'. token_name($id) . '">' . htmlspecialchars($text) . '</span>';
+						break;
+					case T_ECHO:
+					case T_VARIABLE:
+						break;
+					default:
+						if( is_array($token) ) {
+							$debug[] = '<span title="'. token_name($id) . '">' . htmlspecialchars($text) . '</span>';
+						} else {
+							$debug[] = $id;
+						}
+						break;
+				}
 			}
 		}
 
 		if( $is_debug ) {
-			$return = implode('', $debug) . "<HR>\n" . $return;
+			$return = '<nowiki>' . implode('', $debug) . "</nowiki><HR>\n" . $return;
 		}
 		return $return;
 	}
