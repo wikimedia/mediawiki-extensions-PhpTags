@@ -24,7 +24,6 @@ class Runtime {
 
 	// @see http://www.php.net/manual/ru/language.operators.precedence.php
 	private $operatorsPrecedence = array(
-		array('--', '++'),
 		array('!'),
 		array('*', '/', '%'),
 		array('+', '-', '.'),
@@ -144,12 +143,6 @@ class Runtime {
 
 	private function doOperation($operator, $param = null) {
 		switch ($operator) {
-			case '++':
-				$this->lastParam++;
-				break;
-			case '--':
-				$this->lastParam--;
-				break;
 			case '.':
 				$this->lastParam = $param . $this->lastParam;
 				break;
@@ -199,6 +192,8 @@ class Runtime {
 		$return = null;
 
 		switch ($this->lastCommand) {
+			case false: // ++$variable OR --$variable;
+				break;
 			case 'echo':
 				$return = implode('', $this->listParams);
 				if( $this->lastDebug !== false ) {
@@ -246,6 +241,8 @@ class Runtime {
 						case T_SR_EQUAL:// >>=
 							self::$variables[$varName] >>= $this->lastParam;
 							break;
+						case false: // $variable++ OR $variable--;
+							break;
 						default:
 							// TODO exception
 							$return = 'Error! Unknown operator "' . htmlspecialchars($this->variableOperator) . '" in ' . __METHOD__;
@@ -258,7 +255,7 @@ class Runtime {
 
 				} else {
 					// TODO exception
-					$return = 'Error in ' . __METHOD__;
+					$return = 'Error in ' . __METHOD__ . 'lastCommand = \'' . htmlspecialchars( var_export($this->lastCommand, true) ) .'\'';
 				}
 				break;
 		}
@@ -267,14 +264,18 @@ class Runtime {
 	}
 
 	public function setVariable( $name, $debug ) {
-		$this->addCommand($name, $debug);
+		$this->addCommand("\$$name", $debug);
+	}
+
+	public function setVariableValue( $name, $value) {
+		self::$variables[$name] = $value;
 	}
 
 	public function setVariableOperator( $operator ) {
 		$this->variableOperator = $operator;
 	}
 
-	public function getVariable( $name ) {
+	public function getVariableValue( $name ) {
 		if( isset(self::$variables[$name]) ) {
 			return self::$variables[$name];
 		} else {

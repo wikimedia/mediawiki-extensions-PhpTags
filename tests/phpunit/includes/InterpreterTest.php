@@ -317,4 +317,37 @@ echo "\$foo * \$bar = $foo * $bar = ", $foo * $bar, "\n\n";'),
 				);
 	}
 
+	public function testRun_echo_math_Increment_1() {
+		$this->assertEquals(
+				Interpreter::run('$a = 10; echo $a++, $a, ++$a;'),
+				'101112'
+				);
+	}
+	public function testRun_echo_math_Increment_2() {
+		$this->assertEquals(
+				Interpreter::run('
+$a = 10;
+$a++;
+++$a;
+echo "$a, ", $a++ + -5, ", " . ++$a, ", $a.";'),
+				'12, 7, 14, 14.'
+				);
+	}
+	public function testRun_echo_math_Decrement_1() {
+		$this->assertEquals(
+				Interpreter::run('$a = 10; echo $a--, $a, --$a;'),
+				'1098'
+				);
+	}
+	public function testRun_echo_math_Decrement_2() {
+		$this->assertEquals(
+				Interpreter::run('
+$a = 10;
+$a--;
+--$a;
+echo "$a, ", $a-- + -5, ", " . --$a, ", $a.";'),
+				'8, 3, 6, 6.'
+				);
+	}
+
 }
