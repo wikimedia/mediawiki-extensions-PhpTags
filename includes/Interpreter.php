@@ -24,6 +24,9 @@ class Interpreter {
 		$expectListParams = false;
 		$expectCurlyClose = false;
 		$expectQuotesClose = false;
+		$incrementVariable = false;
+		$variableName = null;
+		$variableValue = null;
 		$line = 1;
 		$runtime = new Runtime();
 
@@ -76,6 +79,25 @@ class Interpreter {
 				case T_SR: // >>
 						$runtime->addOperator( $id );
 					break;
+				case T_INC: // ++
+				case T_DEC: // --
+					if( $incrementVariable === false ) {
+						$incrementVariable = $id;
+						$expected = array( T_VARIABLE );
+					} else {
+						$variableValue = $runtime->getVariableValue( $variableName );
+						if( $id == T_INC ) {
+							$variableValue++;
+						} else {
+							$variableValue--;
+						}
+						$runtime->setVariableValue($variableName, $variableValue);
+						$expected = array( ';', '.', '+', '-', '*', '/', '%', '&', '|', '^', T_SL, T_SR ); // same as for case T_LNUMBER:
+						if($expectListParams){
+							$expected[] = ',';
+						}
+					}
+					break;
 				case T_ECHO:
 					if($is_debug) {
 						$i = array_push($debug, $text)-1;
@@ -103,11 +125,27 @@ class Interpreter {
 					break;
 				case T_VARIABLE:
 					if( $expected && in_array(T_VARIABLE, $expected) ) {
-						$value = $runtime->getVariable( substr($text, 1) );
+						$variableName = substr($text, 1);
+						$variableValue = $runtime->getVariableValue( $variableName );
+						if( $incrementVariable == T_INC || $incrementVariable == T_DEC ) {
+							if( $incrementVariable == T_INC ) {
+								$variableValue++;
+							} else {
+								$variableValue--;
+							}
+							$runtime->setVariableValue( $variableName, $variableValue);
+							$variableName = false;
+						} else {
+							$incrementVariable = $variableName;
+						}
 						if( $expectCurlyClose ) {
 							$expected = array( '}' );
 						} else {
 							$expected = array( ';', '.', '+', '-', '*', '/', '%', '&', '|', '^', T_SL, T_SR, T_ENCAPSED_AND_WHITESPACE );
+							if( $variableName !== false ){
+								$expected[] = T_INC;
+								$expected[] = T_DEC;
+							}
 						}
 						if( $expectListParams ) {
 							$expected[] = ',';
@@ -117,12 +155,12 @@ class Interpreter {
 							$expected[] = '"';
 							$runtime->addOperator('.');
 						}
-						$runtime->addParam($value);
+						$runtime->addParam($variableValue);
 						if($is_debug) {
-							if( is_null($value) ) {
-								$debug[] = '<span style="color:red" title="'.token_name($id).' = '.htmlspecialchars( var_export($value, true) ).'">' . $text . '</span>';
+							if( is_null($variableValue) ) {
+								$debug[] = '<span style="color:red" title="'.token_name($id).' = '.htmlspecialchars( var_export($variableValue, true) ).'">' . $text . '</span>';
 							} else {
-								$debug[] = '<span style="color:#6D3206" title="'.token_name($id).' = '.htmlspecialchars( var_export($value, true) ).'">' . $text . '</span>';
+								$debug[] = '<span style="color:#6D3206" title="'.token_name($id).' = '.htmlspecialchars( var_export($variableValue, true) ).'">' . $text . '</span>';
 							}
 						}
 					} else {
@@ -131,7 +169,9 @@ class Interpreter {
 						} else {
 							$i = false;
 						}
-						$runtime->setVariable($text, $i);
+						$variableName = substr($text, 1);
+						$runtime->setVariable( $variableName, $i );
+						$incrementVariable = $variableName;
 						$expected = array(
 							'=',
 							T_CONCAT_EQUAL,
@@ -145,9 +185,14 @@ class Interpreter {
 							T_XOR_EQUAL,
 							T_SL_EQUAL,
 							T_SR_EQUAL,
+							T_INC,
+							T_DEC,
 							);
 					}
 					break;
+			}
+			if( $id != T_VARIABLE && $id != T_INC && $id != T_DEC ) {
+				$incrementVariable = false;
 			}
 
 			switch ($id) {
@@ -168,7 +213,7 @@ class Interpreter {
 				case T_CONSTANT_ENCAPSED_STRING:
 				case T_LNUMBER:
 				case T_DNUMBER:
-					$expected = array( ';', '.', '+', '-', '*', '/', '%', '&', '|', '^', T_SL, T_SR );
+					$expected = array( ';', '.', '+', '-', '*', '/', '%', '&', '|', '^', T_SL, T_SR ); // same as for case T_INC:
 					if($expectListParams){
 						$expected[] = ',';
 					}
@@ -206,6 +251,8 @@ class Interpreter {
 						T_LNUMBER,
 						T_DNUMBER,
 						T_VARIABLE,
+						T_INC,
+						T_DEC,
 						T_CURLY_OPEN,
 						'"',
 						'-',
@@ -213,12 +260,13 @@ class Interpreter {
 						);
 					break;
 				case T_CURLY_OPEN:
-					$expectCurlyClose = true;
-					$expected = array(
-						T_VARIABLE,
-						'-',
-						'+',
-						);
+					if( $expectQuotesClose === true ) {
+						$expectCurlyClose = true;
+						$expected = array( T_VARIABLE );
+					} else {
+						$return .= '<br><span class="error">' . wfMessage( 'foxway-php-syntax-error-unexpected', '\' { \'', $line )->escaped() . '</span>';
+						break 2;
+					}
 					break;
 				case '}':
 					if( $expectCurlyClose ) {
@@ -259,10 +307,6 @@ class Interpreter {
 					case T_LNUMBER:
 					case T_DNUMBER:
 						$debug[] = '<span style="color:#FF00FF" title="'. token_name($id) . '">' . htmlspecialchars($text) . '</span>';
-						break;
-					case T_CURLY_OPEN:
-					case T_AND_EQUAL:
-						$debug[] = '<span style="color:#000000" title="'. token_name($id) . '">' . htmlspecialchars($text) . '</span>';
 						break;
 					case T_ECHO:
 					case T_VARIABLE:
