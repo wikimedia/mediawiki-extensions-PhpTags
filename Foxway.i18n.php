@@ -17,7 +17,10 @@ $messages['en'] = array(
 	'foxway-php-syntax-error-unexpected' => 'PHP parse error: syntax error, unexpected $1 in command line code on line $2'
 );
 
-/** Message documentation (Message documentation)
+/** Message documentation (This is the name of the message documentation language code (qqq). Follow the rules of your languages and use small first letter if it doesn't capitalize language names always.
+
+It might be easier to translate it as "translation guidelines" or "translation help".
+{{Identical|Message documentation}})
  * @author pastakhov
  */
 $messages['qqq'] = array(
@@ -42,6 +45,14 @@ $messages['de'] = array(
 $messages['fr'] = array(
 	'foxway-desc' => 'Autorise le stockage de données orientées objet et implémente son propre moteur pour le code PHP sur les pages',
 	'foxway-php-syntax-error-unexpected' => 'Erreur d’analyse PHP : erreur de syntaxe, $1 non attendu dans le code de la ligne de commande à la ligne $2',
+);
+
+/** Galician (galego)
+ * @author Toliño
+ */
+$messages['gl'] = array(
+	'foxway-desc' => 'Permite o almacenamento de datos orientados a obxectos e introduce o seu propio tempo de execución para o código PHP nas páxinas',
+	'foxway-php-syntax-error-unexpected' => 'Erro de análise PHP: Erro de sintaxe; "$1" inesperado no código da liña de comandos na liña $2',
 );
 
 /** Japanese (日本語)
