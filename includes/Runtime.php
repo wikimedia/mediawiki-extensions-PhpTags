@@ -50,7 +50,7 @@ class Runtime {
 	}
 
 	private function pushStack() {
-		$this->stack[] = array($this->lastCommand, $this->lastDebug, $this->lastParam, $this->listParams, $this->lastOperator, $this->lastNegative, $this->variableOperator, $this->mathMemory);
+		$this->stack[] = array($this->lastCommand, $this->lastDebug, $this->listParams, $this->lastOperator, $this->lastNegative, $this->variableOperator, $this->mathMemory);
 		$this->resetRegisters();
 	}
 
@@ -58,7 +58,7 @@ class Runtime {
 		if( count($this->stack) == 0 ) {
 			$this->resetRegisters();
 		} else {
-			list($this->lastCommand, $this->lastDebug, $this->lastParam, $this->listParams, $this->lastOperator, $this->lastNegative, $this->variableOperator, $this->mathMemory) = array_pop($this->stack);
+			list($this->lastCommand, $this->lastDebug, $this->listParams, $this->lastOperator, $this->lastNegative, $this->variableOperator, $this->mathMemory) = array_pop($this->stack);
 		}
 	}
 
@@ -84,7 +84,7 @@ class Runtime {
 	}
 
 	public function addParam( $param ) {
-//\MWDebug::log( "function addParam( '$param' ) @ lastOperator=" . var_export($this->lastOperator, true) . " lastNegative=" . var_export($this->lastNegative, true));
+\MWDebug::log( "function addParam( '$param' ) @ lastOperator=" . var_export($this->lastOperator, true) . " lastNegative=" . var_export($this->lastNegative, true));
 		if( $this->lastNegative === true) {
 			$param = -$param;
 			$this->lastNegative = null;
@@ -102,11 +102,11 @@ class Runtime {
 			}
 			$this->lastParam = $param;
 		}
-//\MWDebug::log("lastParam = $this->lastParam, lastOperator = $this->lastOperator, mathMemory = " . var_export($this->mathMemory, true) );
+\MWDebug::log("lastParam = $this->lastParam, lastOperator = $this->lastOperator, mathMemory = " . var_export($this->mathMemory, true) );
 	}
 
 	public function separateParams() {
-//\MWDebug::log("function separateParams()");
+\MWDebug::log("function separateParams()");
 		while( count($this->mathMemory) != 0 ) {
 			$mathMemory = array_pop($this->mathMemory);
 			$this->doOperation($mathMemory[0], $mathMemory[1]);
@@ -116,13 +116,13 @@ class Runtime {
 	}
 
 	public function addOperator( $operator ) {
-//\MWDebug::log("function addOperator( $operator ) @ lastOperator = '$this->lastOperator', lastParam = '$this->lastParam'" );
+\MWDebug::log("function addOperator( $operator ) @ lastOperator = '$this->lastOperator', lastParam = '$this->lastParam'" );
 		// For negative operator
 		if( $this->lastOperator || is_null($this->lastParam) ) {
 			if( $operator == '-' ) {
 				//					  false or null
 				$this->lastNegative = !$this->lastNegative ? true : false;
-//\MWDebug::log( "lastNegative = " . var_export($this->lastNegative, true) );
+\MWDebug::log( "lastNegative = " . var_export($this->lastNegative, true) );
 			}
 		} else {
 			//doOperation for higher precedence
@@ -180,7 +180,7 @@ class Runtime {
 				\MWDebug::log( __METHOD__ . " unknown operator '$operator'" );
 				break;
 		}
-//\MWDebug::log( "function doOperation('$operator', '$param') @ '$this->lastParam'");
+\MWDebug::log( "function doOperation('$operator', '$param') @ '$this->lastParam'");
 	}
 
 	public function getCommandResult( &$debug ) {
@@ -284,4 +284,20 @@ class Runtime {
 		}
 	}
 
+	public function parenthesesOpen() {
+		if( $this->lastOperator ) {
+			$precedence = $this->getOperatorPrecedence( $this->lastOperator );
+			$this->mathMemory[$precedence] = array($this->lastOperator, $this->lastParam);
+			$this->lastOperator = false;
+		}
+		$this->pushStack();
+	}
+
+	public function parenthesesClose() {
+		while( count($this->mathMemory) != 0 ) {
+			$mathMemory = array_pop($this->mathMemory);
+			$this->doOperation($mathMemory[0], $mathMemory[1]);
+		}
+		$this->popStack();
+	}
 }

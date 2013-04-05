@@ -350,4 +350,27 @@ echo "$a, ", $a-- + -5, ", " . --$a, ", $a.";'),
 				);
 	}
 
+	public function testRun_echo_parentheses_1() {
+		$this->assertEquals(
+				Interpreter::run('echo (2+5)*10;'),
+				'70'
+				);
+	}
+	public function testRun_echo_parentheses_2() {
+		$this->assertEquals(
+				Interpreter::run('$a=5; $a += ++$a - ( 9 + 9 ) / 9; echo $a;'),
+				'10'
+				);
+		$this->assertEquals(
+				Interpreter::run('$a=5; $a += ++$a - -( 9 + 9 ) / 9; echo $a;'),
+				'14'
+				);
+	}
+	public function testRun_echo_parentheses_3() {
+		$this->assertEquals(
+				Interpreter::run('echo (5+8)/4 + (((2+1) * (3+2) + 4)/5 + 7);'),
+				'14.05'
+				);
+	}
+
 }

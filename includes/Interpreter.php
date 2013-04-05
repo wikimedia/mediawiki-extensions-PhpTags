@@ -24,6 +24,7 @@ class Interpreter {
 		$expectListParams = false;
 		$expectCurlyClose = false;
 		$expectQuotesClose = false;
+		$parenthesesLevel = 0;
 		$incrementVariable = false;
 		$variableName = null;
 		$variableValue = null;
@@ -51,6 +52,17 @@ class Interpreter {
 					break;
 				case ',':
 					$runtime->separateParams();
+					break;
+				case '(':
+					$parenthesesLevel++;
+					$runtime->parenthesesOpen();
+					break;
+				case ')':
+					$parenthesesLevel--;
+					$runtime->parenthesesClose();
+					if( $parenthesesLevel == 0 ) {
+						unset($expected[array_search(')', $expected)]);
+					}
 					break;
 				case '=':
 				case T_CONCAT_EQUAL:	// .=
@@ -146,6 +158,9 @@ class Interpreter {
 								$expected[] = T_INC;
 								$expected[] = T_DEC;
 							}
+							if( $parenthesesLevel ) {
+								$expected[] = ')';
+							}
 						}
 						if( $expectListParams ) {
 							$expected[] = ',';
@@ -217,6 +232,9 @@ class Interpreter {
 					if($expectListParams){
 						$expected[] = ',';
 					}
+					if( $parenthesesLevel ) {
+						$expected[] = ')';
+					}
 					break;
 				case T_ECHO:
 					$expectListParams = true;
@@ -257,6 +275,7 @@ class Interpreter {
 						'"',
 						'-',
 						'+',
+						'(',
 						);
 					break;
 				case T_CURLY_OPEN:
