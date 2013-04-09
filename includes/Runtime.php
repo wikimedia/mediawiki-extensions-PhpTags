@@ -30,8 +30,10 @@ class Runtime {
 		array('+', '-', '.'),
 		//		<<	>>
 		array(T_SL, T_SR),
-		array('<', '<=', '>', '>='),
-		array('==', '!=', '===', '!==', '<>'),
+		//						<=						>=
+		array('<', '>', T_IS_SMALLER_OR_EQUAL, T_IS_GREATER_OR_EQUAL),
+		//		==				!=				===				!==
+		array(T_IS_EQUAL, T_IS_NOT_EQUAL, T_IS_IDENTICAL, T_IS_NOT_IDENTICAL),
 		array('&'),
 		array('^'),
 		array('|'),
@@ -207,6 +209,30 @@ class Runtime {
 				break;
 			case T_BOOL_CAST:
 				$this->lastParam = (bool) $this->lastParam;
+				break;
+			case '<':
+				$this->lastParam = $param < $this->lastParam;
+				break;
+			case '>':
+				$this->lastParam = $param > $this->lastParam;
+				break;
+			case T_IS_SMALLER_OR_EQUAL: // <=
+				$this->lastParam = $param <= $this->lastParam;
+				break;
+			case T_IS_GREATER_OR_EQUAL: // >=
+				$this->lastParam = $param >= $this->lastParam;
+				break;
+			case T_IS_EQUAL: // ==
+				$this->lastParam = $param == $this->lastParam;
+				break;
+			case T_IS_NOT_EQUAL: // !=
+				$this->lastParam = $param != $this->lastParam;
+				break;
+			case T_IS_IDENTICAL: // ===
+				$this->lastParam = $param === $this->lastParam;
+				break;
+			case T_IS_NOT_IDENTICAL: // !==
+				$this->lastParam = $param !== $this->lastParam;
 				break;
 			default:
 				\MWDebug::log( __METHOD__ . " unknown operator '$operator'" );

@@ -16,6 +16,30 @@ class Interpreter {
 		T_DOC_COMMENT,
 	);
 
+	private static $arrayOperators = array(
+		';',
+		'.',
+		'+',
+		'-',
+		'*',
+		'/',
+		'%',
+		'&',
+		'|',
+		'^',
+		T_SL,						// <<
+		T_SR,						// >>
+		T_ENCAPSED_AND_WHITESPACE,	// " $a"
+		'<',
+		'>',
+		T_IS_SMALLER_OR_EQUAL,		// <=
+		T_IS_GREATER_OR_EQUAL,		// >=
+		T_IS_EQUAL,					// ==
+		T_IS_NOT_EQUAL,				// !=
+		T_IS_IDENTICAL,				// ===
+		T_IS_NOT_IDENTICAL,			// !==
+		);
+
 	public static function run($source, $is_debug = false) {
 		$tokens = token_get_all("<?php $source ?>");
 		$return = "";
@@ -95,6 +119,14 @@ class Interpreter {
 				case T_STRING_CAST: // (string)
 				case T_ARRAY_CAST: // (array)
 				case T_BOOL_CAST: // (bool)
+				case '<':
+				case '>':
+				case T_IS_SMALLER_OR_EQUAL: // <=
+				case T_IS_GREATER_OR_EQUAL: // >=
+				case T_IS_EQUAL: // ==
+				case T_IS_NOT_EQUAL: // !=
+				case T_IS_IDENTICAL: // ===
+				case T_IS_NOT_IDENTICAL: // !==
 						$runtime->addOperator( $id );
 					break;
 				case T_INC: // ++
@@ -110,7 +142,7 @@ class Interpreter {
 							$variableValue--;
 						}
 						$runtime->setVariableValue($variableName, $variableValue);
-						$expected = array( ';', '.', '+', '-', '*', '/', '%', '&', '|', '^', T_SL, T_SR ); // same as for case T_LNUMBER:
+						$expected = self::$arrayOperators;
 						if($expectListParams){
 							$expected[] = ',';
 						}
@@ -135,7 +167,7 @@ class Interpreter {
 				case T_DNUMBER:
 					$runtime->addParam( (float)$text );
 					break;
-				case T_ENCAPSED_AND_WHITESPACE:
+				case T_ENCAPSED_AND_WHITESPACE: // " $a"
 					if( $expectQuotesClose ) {
 						$runtime->addOperator('.');
 					}
@@ -159,7 +191,7 @@ class Interpreter {
 						if( $expectCurlyClose ) {
 							$expected = array( '}' );
 						} else {
-							$expected = array( ';', '.', '+', '-', '*', '/', '%', '&', '|', '^', T_SL, T_SR, T_ENCAPSED_AND_WHITESPACE );
+							$expected = self::$arrayOperators;
 							if( $variableName !== false ){
 								$expected[] = T_INC;
 								$expected[] = T_DEC;
@@ -234,7 +266,7 @@ class Interpreter {
 				case T_CONSTANT_ENCAPSED_STRING:
 				case T_LNUMBER:
 				case T_DNUMBER:
-					$expected = array( ';', '.', '+', '-', '*', '/', '%', '&', '|', '^', T_SL, T_SR ); // same as for case T_INC:
+					$expected = self::$arrayOperators;
 					if($expectListParams){
 						$expected[] = ',';
 					}
@@ -269,6 +301,14 @@ class Interpreter {
 				case '^':
 				case T_SL: // <<
 				case T_SR: // >>
+				case '<':
+				case '>':
+				case T_IS_SMALLER_OR_EQUAL: // <=
+				case T_IS_GREATER_OR_EQUAL: // >=
+				case T_IS_EQUAL: // ==
+				case T_IS_NOT_EQUAL: // !=
+				case T_IS_IDENTICAL: // ===
+				case T_IS_NOT_IDENTICAL: // !==
 					$expected = array(
 						T_CONSTANT_ENCAPSED_STRING, // "foo" or 'bar'
 						T_ENCAPSED_AND_WHITESPACE, // " $a"

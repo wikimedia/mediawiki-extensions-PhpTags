@@ -428,4 +428,90 @@ echo "$a, ", $a-- + -5, ", " . --$a, ", $a.";'),
 				'5'
 				);
 	}
+
+	public function testRun_echo_compare_1() {
+		$this->assertEquals(
+				Interpreter::run('echo 5 == 5;'),
+				'1'
+				);
+	}
+	public function testRun_echo_compare_2() {
+		$this->assertEquals(
+				Interpreter::run('echo 5 == 3+2;'),
+				'1'
+				);
+	}
+	public function testRun_echo_compare_3() {
+		$this->assertEquals(
+				Interpreter::run('echo -3 + 8 == 3 + 2;'),
+				'1'
+				);
+	}
+	public function testRun_echo_compare_4() {
+		$this->assertEquals(
+				Interpreter::run('echo -3 * -8 > 3 + 8;'),
+				'1'
+				);
+	}
+	public function testRun_echo_compare_5() {
+		$this->assertEquals(
+				Interpreter::run('echo -3 * 8 < 3 + 8;'),
+				'1'
+				);
+	}
+	public function testRun_echo_compare_6() {
+		$this->assertEquals(
+				Interpreter::run('echo 3 === (int)"3";'),
+				'1'
+				);
+	}
+	public function testRun_echo_compare_7() {
+		$this->assertEquals(
+				Interpreter::run('echo 0 == "a";'),
+				'1'
+				);
+	}
+	public function testRun_echo_compare_8() {
+		$this->assertEquals(
+				Interpreter::run('echo "1" == "01";'),
+				'1'
+				);
+	}
+	public function testRun_echo_compare_9() {
+		$this->assertEquals(
+				Interpreter::run('echo "10" == "1e1";'),
+				'1'
+				);
+	}
+	public function testRun_echo_compare_10() {
+		$this->assertEquals(
+				Interpreter::run('echo 100 == "1e2";'),
+				'1'
+				);
+	}
+	public function testRun_echo_compare_11() {
+		$this->assertEquals(
+				Interpreter::run('$foo = 4; echo $foo != $foo*2;'),
+				'1'
+				);
+	}
+	public function testRun_echo_compare_12() {
+		$this->assertEquals(
+				Interpreter::run('echo $foo <= $foo*2;'),
+				'1'
+				);
+	}
+	public function testRun_echo_compare_13() {
+		$this->assertEquals(
+				Interpreter::run('echo $foo*4 >= $foo*2;'),
+				'1'
+				);
+	}
+	public function testRun_echo_compare_14() {
+		$this->assertEquals(
+				Interpreter::run('echo 5 !== (string)5;'),
+				'1'
+				);
+	}
+
 }
