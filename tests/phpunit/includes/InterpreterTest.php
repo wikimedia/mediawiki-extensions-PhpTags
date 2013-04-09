@@ -316,6 +316,12 @@ echo "\$foo * \$bar = $foo * $bar = ", $foo * $bar, "\n\n";'),
 				'3'
 				);
 	}
+	public function testRun_echo_math_RightShift_3() {
+		$this->assertEquals(
+				Interpreter::run('echo -123 >> 2 + 3;'),
+				'-4'
+				);
+	}
 
 	public function testRun_echo_math_Increment_1() {
 		$this->assertEquals(
@@ -373,4 +379,53 @@ echo "$a, ", $a-- + -5, ", " . --$a, ", $a.";'),
 				);
 	}
 
+	public function testRun_echo_inverting_1() {
+		$this->assertEquals(
+				Interpreter::run('echo ~10;'),
+				'-11'
+				);
+	}
+	public function testRun_echo_inverting_2() {
+		$this->assertEquals(
+				Interpreter::run('echo ~-10;'),
+				'9'
+				);
+	}
+	public function testRun_echo_inverting_3() {
+		$this->assertEquals(
+				Interpreter::run('echo -~10;'),
+				'11'
+				);
+	}
+
+	public function testRun_echo_type_1() {
+		$this->assertEquals(
+				Interpreter::run('echo (bool)10;'),
+				'1'
+				);
+	}
+	public function testRun_echo_type_2() {
+		$this->assertEquals(
+				Interpreter::run('echo (bool)-10;'),
+				'1'
+				);
+	}
+	public function testRun_echo_type_3() {
+		$this->assertEquals(
+				Interpreter::run('echo -(bool)10;'),
+				'-1'
+				);
+	}
+	public function testRun_echo_type_4() {
+		$this->assertEquals(
+				Interpreter::run('echo (bool)0;'),
+				''
+				);
+	}
+	public function testRun_echo_type_5() {
+		$this->assertEquals(
+				Interpreter::run('echo -(int)-5.5;'),
+				'5'
+				);
+	}
 }
