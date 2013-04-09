@@ -89,6 +89,12 @@ class Interpreter {
 				case '^':
 				case T_SL: // <<
 				case T_SR: // >>
+				case '~':
+				case T_INT_CAST: // (int)
+				case T_DOUBLE_CAST: // (double)
+				case T_STRING_CAST: // (string)
+				case T_ARRAY_CAST: // (array)
+				case T_BOOL_CAST: // (bool)
 						$runtime->addOperator( $id );
 					break;
 				case T_INC: // ++
@@ -264,18 +270,24 @@ class Interpreter {
 				case T_SL: // <<
 				case T_SR: // >>
 					$expected = array(
-						T_CONSTANT_ENCAPSED_STRING,
-						T_ENCAPSED_AND_WHITESPACE,
-						T_LNUMBER,
-						T_DNUMBER,
-						T_VARIABLE,
-						T_INC,
-						T_DEC,
-						T_CURLY_OPEN,
+						T_CONSTANT_ENCAPSED_STRING, // "foo" or 'bar'
+						T_ENCAPSED_AND_WHITESPACE, // " $a"
+						T_LNUMBER, // 123, 012, 0x1ac
+						T_DNUMBER, // 0.12
+						T_VARIABLE, // $foo
+						T_INC, // ++
+						T_DEC, // --
+						T_CURLY_OPEN, // {
 						'"',
 						'-',
 						'+',
 						'(',
+						'~',
+						T_INT_CAST, // (int)
+						T_DOUBLE_CAST, // (double)
+						T_STRING_CAST, // (string)
+						T_ARRAY_CAST, // (array)
+						T_BOOL_CAST, // (bool)
 						);
 					break;
 				case T_CURLY_OPEN:
@@ -326,6 +338,13 @@ class Interpreter {
 					case T_LNUMBER:
 					case T_DNUMBER:
 						$debug[] = '<span style="color:#FF00FF" title="'. token_name($id) . '">' . htmlspecialchars($text) . '</span>';
+						break;
+					case T_INT_CAST: // (int)
+					case T_DOUBLE_CAST: // (double)
+					case T_STRING_CAST: // (string)
+					case T_ARRAY_CAST: // (array)
+					case T_BOOL_CAST: // (bool)
+						$debug[] = '<span style="color:#0000E6" title="'. token_name($id) . '">' . htmlspecialchars($text) . '</span>';
 						break;
 					case T_ECHO:
 					case T_VARIABLE:
