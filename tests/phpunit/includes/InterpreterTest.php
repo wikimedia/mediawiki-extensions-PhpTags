@@ -514,4 +514,42 @@ echo "$a, ", $a-- + -5, ", " . --$a, ", $a.";'),
 				);
 	}
 
+	public function testRun_echo_compare_false() {
+		$this->assertEquals(
+				Interpreter::run('echo ( 5 === (string)5 ) === false;'),
+				'1'
+				);
+	}
+	public function testRun_echo_compare_true() {
+		$this->assertEquals(
+				Interpreter::run('echo (100 == "1e2") === true;'),
+				'1'
+				);
+	}
+	public function testRun_echo_compare_false_true() {
+		$this->assertEquals(
+				Interpreter::run('echo (false === true) == false;'),
+				'1'
+				);
+	}
+	public function testRun_echo_compare_true_true() {
+		$this->assertEquals(
+				Interpreter::run('echo true === true === true;'),
+				'1'
+				);
+	}
+
+	public function testRun_echo_true() {
+		$this->assertEquals(
+				Interpreter::run('echo true;'),
+				'1'
+				);
+	}
+	public function testRun_echo_false() {
+		$this->assertEquals(
+				Interpreter::run('echo false;'),
+				''
+				);
+	}
+
 }

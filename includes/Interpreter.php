@@ -243,6 +243,16 @@ class Interpreter {
 							);
 					}
 					break;
+				case T_STRING:
+					if( strcasecmp($text, 'true') == 0 ) {
+						$runtime->addParam( true );
+					} elseif( strcasecmp($text, 'false') == 0 ) {
+						$runtime->addParam( false );
+					} else {
+						$return .= '<br><span class="error">' . wfMessage( 'foxway-php-syntax-error-unexpected', "'$text'", $line )->escaped() . '</span>';
+						break 2;
+					}
+					break;
 			}
 			if( $id != T_VARIABLE && $id != T_INC && $id != T_DEC ) {
 				$incrementVariable = false;
@@ -266,6 +276,7 @@ class Interpreter {
 				case T_CONSTANT_ENCAPSED_STRING:
 				case T_LNUMBER:
 				case T_DNUMBER:
+				case T_STRING:
 					$expected = self::$arrayOperators;
 					if($expectListParams){
 						$expected[] = ',';
@@ -315,6 +326,7 @@ class Interpreter {
 						T_LNUMBER, // 123, 012, 0x1ac
 						T_DNUMBER, // 0.12
 						T_VARIABLE, // $foo
+						T_STRING,
 						T_INC, // ++
 						T_DEC, // --
 						T_CURLY_OPEN, // {
@@ -389,6 +401,12 @@ class Interpreter {
 					case T_ECHO:
 					case T_VARIABLE:
 						break;
+					case T_STRING:
+					if( strcasecmp($text, 'true') == 0 || strcasecmp($text, 'false') == 0 ) {
+						$debug[] = '<span style="color:#0000E6" title="'. token_name($id) . '">' . htmlspecialchars($text) . '</span>';
+						break;
+					}
+					// break is not necessary here
 					default:
 						if( is_array($token) ) {
 							$debug[] = '<span title="'. token_name($id) . '">' . htmlspecialchars($text) . '</span>';
