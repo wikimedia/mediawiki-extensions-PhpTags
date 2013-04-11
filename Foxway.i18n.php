@@ -30,9 +30,10 @@ $messages['qqq'] = array(
 /** German (Deutsch)
  * @author HvW
  * @author Metalhead64
+ * @author Purodha
  */
 $messages['de'] = array(
-	'foxway-desc' => 'Ermöglicht die Speicherung von objektorientierten Daten und implementiert die eigene Laufzeitumgebung für PHP-Code auf Seiten',
+	'foxway-desc' => 'Ermöglicht die Speicherung von objektorientierten Daten und implementiert eine eigene Laufzeitumgebung für PHP-Code auf Seiten',
 	'foxway-php-syntax-error-unexpected' => 'PHP-Parserfehler: Syntaxfehler, unerwartete $1 im Befehlszeilencode in Zeile $2',
 );
 
@@ -60,10 +61,26 @@ $messages['ja'] = array(
 	'foxway-php-syntax-error-unexpected' => 'PHP 構文解析エラー: 構文エラーです。行 $2 のコードで予期しない $1 が見つかりました。',
 );
 
+/** Colognian (Ripoarisch)
+ * @author Purodha
+ */
+$messages['ksh'] = array(
+	'foxway-desc' => 'Määd_et möjjelesch, objägg_orrejänteerde Daat faßzehallde un brängg_en eije Ömjävong met sesch, öm <i lang="en">PHP</i>-Projramme loufe ze lohße.',
+	'foxway-php-syntax-error-unexpected' => 'Ene <i lang="en">PHP</i>-Projrammfähler wood jevonge: e „$1“ es en däm Projramm en dä Reih $2, woh mer dat nit äwaade deiht.',
+);
+
 /** Macedonian (македонски)
  * @author Bjankuloski06
  */
 $messages['mk'] = array(
 	'foxway-desc' => 'Овозможува складирање на објектно-ориентирани податоци и става свој извршител за PHP-код на страниците',
 	'foxway-php-syntax-error-unexpected' => 'Грешка при парсирање на PHP: синтаксна грешка, не се очекува $1 во кодот во ред $2',
+);
+
+/** Dutch (Nederlands)
+ * @author Siebrand
+ */
+$messages['nl'] = array(
+	'foxway-desc' => "Maakt het mogelijk om objectgeoriënteerde gegevens op te slaan en implementeert een eigen runtime voor PHP-code op pagina's",
+	'foxway-php-syntax-error-unexpected' => 'Verwerkingsfout in PHP: syntaxisfout, "$1" is onverwacht in regel $2.',
 );
