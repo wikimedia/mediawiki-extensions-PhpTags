@@ -552,4 +552,53 @@ echo "$a, ", $a-- + -5, ", " . --$a, ", $a.";'),
 				);
 	}
 
+	public function testRun_echo_ternary_1() {
+		$this->assertEquals(
+				Interpreter::run('echo true?"true":"false";'),
+				'true'
+				);
+	}
+	public function testRun_echo_ternary_2() {
+		$this->assertEquals(
+				Interpreter::run('echo false?"true":"false";'),
+				'false'
+				);
+	}
+	public function testRun_echo_ternary_3() {
+		$this->assertEquals(
+				Interpreter::run('echo true?"true":false?"t":"f";'),
+				't'
+				);
+	}
+	public function testRun_echo_ternary_4() {
+		$this->assertEquals(
+				Interpreter::run('echo false?"true":false?"t":"f";'),
+				'f'
+				);
+	}
+	public function testRun_echo_ternary_5() {
+		$this->assertEquals(
+				Interpreter::run('echo true?true?"true":false:false?"t":"f";'),
+				't'
+				);
+	}
+	public function testRun_echo_ternary_6() {
+		$this->assertEquals(
+				Interpreter::run('echo true?true?false:false:false?"t":"f";'),
+				'f'
+				);
+	}
+	public function testRun_echo_ternary_7() {
+		$this->assertEquals(
+				Interpreter::run('echo true?true?"true":false:"false";'),
+				'true'
+				);
+	}
+	public function testRun_echo_ternary_8() {
+		$this->assertEquals(
+				Interpreter::run('echo false?true?false:false:"false";'),
+				'false'
+				);
+	}
+
 }

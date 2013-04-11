@@ -39,7 +39,6 @@ class Runtime {
 		array('|'),
 		array('&&'),
 		array('||'),
-		array('?', ':'),
 	);
 
 	private function getOperatorPrecedence( $operator ) {
@@ -93,7 +92,7 @@ class Runtime {
 			$this->mathMemory[$precedence] = array($this->lastOperator, $this->lastParam);
 			$this->lastOperator = false;
 		} elseif( !is_null($this->lastParam) ) {
-			$this->listParams[] = $this->lastParam;
+			$this->listParams[] = $this->lastParam; // TODO:it seems that this is unnecessary
 		}
 		$this->lastParam = $param;
 		$this->doMath(0);
@@ -138,7 +137,7 @@ class Runtime {
 		}
 	}
 
-	private function doMath( $precedence = 12 ) { //12 = count($operatorsPrecedence)-1
+	private function doMath( $precedence = 11 ) { //11 = count($operatorsPrecedence)-1
 		if( isset($this->mathMemory[0]) ) {
 			while( $mathZerroMemory = array_pop($this->mathMemory[0]) ) {
 				$this->doOperation($mathZerroMemory);
@@ -239,6 +238,13 @@ class Runtime {
 				break;
 		}
 //\MWDebug::log( "function doOperation('$operator', '$param') @ '$this->lastParam'");
+	}
+
+	public function getMathResult() {
+		$this->doMath();
+		$return = $this->lastParam;
+		$this->lastParam = null;
+		return $return;
 	}
 
 	public function getCommandResult( &$debug ) {

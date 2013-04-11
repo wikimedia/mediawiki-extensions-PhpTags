@@ -38,6 +38,8 @@ class Interpreter {
 		T_IS_NOT_EQUAL,				// !=
 		T_IS_IDENTICAL,				// ===
 		T_IS_NOT_IDENTICAL,			// !==
+		'?',
+		':',
 		);
 
 	public static function run($source, $is_debug = false) {
@@ -48,6 +50,7 @@ class Interpreter {
 		$expectListParams = false;
 		$expectCurlyClose = false;
 		$expectQuotesClose = false;
+		$expectTernarySeparators = 0;
 		$parenthesesLevel = 0;
 		$incrementVariable = false;
 		$variableName = null;
@@ -55,20 +58,21 @@ class Interpreter {
 		$line = 1;
 		$runtime = new Runtime();
 
-		foreach ($tokens as $token) {
+		reset($tokens);
+		while ( list(, $token) = each($tokens) ) {
 			if ( is_string($token) ) {
 				$id = $token;
 			} else {
 				list($id, $text, $line) = $token;
 			}
 
+			//\MWDebug::log( 'WHILE ' . var_export($token,true) );
+
 			if( $expected && in_array($id, self::$skipTokenIds) === false && in_array($id, $expected) === false) {
 				$id_str = is_string($id) ? "' $id '" : token_name($id);
-				$return .= '<br><span class="error">' . wfMessage( 'foxway-php-syntax-error-unexpected', $id_str, $line )->escaped() . '</span>';
+				$return .= '<br><span class="error" title="' . __LINE__ . '">' . wfMessage( 'foxway-php-syntax-error-unexpected', $id_str, $line )->escaped() . '</span>';
 				break;
 			}
-
-			//\MWDebug::log( var_export($token,true) );
 
 			switch ($id) {
 				case ';':
@@ -129,6 +133,108 @@ class Interpreter {
 				case T_IS_NOT_IDENTICAL: // !==
 						$runtime->addOperator( $id );
 					break;
+				case '?':
+					if( $runtime->getMathResult() ) { // true
+						$expectTernarySeparators++; // just go further
+					} else { // false, to skip to the ternary operator separator
+						$tmp_skip = 0; // it to parse the syntax of nested ternary operators
+						$skipedTokens = 0; // it for debug messages and check correct syntax
+						$token = current($tokens);
+						do {
+							//\MWDebug::log( var_export($token, true) );
+							if ( is_string($token) ) {
+								$id = $token;
+							} else {
+								list($id, $text, $line) = $token;
+							}
+							switch ($id) {
+								case '?': // is embedded ternary operator
+									$tmp_skip++; // will skip ternary separators
+									break;
+								case ':':
+									if( $tmp_skip > 0 ) { // were the embedded ternary operator?
+										$tmp_skip--;
+									} else { /************************ EXIT HERE ***********************************/
+										break 2; // found the required separator, we go from here and just go further
+									}        /************************ EXIT HERE ***********************************/
+									break;
+								case T_WHITESPACE:
+								case T_COMMENT:
+								case T_DOC_COMMENT:
+									break; // just ignore, does not affect the count skipped operators
+								case ',':
+								case ';':
+								case T_IF: // This should not occur here, syntax error
+									$return .= $return .= '<br><span class="error" title="' . __LINE__ . '">' . wfMessage( 'foxway-php-syntax-error-unexpected', is_string($id) ? "' $id '" : token_name($id), $line )->escaped() . '</span>';
+									break 4;
+								default :
+									$skipedTokens++; // Increments the counter skipped operators
+									break;
+							}
+						} while( $token = next($tokens) );
+						if($is_debug) {
+							$debug[] = '<span style="color:#969696" title="Skiped tokens: '.$skipedTokens.'"> ? ... </span>';
+						}
+						if( $token === false ) {
+							$return .= $return .= '<br><span class="error" title="' . __LINE__ . '">' . wfMessage( 'foxway-php-syntax-error-unexpected', '$end', $line )->escaped() . '</span>';
+							break 2;
+						}
+						$id = ':';
+						next($tokens);
+						//just go further
+					}
+					break;
+				case ':':
+					if( $expectTernarySeparators > 0 ) { // Yes, we waited this
+						// Here we need to find the end of the current ternary operator and skip other operators
+						$expectTernarySeparators--;
+						$skipedTokens = 0; // it for debug messages and check correct syntax
+						$token = current($tokens);
+						do {
+							//\MWDebug::log( var_export($token, true) );
+							if ( is_string($token) ) {
+								$id = $token;
+							} else {
+								list($id, $text, $line) = $token;
+							}
+							switch ($id) {
+								case ':':
+									if( $expectTernarySeparators > 0 ) { // This ternary operator is nested and this separator owned by a parent
+										$expectTernarySeparators--; // note that found it. is to control the syntax
+										break;
+									} else {
+										break 2; // is a violation of the syntax, exit the loop. After the loop has to go error
+									}
+								case ',':
+								case ';':
+								case '?':
+									if( $skipedTokens > 0 ) {
+										if($is_debug) {
+											$debug[] = '<span style="color:#969696" title="Skiped tokens: '.$skipedTokens.'"> : ... </span>';
+										}
+										/************************ EXIT HERE ***********************************/
+										continue 4; // We found the end of the ternary operator, and now go further
+										/************************ EXIT HERE ***********************************/
+									}
+									// break is not necessary here
+								case T_IF:
+									$return .= $return .= '<br><span class="error" title="' . __LINE__ . '">' . wfMessage( 'foxway-php-syntax-error-unexpected', is_string($id) ? "' $id '" : token_name($id), $line )->escaped() . '</span>';
+									break 4;
+								case T_WHITESPACE:
+								case T_COMMENT:
+								case T_DOC_COMMENT:
+									break; // just ignore
+								default :
+									$skipedTokens++;
+									break;
+							}
+						} while( $token = next($tokens) );
+						$return .= $return .= '<br><span class="error" title="' . __LINE__ . '">' . wfMessage( 'foxway-php-syntax-error-unexpected', '$end', $line )->escaped() . '</span>';
+						break 2;
+					}
+					// If we are here, then we do not expect to find separator ternary
+					$return .= '<br><span class="error" title="' . __LINE__ . '">' . wfMessage( 'foxway-php-syntax-error-unexpected', $id, $line )->escaped() . '</span>';
+					break 2;
 				case T_INC: // ++
 				case T_DEC: // --
 					if( $incrementVariable === false ) {
@@ -249,7 +355,7 @@ class Interpreter {
 					} elseif( strcasecmp($text, 'false') == 0 ) {
 						$runtime->addParam( false );
 					} else {
-						$return .= '<br><span class="error">' . wfMessage( 'foxway-php-syntax-error-unexpected', "'$text'", $line )->escaped() . '</span>';
+						$return .= '<br><span class="error" title="' . __LINE__ . '">' . wfMessage( 'foxway-php-syntax-error-unexpected', "'$text'", $line )->escaped() . '</span>';
 						break 2;
 					}
 					break;
@@ -257,6 +363,8 @@ class Interpreter {
 			if( $id != T_VARIABLE && $id != T_INC && $id != T_DEC ) {
 				$incrementVariable = false;
 			}
+
+			/*****************   EXPECT   *************************************/
 
 			switch ($id) {
 				case ';':
@@ -320,6 +428,8 @@ class Interpreter {
 				case T_IS_NOT_EQUAL: // !=
 				case T_IS_IDENTICAL: // ===
 				case T_IS_NOT_IDENTICAL: // !==
+				case '?':
+				case ':':
 					$expected = array(
 						T_CONSTANT_ENCAPSED_STRING, // "foo" or 'bar'
 						T_ENCAPSED_AND_WHITESPACE, // " $a"
@@ -347,7 +457,7 @@ class Interpreter {
 						$expectCurlyClose = true;
 						$expected = array( T_VARIABLE );
 					} else {
-						$return .= '<br><span class="error">' . wfMessage( 'foxway-php-syntax-error-unexpected', '\' { \'', $line )->escaped() . '</span>';
+						$return .= '<br><span class="error" title="' . __LINE__ . '">' . wfMessage( 'foxway-php-syntax-error-unexpected', '\' { \'', $line )->escaped() . '</span>';
 						break 2;
 					}
 					break;
@@ -364,7 +474,7 @@ class Interpreter {
 							'"',
 							);
 					} else {
-						$return .= '<br><span class="error">' . wfMessage( 'foxway-php-syntax-error-unexpected', '\' } \'', $line )->escaped() . '</span>';
+						$return .= '<br><span class="error" title="' . __LINE__ . '">' . wfMessage( 'foxway-php-syntax-error-unexpected', '\' } \'', $line )->escaped() . '</span>';
 						break 2;
 					}
 					break;
