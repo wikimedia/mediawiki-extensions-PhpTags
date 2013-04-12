@@ -249,7 +249,7 @@ class Interpreter {
 						}
 						$runtime->setVariableValue($variableName, $variableValue);
 						$expected = self::$arrayOperators;
-						if($expectListParams){
+						if($expectListParams && $parenthesesLevel == 0){
 							$expected[] = ',';
 						}
 					}
@@ -306,7 +306,7 @@ class Interpreter {
 								$expected[] = ')';
 							}
 						}
-						if( $expectListParams ) {
+						if( $expectListParams && $parenthesesLevel == 0 ) {
 							$expected[] = ',';
 						}
 						if( $expectQuotesClose ) {
@@ -386,7 +386,7 @@ class Interpreter {
 				case T_DNUMBER:
 				case T_STRING:
 					$expected = self::$arrayOperators;
-					if($expectListParams){
+					if($expectListParams && $parenthesesLevel == 0){
 						$expected[] = ',';
 					}
 					if( $parenthesesLevel ) {
