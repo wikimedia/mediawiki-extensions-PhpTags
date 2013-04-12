@@ -173,7 +173,7 @@ class Interpreter {
 							}
 						} while( $token = next($tokens) );
 						if($is_debug) {
-							$debug[] = '<span style="color:#969696" title="Skiped tokens: '.$skipedTokens.'"> ? ... </span>';
+							$debug[] = ' <span title="FALSE">?</span><span style="color:#969696" title="Skiped tokens: '.$skipedTokens.'"> ... </span>';
 						}
 						if( $token === false ) {
 							$return .= $return .= '<br><span class="error" title="' . __LINE__ . '">' . wfMessage( 'foxway-php-syntax-error-unexpected', '$end', $line )->escaped() . '</span>';
@@ -210,7 +210,7 @@ class Interpreter {
 								case '?':
 									if( $skipedTokens > 0 ) {
 										if($is_debug) {
-											$debug[] = '<span style="color:#969696" title="Skiped tokens: '.$skipedTokens.'"> : ... </span>';
+											$debug[] = ':<span style="color:#969696" title="Skiped tokens: '.$skipedTokens.'"> ... </span>';
 										}
 										/************************ EXIT HERE ***********************************/
 										continue 4; // We found the end of the ternary operator, and now go further
@@ -510,6 +510,9 @@ class Interpreter {
 						break;
 					case T_ECHO:
 					case T_VARIABLE:
+						break;
+					case '?':
+						$debug[] = '<span title="TRUE">?</span>';
 						break;
 					case T_STRING:
 					if( strcasecmp($text, 'true') == 0 || strcasecmp($text, 'false') == 0 ) {
