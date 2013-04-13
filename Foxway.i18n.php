@@ -14,7 +14,7 @@ $messages = array();
  */
 $messages['en'] = array(
 	'foxway-desc' => 'Allows to store an object-oriented data and implements its own runtime for PHP code on pages',
-	'foxway-php-syntax-error-unexpected' => 'PHP parse error: syntax error, unexpected $1 in command line code on line $2'
+	'foxway-php-syntax-error-unexpected' => 'PHP parse error: Syntax error, unexpected $1 in command line code on line $2.'
 );
 
 /** Message documentation (Message documentation)
