@@ -744,6 +744,41 @@ if ( ((74+4)*(4+6)+88)*4 ) echo "!!!";'),
 				'false'
 				);
 	}
-
+	public function testRun_echo_elseif_1() {
+		$this->assertEquals(
+				Interpreter::run('if( true ) echo "one"; elseif( true ) echo "two"; else echo "three";'),
+				'one'
+				);
+	}
+	public function testRun_echo_elseif_2() {
+		$this->assertEquals(
+				Interpreter::run('if( false ) echo "one"; elseif( true ) echo "two"; else echo "three";'),
+				'two'
+				);
+	}
+	public function testRun_echo_elseif_3() {
+		$this->assertEquals(
+				Interpreter::run('if( false ) echo "one"; elseif( false ) echo "two"; else echo "three";'),
+				'three'
+				);
+	}
+	public function testRun_echo_elseif_4() {
+		$this->assertEquals(
+				Interpreter::run('if( true ) { echo "*"; echo "one"; } elseif( true ) { echo "*"; echo "two"; } else { echo "*"; echo "three"; }'),
+				'*one'
+				);
+	}
+	public function testRun_echo_elseif_5() {
+		$this->assertEquals(
+				Interpreter::run('if( false ) { echo "*"; echo "one"; } elseif( true ) { echo "*"; echo "two"; } else { echo "*"; echo "three"; }'),
+				'*two'
+				);
+	}
+	public function testRun_echo_elseif_6() {
+		$this->assertEquals(
+				Interpreter::run('if( false ) { echo "*"; echo "one"; } elseif( false ) { echo "*"; echo "two"; } else { echo "*"; echo "three"; }'),
+				'*three'
+				);
+	}
 
 }

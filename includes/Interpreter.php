@@ -51,8 +51,8 @@ class Interpreter {
 
 	public static function run($source, $is_debug = false) {
 		$tokens = token_get_all("<?php $source ?>");
-		\MWDebug::log( "\$tokens WHILE " . var_export($tokens,true) );
-		
+		//\MWDebug::log( "\$tokens is " . var_export($tokens,true) );
+
 		$return = "";
 		$debug = array();
 		$blocks = array();
@@ -80,7 +80,7 @@ class Interpreter {
 				list($id, $text, $line) = $token;
 			}
 
-			\MWDebug::log( "$index WHILE " . var_export($token,true) );
+			//\MWDebug::log( "$index WHILE " . var_export($token,true) );
 
 			if( $expected && in_array($id, self::$skipTokenIds) === false && in_array($id, $expected) === false) {
 				$id_str = is_string($id) ? "' $id '" : token_name($id);
@@ -271,8 +271,9 @@ class Interpreter {
 					}
 					break;
 				case T_ELSE:
+				case T_ELSEIF:
 					if( isset($blocks[$index]) ) {
-						$commandResult = array(T_ELSE, $blocks[$index][FOX_VALUE]);
+						$commandResult = array($id, $blocks[$index][FOX_VALUE]);
 					} else {
 						$id_str = is_string($id) ? "' $id '" : token_name($id);
 						$return .= '<br><span class="error" title="' . __LINE__ . '">' . wfMessage( 'foxway-php-syntax-error-unexpected', $id_str, $line )->escaped() . '</span>';
@@ -431,25 +432,35 @@ class Interpreter {
 									$expected = false;
 								}
 								$index = $curBlock[FOX_ENDBLOCK];
-								//\MWDebug::log( var_export($tokens[$endBlockIndex], true) );
 								$commandResult = null;
 								continue 2;
 							}
 							break;
+						case T_ELSEIF:
+							if( $result ) { // chek for IF
+								// this code from previus swith( $id ) case T_IF: & case T_ECHO:
+								$IfIndex = $index;
+								$expected = array('(');
+								if($is_debug) {
+									$i = array_push($debug, $text)-1;
+								} else {
+									$i = false;
+								}
+								$runtime->addCommand(T_IF, $i);
+								break;
+							}
+							// break is not necessary here
 						case T_ELSE:
-							if( $result ) {
-								//$expected = false;
-								// just go next
-							} else {
+							if( $result == false ) { // for true just go next
 								// skip next statement
 								// find end of block
-								if( !isset($blocks[$index][FOX_ENDBLOCK]) ) {
+								if( !isset($blocks[$index][FOX_ENDIF]) ) {
 									if( self::findIfElseIndexes($tokens, $blocks, $index, $index+1) !== true ) {
 										$return .= '<br><span class="error" title="' . __LINE__ . '">' . wfMessage( 'foxway-php-syntax-error-unexpected', '$end', $line )->escaped() . '</span>';
 										break 2;
 									}
 								}
-								$index = $blocks[$index][FOX_ENDBLOCK];
+								$index = $blocks[$index][FOX_ENDIF];
 								$commandResult = null;
 								//$expected = false;
 							}
@@ -622,6 +633,7 @@ class Interpreter {
 						break;
 					case T_ECHO:
 					case T_IF:
+					case T_ELSEIF:
 					case T_VARIABLE:
 						break;
 					case '?':
@@ -688,10 +700,8 @@ class Interpreter {
 					break;
 				case T_IF:
 					if( $nestedBlocks == 0 ) {
-						if( !isset($blocks[$i][FOX_ENDIF]) ) {
-							if( self::findIfElseIndexes($tokens, $blocks, $i, self::findLastParenthesis($tokens, $i)) !== true ) {
-								return false;
-							}
+						if( !isset($blocks[$i][FOX_ENDIF]) && self::findIfElseIndexes($tokens, $blocks, $i, self::findLastParenthesis($tokens, $i)) !== true ) {
+							return false;
 						}
 						$i = $blocks[$i][FOX_ENDIF];
 						break 2;
@@ -717,25 +727,30 @@ class Interpreter {
 				case T_DOC_COMMENT:
 				case T_WHITESPACE:
 					break; // ignore it
-				//case T_ELSEIF:
+				case T_ELSEIF:
+					if( !isset($blocks[$i]) && self::findIfElseIndexes($tokens, $blocks, $i, self::findLastParenthesis($tokens, $i)) !== true ) {
+						return false;
+					}
+					$blocks[$ifIndex][FOX_ELSE] = $i; // We fount T_ELSE or T_ELSEIF
+					if( isset($blocks[$i][FOX_ENDIF]) ) {
+						$blocks[$ifIndex][FOX_ENDIF] = $blocks[$i][FOX_ENDIF];
+						break 2;
+					}
+					$i = $blocks[$i][FOX_ENDBLOCK];
+					break;
 				case T_ELSE:
-					if( self::findIfElseIndexes($tokens, $blocks, $i, $i+1) !== true ) {
+					if( !isset($blocks[$i]) && self::findIfElseIndexes($tokens, $blocks, $i, $i+1) !== true ) {
 						return false;
 					}
 					$blocks[$ifIndex][FOX_ELSE] = $i; // We fount T_ELSE or T_ELSEIF
 					$blocks[$ifIndex][FOX_ENDIF] = $blocks[$i][FOX_ENDBLOCK];
-					\MWDebug::log( 'T_ELSE ' . var_export($blocks[$ifIndex], true));
 					break 2; //              Exit
 				default: // ELSE not exists
 					$blocks[$ifIndex][FOX_ELSE] = false;
 					$blocks[$ifIndex][FOX_ENDIF] = $blocks[$ifIndex][FOX_ENDBLOCK];
-					//$blocks[$ifIndex][FOX_ENDIF] = $blocks[$index][FOX_ENDBLOCK];
-					\MWDebug::log( 'default ' . var_export($blocks[$ifIndex], true));
 					break 2;
 			}
 		}
-		//$blocks[$ifIndex][FOX_ELSE] = $else;
-		\MWDebug::log( "function findIfElseIndexes(\$tokens, $ifIndex, $index) @ count = $count, i = $i, " . var_export($blocks[$ifIndex], true) );
 		return true;
 	}
 
