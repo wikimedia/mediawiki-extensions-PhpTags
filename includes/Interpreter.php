@@ -625,6 +625,11 @@ class Interpreter {
 					case T_BOOL_CAST: // (bool)
 						$debug[] = '<span style="color:#0000E6" title="'. token_name($id) . '">' . htmlspecialchars($text) . '</span>';
 						break;
+					case T_ELSEIF:
+						if( $result ) {
+							break;
+						}
+						// break is not necessary here
 					case T_ELSE:
 						$debug[] = '<span style="color:#0000E6" title="'. ($result ? 'if is FALSE, do next' : 'if is TRUE, ignore this') . '">' . htmlspecialchars($text) . '</span>';
 						if( !$result ) {
