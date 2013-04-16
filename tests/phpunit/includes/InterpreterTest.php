@@ -378,6 +378,36 @@ echo "$a, ", $a-- + -5, ", " . --$a, ", $a.";'),
 				'14.05'
 				);
 	}
+	public function testRun_echo_parentheses_4() {
+		$this->assertEquals(
+				Interpreter::run('echo (5+8);'),
+				'13'
+				);
+	}
+	public function testRun_echo_parentheses_5() {
+		$this->assertEquals(
+				Interpreter::run('echo ("hello");'),
+				'hello'
+				);
+	}
+	public function testRun_echo_parentheses_6() {
+		$this->assertEquals(
+				Interpreter::run('$foo = "foo"; echo("hello $foo");'),
+				'hello foo'
+				);
+	}/*
+	public function testRun_echo_parentheses_7() {
+		$this->assertEquals(
+				Interpreter::run('echo("hello "), $foo;'),
+				'hello foo'
+				);
+	}
+	public function testRun_echo_parentheses_8() {
+		$this->assertEquals(
+				Interpreter::run('echo ($foo), (" is "), $foo;'),
+				'foo is foo'
+				);
+	}*/
 
 	public function testRun_echo_inverting_1() {
 		$this->assertEquals(
@@ -600,5 +630,120 @@ echo "$a, ", $a-- + -5, ", " . --$a, ", $a.";'),
 				'false'
 				);
 	}
+
+	public function testRun_echo_if_simple_1() {
+		$this->assertEquals(
+				Interpreter::run('if ( true ) echo "hello";'),
+				'hello'
+				);
+	}
+	public function testRun_echo_if_simple_2() {
+		$this->assertEquals(
+				Interpreter::run('if ( false ) echo "hello";'),
+				''
+				);
+	}
+	public function testRun_echo_if_simple_3() {
+		$this->assertEquals(
+				Interpreter::run('
+if ( 5+5 ) echo "hello";
+if ( 5-5 ) echo " === FALSE === ";
+if ( (5+5)/4 ) echo "world";
+if ( -5+5 ) echo " === FALSE === ";
+if ( ((74+4)*(4+6)+88)*4 ) echo "!!!";'),
+				'helloworld!!!'
+				);
+	}
+	public function testRun_echo_if_else_simple_1() {
+		$this->assertEquals(
+				Interpreter::run('if ( true ) echo "true"; else echo "false";'),
+				'true'
+				);
+	}
+	public function testRun_echo_if_else_simple_2() {
+		$this->assertEquals(
+				Interpreter::run('if ( false ) echo "true"; else echo "false";'),
+				'false'
+				);
+	}
+	public function testRun_echo_if_else_simple_3() {
+		$this->assertEquals(
+				Interpreter::run('if ( true ) echo "true"; else echo "false"; echo " always!";'),
+				'true always!'
+				);
+	}
+	public function testRun_echo_if_else_simple_4() {
+		$this->assertEquals(
+				Interpreter::run('if ( false ) echo "true"; else echo "false"; echo " always!";'),
+				'false always!'
+				);
+	}
+	public function testRun_echo_if_else_block_1() {
+		$this->assertEquals(
+				Interpreter::run('if ( true ) { echo "true"; echo "true";} else { echo "false"; echo "false"; }'),
+				'truetrue'
+				);
+	}
+	public function testRun_echo_if_else_block_2() {
+		$this->assertEquals(
+				Interpreter::run('if ( false ) { echo "true"; echo "true";} else { echo "false"; echo "false"; }'),
+				'falsefalse'
+				);
+	}
+	public function testRun_echo_if_variable_1() {
+		$this->assertEquals(
+				Interpreter::run('$foo = 5; if ( $foo > 4 ) echo "true"; else echo "false";'),
+				'true'
+				);
+	}
+	public function testRun_echo_if_variable_2() {
+		$this->assertEquals(
+				Interpreter::run('if( $foo*2 > 4*3 ) echo "true"; else echo "false";'),
+				'false'
+				);
+	}
+	public function testRun_echo_if_variable_3() {
+		$this->assertEquals(
+				Interpreter::run('if( $foo === 5 ) echo "true"; else echo "false";'),
+				'true'
+				);
+	}
+	public function testRun_echo_if_variable_4() {
+		$this->assertEquals(
+				Interpreter::run('if( $foo++ ==  5 ) echo "true"; else echo "false";'),
+				'true'
+				);
+	}
+	public function testRun_echo_if_variable_5() {
+		$this->assertEquals(
+				Interpreter::run('if( ++$foo ==  7 ) echo "true"; else echo "false";'),
+				'true'
+				);
+	}
+	public function testRun_echo_if_double_1() {
+		$this->assertEquals(
+				Interpreter::run('if( true ) if( true ) echo "true"; else echo "false";'),
+				'true'
+				);
+	}
+	public function testRun_echo_if_double_2() {
+		$this->assertEquals(
+				Interpreter::run('if( true ) if( true ) {echo "true"; echo "true";} else echo "falsefalse";'),
+				'truetrue'
+				);
+	}
+	public function testRun_echo_if_double_3() {
+		$this->assertEquals(
+				Interpreter::run('if( false ) if( true ) {echo "true"; echo "true";} else echo "falsefalse";'),
+				''
+				);
+	}
+	public function testRun_echo_if_double_4() {
+		$this->assertEquals(
+				Interpreter::run('if( false ) if( true ) {echo "true"; echo "true";} else echo "falsefalse"; else echo "false";'),
+				'false'
+				);
+	}
+
 
 }
