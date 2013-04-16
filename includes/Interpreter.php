@@ -1,5 +1,11 @@
 <?php
 namespace Foxway;
+
+define( 'FOX_ENDBLOCK', 0);
+define( 'FOX_ENDIF', 1);
+define( 'FOX_ELSE' , 2);
+define( 'FOX_VALUE', 3);
+
 /**
  * Interpreter class of Foxway extension.
  *
@@ -40,33 +46,41 @@ class Interpreter {
 		T_IS_NOT_IDENTICAL,			// !==
 		'?',
 		':',
+		'}',
 		);
 
 	public static function run($source, $is_debug = false) {
 		$tokens = token_get_all("<?php $source ?>");
+		\MWDebug::log( "\$tokens WHILE " . var_export($tokens,true) );
+		
 		$return = "";
 		$debug = array();
+		$blocks = array();
 		$expected = false;
 		$expectListParams = false;
 		$expectCurlyClose = false;
 		$expectQuotesClose = false;
 		$expectTernarySeparators = 0;
 		$parenthesesLevel = 0;
+		$curlyLever = 0;
+		$IfIndex = false;
 		$incrementVariable = false;
 		$variableName = null;
 		$variableValue = null;
+		$commandResult = null;
 		$line = 1;
 		$runtime = new Runtime();
 
-		reset($tokens);
-		while ( list(, $token) = each($tokens) ) {
+		$countTokens = count($tokens);
+		for( $index = 0; $index < $countTokens; $index++ ){
+			$token = $tokens[$index];
 			if ( is_string($token) ) {
 				$id = $token;
 			} else {
 				list($id, $text, $line) = $token;
 			}
 
-			//\MWDebug::log( 'WHILE ' . var_export($token,true) );
+			\MWDebug::log( "$index WHILE " . var_export($token,true) );
 
 			if( $expected && in_array($id, self::$skipTokenIds) === false && in_array($id, $expected) === false) {
 				$id_str = is_string($id) ? "' $id '" : token_name($id);
@@ -76,7 +90,8 @@ class Interpreter {
 
 			switch ($id) {
 				case ';':
-					$return .= $runtime->getCommandResult($debug);
+					// TODO: check parenthess level???
+					$commandResult = $runtime->getCommandResult($debug);
 					break;
 				case ',':
 					$runtime->separateParams();
@@ -87,7 +102,9 @@ class Interpreter {
 					break;
 				case ')':
 					$parenthesesLevel--;
-					$runtime->parenthesesClose();
+					if( $runtime->parenthesesClose() ) {
+						$commandResult = $runtime->getCommandResult($debug);
+					}
 					if( $parenthesesLevel == 0 ) {
 						unset($expected[array_search(')', $expected)]);
 					}
@@ -135,18 +152,18 @@ class Interpreter {
 					break;
 				case '?':
 					if( $runtime->getMathResult() ) { // true
-						$expectTernarySeparators++; // just go further
+						$expectTernarySeparators++; // just go next
 					} else { // false, to skip to the ternary operator separator
 						$tmp_skip = 0; // it to parse the syntax of nested ternary operators
 						$skipedTokens = 0; // it for debug messages and check correct syntax
-						$token = current($tokens);
-						do {
-							//\MWDebug::log( var_export($token, true) );
+						for( $index++; $index < $countTokens; $index++ ){
+							$token = $tokens[$index];
 							if ( is_string($token) ) {
 								$id = $token;
 							} else {
 								list($id, $text, $line) = $token;
 							}
+							//\MWDebug::log( var_export($token, true) );
 							switch ($id) {
 								case '?': // is embedded ternary operator
 									$tmp_skip++; // will skip ternary separators
@@ -155,7 +172,7 @@ class Interpreter {
 									if( $tmp_skip > 0 ) { // were the embedded ternary operator?
 										$tmp_skip--;
 									} else { /************************ EXIT HERE ***********************************/
-										break 2; // found the required separator, we go from here and just go further
+										break 2; // found the required separator, we go from here and just go next
 									}        /************************ EXIT HERE ***********************************/
 									break;
 								case T_WHITESPACE:
@@ -171,17 +188,15 @@ class Interpreter {
 									$skipedTokens++; // Increments the counter skipped operators
 									break;
 							}
-						} while( $token = next($tokens) );
+						}
 						if($is_debug) {
 							$debug[] = ' <span title="FALSE">?</span><span style="color:#969696" title="Skiped tokens: '.$skipedTokens.'"> ... </span>';
 						}
-						if( $token === false ) {
+						if( $index == $countTokens ) {
 							$return .= $return .= '<br><span class="error" title="' . __LINE__ . '">' . wfMessage( 'foxway-php-syntax-error-unexpected', '$end', $line )->escaped() . '</span>';
 							break 2;
 						}
-						$id = ':';
-						next($tokens);
-						//just go further
+						//just go next
 					}
 					break;
 				case ':':
@@ -189,14 +204,14 @@ class Interpreter {
 						// Here we need to find the end of the current ternary operator and skip other operators
 						$expectTernarySeparators--;
 						$skipedTokens = 0; // it for debug messages and check correct syntax
-						$token = current($tokens);
-						do {
-							//\MWDebug::log( var_export($token, true) );
+						for( $index++; $index < $countTokens; $index++ ){
+							$token = $tokens[$index];
 							if ( is_string($token) ) {
 								$id = $token;
 							} else {
 								list($id, $text, $line) = $token;
 							}
+							//\MWDebug::log( var_export($token, true) );
 							switch ($id) {
 								case ':':
 									if( $expectTernarySeparators > 0 ) { // This ternary operator is nested and this separator owned by a parent
@@ -212,6 +227,7 @@ class Interpreter {
 										if($is_debug) {
 											$debug[] = ':<span style="color:#969696" title="Skiped tokens: '.$skipedTokens.'"> ... </span>';
 										}
+										$index--;
 										/************************ EXIT HERE ***********************************/
 										continue 4; // We found the end of the ternary operator, and now go further
 										/************************ EXIT HERE ***********************************/
@@ -228,7 +244,7 @@ class Interpreter {
 									$skipedTokens++;
 									break;
 							}
-						} while( $token = next($tokens) );
+						}
 						$return .= $return .= '<br><span class="error" title="' . __LINE__ . '">' . wfMessage( 'foxway-php-syntax-error-unexpected', '$end', $line )->escaped() . '</span>';
 						break 2;
 					}
@@ -254,13 +270,26 @@ class Interpreter {
 						}
 					}
 					break;
+				case T_ELSE:
+					if( isset($blocks[$index]) ) {
+						$commandResult = array(T_ELSE, $blocks[$index][FOX_VALUE]);
+					} else {
+						$id_str = is_string($id) ? "' $id '" : token_name($id);
+						$return .= '<br><span class="error" title="' . __LINE__ . '">' . wfMessage( 'foxway-php-syntax-error-unexpected', $id_str, $line )->escaped() . '</span>';
+						break 2;
+					}
+					break;
+				case T_IF:
+					$IfIndex = $index;
+					$expected = array('(');
+					// break is not necessary here
 				case T_ECHO:
 					if($is_debug) {
 						$i = array_push($debug, $text)-1;
 					} else {
 						$i = false;
 					}
-					$runtime->addCommand('echo', $i);
+					$runtime->addCommand($id, $i);
 					break;
 				case T_CONSTANT_ENCAPSED_STRING:
 					$is_apostrophe = substr($text, 0, 1) == '\'' ? true : false;
@@ -364,10 +393,77 @@ class Interpreter {
 				$incrementVariable = false;
 			}
 
+			/*****************  COMMAND RESULT  *******************************/
+			if( !is_null($commandResult) ) {
+				if( is_string($commandResult) ) {
+					$return .= $commandResult;
+				}elseif( is_array($commandResult) ) {
+					list($command, $result) = $commandResult;
+					switch ($command) {
+						case T_ECHO:
+							$return .= $result;
+							break;
+						case T_IF:
+							if( !isset($blocks[$IfIndex]) ) {
+								if( self::findIfElseIndexes($tokens, $blocks, $IfIndex, $index) !== true ) {
+									$return .= '<br><span class="error" title="' . __LINE__ . '">' . wfMessage( 'foxway-php-syntax-error-unexpected', '$end', $line )->escaped() . '</span>';
+									break 2;
+								}
+							}
+							$curBlock = $blocks[$IfIndex];
+							$elseIndex = $curBlock[FOX_ELSE];
+							if( $result ) {
+								if( $elseIndex ) {
+									$blocks[$elseIndex][FOX_VALUE] = false;
+								}
+								$expected = false;
+								// just go next
+							} else {
+								// skip next statement
+								if($is_debug) {
+									$debug[] = ')<span style="color:#969696"> ... </span>;';
+								}
+								// find 'else'
+								if( $elseIndex ) {
+									$blocks[$elseIndex][FOX_VALUE] = true;
+									$expected = array( T_ELSE, T_ELSEIF );
+								} else {
+									$expected = false;
+								}
+								$index = $curBlock[FOX_ENDBLOCK];
+								//\MWDebug::log( var_export($tokens[$endBlockIndex], true) );
+								$commandResult = null;
+								continue 2;
+							}
+							break;
+						case T_ELSE:
+							if( $result ) {
+								//$expected = false;
+								// just go next
+							} else {
+								// skip next statement
+								// find end of block
+								if( !isset($blocks[$index][FOX_ENDBLOCK]) ) {
+									if( self::findIfElseIndexes($tokens, $blocks, $index, $index+1) !== true ) {
+										$return .= '<br><span class="error" title="' . __LINE__ . '">' . wfMessage( 'foxway-php-syntax-error-unexpected', '$end', $line )->escaped() . '</span>';
+										break 2;
+									}
+								}
+								$index = $blocks[$index][FOX_ENDBLOCK];
+								$commandResult = null;
+								//$expected = false;
+							}
+							break;
+					}
+				}
+				$commandResult = null;
+			}
+
 			/*****************   EXPECT   *************************************/
 
 			switch ($id) {
 				case ';':
+				case T_ELSE:
 					$expectListParams = false;
 					$expected = false;
 					break;
@@ -395,6 +491,11 @@ class Interpreter {
 					break;
 				case T_ECHO:
 					$expectListParams = true;
+					// break is not necessary here
+				case '(': // TODO: remove $id == '(' &&
+					if( $id == '(' && $expected != array('(') ) {
+						break;
+					}
 					// break is not necessary here
 				case ',':
 				case '=':
@@ -473,14 +574,19 @@ class Interpreter {
 							T_CURLY_OPEN,
 							'"',
 							);
-					} else {
+					} elseif( $curlyLever ) {
+						$curlyLever++;
+					}else {
 						$return .= '<br><span class="error" title="' . __LINE__ . '">' . wfMessage( 'foxway-php-syntax-error-unexpected', '\' } \'', $line )->escaped() . '</span>';
 						break 2;
 					}
 					break;
+				case '{':
+					$curlyLever++;
+					break;
 			}
 
-			// Debug info
+			/*****************   DEBUG INFO   *********************************/
 			if($is_debug) {
 				switch ($id) {
 					case T_COMMENT:
@@ -508,7 +614,14 @@ class Interpreter {
 					case T_BOOL_CAST: // (bool)
 						$debug[] = '<span style="color:#0000E6" title="'. token_name($id) . '">' . htmlspecialchars($text) . '</span>';
 						break;
+					case T_ELSE:
+						$debug[] = '<span style="color:#0000E6" title="'. ($result ? 'if is FALSE, do next' : 'if is TRUE, ignore this') . '">' . htmlspecialchars($text) . '</span>';
+						if( !$result ) {
+							$debug[] = '<span style="color:#969696"> ... </span>;';
+						}
+						break;
 					case T_ECHO:
+					case T_IF:
 					case T_VARIABLE:
 						break;
 					case '?':
@@ -548,6 +661,100 @@ class Interpreter {
 			$replacement = array('$1"', "\n", "\r", "\t", "\v", '$', '\\');
 		}
 		return preg_replace($pattern, $replacement, $string);
+	}
+
+	private static function findIfElseIndexes(&$tokens, &$blocks, $ifIndex, $index) {
+		$count = count($tokens);
+
+		$nestedBlocks = 0;
+		for( $i = $index; $i < $count; $i++ ) { // find end of block
+			$token = $tokens[$i];
+			if ( is_string($token) ) {
+				$id = $token;
+			} else {
+				list($id) = $token;
+			}
+			switch( $id ) {
+				case '{':
+					$nestedBlocks++;
+					break;
+				case '}':
+					$nestedBlocks--;
+					// break is not necessary here
+				case ';':
+					if($nestedBlocks == 0 ) {
+						break 2;
+					}
+					break;
+				case T_IF:
+					if( $nestedBlocks == 0 ) {
+						if( !isset($blocks[$i][FOX_ENDIF]) ) {
+							if( self::findIfElseIndexes($tokens, $blocks, $i, self::findLastParenthesis($tokens, $i)) !== true ) {
+								return false;
+							}
+						}
+						$i = $blocks[$i][FOX_ENDIF];
+						break 2;
+					}
+					break;
+			}
+		}
+		if( $i == $count-1 ) {
+			return false; // end of block not find
+		}
+		$blocks[$ifIndex][FOX_ENDBLOCK] = $i;
+
+		//$else = false;
+		for( $i++; $i < $count; $i++ ) { // find T_ELSE or T_ELSEIF
+			$token = $tokens[$i];
+			if ( is_string($token) ) {
+				$id = $token;
+			} else {
+				list($id) = $token;
+			}
+			switch ($id) {
+				case T_COMMENT:
+				case T_DOC_COMMENT:
+				case T_WHITESPACE:
+					break; // ignore it
+				//case T_ELSEIF:
+				case T_ELSE:
+					if( self::findIfElseIndexes($tokens, $blocks, $i, $i+1) !== true ) {
+						return false;
+					}
+					$blocks[$ifIndex][FOX_ELSE] = $i; // We fount T_ELSE or T_ELSEIF
+					$blocks[$ifIndex][FOX_ENDIF] = $blocks[$i][FOX_ENDBLOCK];
+					\MWDebug::log( 'T_ELSE ' . var_export($blocks[$ifIndex], true));
+					break 2; //              Exit
+				default: // ELSE not exists
+					$blocks[$ifIndex][FOX_ELSE] = false;
+					$blocks[$ifIndex][FOX_ENDIF] = $blocks[$ifIndex][FOX_ENDBLOCK];
+					//$blocks[$ifIndex][FOX_ENDIF] = $blocks[$index][FOX_ENDBLOCK];
+					\MWDebug::log( 'default ' . var_export($blocks[$ifIndex], true));
+					break 2;
+			}
+		}
+		//$blocks[$ifIndex][FOX_ELSE] = $else;
+		\MWDebug::log( "function findIfElseIndexes(\$tokens, $ifIndex, $index) @ count = $count, i = $i, " . var_export($blocks[$ifIndex], true) );
+		return true;
+	}
+
+	private static function findLastParenthesis(&$tokens, $index) {
+		$parenthesesLevel = 0;
+		$count = count($tokens);
+		for( $i = $index; $i < $count; $i++ ) {
+			switch ($tokens[$i]) {
+				case '(':
+					$parenthesesLevel++;
+					break;
+				case ')':
+					$parenthesesLevel--;
+					if ( $parenthesesLevel == 0 ) {
+						break 2;
+					}
+			}
+		}
+		return $i;
 	}
 
 }

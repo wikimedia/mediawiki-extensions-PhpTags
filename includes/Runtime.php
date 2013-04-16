@@ -256,10 +256,16 @@ class Runtime {
 		switch ($this->lastCommand) {
 			case false: // ++$variable OR --$variable;
 				break;
-			case 'echo':
-				$return = implode('', $this->listParams);
+			case T_ECHO:
+				$return = array( T_ECHO, implode('', $this->listParams) );
 				if( $this->lastDebug !== false ) {
-					$debug[$this->lastDebug] = '<span style="color:#0000E6" title="'. token_name(T_ECHO) . ' do ' . htmlspecialchars($return) . '">' . $debug[$this->lastDebug] . '</span>';
+					$debug[$this->lastDebug] = '<span style="color:#0000E6" title="'. token_name(T_ECHO) . ' do ' . htmlspecialchars($return[1]) . '">' . $debug[$this->lastDebug] . '</span>';
+				}
+				break;
+			case T_IF:
+				$return = array( T_IF, $this->lastParam );
+				if( $this->lastDebug !== false ) {
+					$debug[$this->lastDebug] = '<span style="color:#0000E6" title="'. ($this->lastParam ? 'TRUE' : 'FALSE') . '">' . $debug[$this->lastDebug] . '</span>';
 				}
 				break;
 			default:
@@ -358,5 +364,8 @@ class Runtime {
 	public function parenthesesClose() {
 		$this->doMath();
 		$this->popStack();
+		if( !is_null($this->lastCommand) && $this->lastCommand != T_ECHO && substr($this->lastCommand, 0, 1) != '$') {
+			return $this->lastCommand;
+		}
 	}
 }

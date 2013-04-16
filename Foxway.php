@@ -15,7 +15,7 @@ if ( !defined( 'MEDIAWIKI' ) ) {
 	die( 'This file is an extension to MediaWiki and thus not a valid entry point.' );
 }
 
-define( 'Foxway_VERSION' , '0.0.9' );
+define( 'Foxway_VERSION' , '0.0.10' );
 
 // Register this extension on Special:Version
 $wgExtensionCredits['parserhook'][] = array(
