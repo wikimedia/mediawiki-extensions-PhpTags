@@ -42,7 +42,7 @@ $messages['de'] = array(
  */
 $messages['fr'] = array(
 	'foxway-desc' => 'Autorise le stockage de données orientées objet et implémente son propre moteur pour le code PHP sur les pages',
-	'foxway-php-syntax-error-unexpected' => 'Erreur d’analyse PHP : erreur de syntaxe, $1 non attendu dans le code de la ligne de commande à la ligne $2',
+	'foxway-php-syntax-error-unexpected' => 'Erreur d’analyse PHP : Erreur de syntaxe, $1 non attendu dans le code de la ligne de commande à la ligne $2.',
 );
 
 /** Galician (galego)
@@ -82,5 +82,5 @@ $messages['mk'] = array(
  */
 $messages['nl'] = array(
 	'foxway-desc' => "Maakt het mogelijk om objectgeoriënteerde gegevens op te slaan en implementeert een eigen runtime voor PHP-code op pagina's",
-	'foxway-php-syntax-error-unexpected' => 'Verwerkingsfout in PHP: syntaxisfout, "$1" is onverwacht in regel $2.', # Fuzzy
+	'foxway-php-syntax-error-unexpected' => 'Verwerkingsfout in PHP: syntaxisfout, "$1" is onverwacht in regel $2.',
 );
