@@ -50,7 +50,7 @@ $messages['fr'] = array(
  */
 $messages['gl'] = array(
 	'foxway-desc' => 'Permite o almacenamento de datos orientados a obxectos e introduce o seu propio tempo de execución para o código PHP nas páxinas',
-	'foxway-php-syntax-error-unexpected' => 'Erro de análise PHP: Erro de sintaxe; "$1" inesperado no código da liña de comandos na liña $2',
+	'foxway-php-syntax-error-unexpected' => 'Erro de análise PHP: Erro de sintaxe; "$1" inesperado no código da liña de comandos na liña $2.',
 );
 
 /** Japanese (日本語)
