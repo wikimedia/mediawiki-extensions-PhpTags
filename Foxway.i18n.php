@@ -77,6 +77,14 @@ $messages['mk'] = array(
 	'foxway-php-syntax-error-unexpected' => 'Грешка при парсирање на PHP: Синтаксна грешка - не се очекува $1 во кодот во ред бр. $2.',
 );
 
+/** Malay (Bahasa Melayu)
+ * @author Anakmalaysia
+ */
+$messages['ms'] = array(
+	'foxway-desc' => 'Membolehkan penyimpanan data berorientasikan objek serta melaksanakan masa jalan sendiri untuk kod PHP pada halaman',
+	'foxway-php-syntax-error-unexpected' => 'Ralat huraian PHP: Ralat sintaks, $1 tak dijangka dalam kod baris perintah pada baris $2.',
+);
+
 /** Dutch (Nederlands)
  * @author Siebrand
  */
