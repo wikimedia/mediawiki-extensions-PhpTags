@@ -41,6 +41,46 @@ class Foxway {
 	}
 
 	public static function render($input, array $args, Parser $parser, PPFrame $frame) {
-		return Foxway\Interpreter::run( $input, isset($args['debug']) );
+		$is_debug = isset($args['debug']);
+		$return = '';
+
+		$result = Foxway\Interpreter::run( $input, $is_debug );
+
+		foreach ($result as &$value) {
+			if( $value instanceof Foxway\iRawOutput ) {
+				$value = (string)$value;
+			}
+		}
+
+		if( $is_debug ) {
+			$parser->getOutput()->addModules('ext.Foxway.Debug');
+			$return .= self::insertNoWiki( $parser, array_shift($result) ) . "\n";
+		}
+
+		return $return . self::insertGeneral( $parser, $parser->recursiveTagParse(implode('', $result),$frame) );
+	}
+
+	/**
+	 *
+	 * @param Parser $parser
+	 * @param string $text
+	 * @return string
+	 */
+	private static function insertGeneral(Parser &$parser, &$text) {
+		return $parser->insertStripItem( $text );
+	}
+
+	/**
+	 * @see Parser::insertStripItem()
+	 * @param Parser $parser
+	 * @param string $text
+	 * @return string
+	 */
+	private static function insertNoWiki(Parser &$parser, &$text) {
+		// @see Parser::insertStripItem()
+		$rnd = "{$parser->mUniqPrefix}-item-{$parser->mMarkerIndex}-" . Parser::MARKER_SUFFIX;
+		$parser->mMarkerIndex++;
+		$parser->mStripState->addNoWiki( $rnd, $text );
+		return $rnd;
 	}
 }

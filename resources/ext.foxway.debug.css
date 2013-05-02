@@ -1,0 +1,42 @@
+.foxway_debug {
+	width: 100%;
+	border: 1px outset;
+	background-color: #cccccc;
+}
+
+.foxway_debug td {
+	padding: 1em;
+	border: 1px inset;
+	background-color: #f9f9f9;
+}
+
+.foxway_comment,
+.foxway_skipped {
+	color:#969696;
+}
+
+.foxway_string {
+	color:#CE7B00;
+}
+
+.foxway_number {
+	color:#FF00FF;
+}
+
+.foxway_construct {
+	color:#0000E6;
+}
+
+.foxway_variable {
+	color:#6D3206;
+}
+
+.foxway_undefined {
+	color: red;
+}
+
+.foxway_runtime {
+	background-color: green;
+	font-weight: bold;
+	color: white;
+}
