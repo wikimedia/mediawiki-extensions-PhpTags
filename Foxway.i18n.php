@@ -92,3 +92,11 @@ $messages['nl'] = array(
 	'foxway-desc' => "Maakt het mogelijk om objectgeoriënteerde gegevens op te slaan en implementeert een eigen runtime voor PHP-code op pagina's",
 	'foxway-php-syntax-error-unexpected' => 'Verwerkingsfout in PHP: syntaxisfout, "$1" is onverwacht in regel $2.',
 );
+
+/** tarandíne (tarandíne)
+ * @author Joetaras
+ */
+$messages['roa-tara'] = array(
+	'foxway-desc' => "Permette de stipà 'nu date oriendate a l'oggette e 'mblemende 'u combortamede in esecuzione pu codece PHP sus a le pàggene",
+	'foxway-php-syntax-error-unexpected' => "Errore de analisi de PHP: Errore de sindasse, inaspettate $1 jndr'à 'u linèe de codece $2.",
+);
