@@ -15,7 +15,7 @@ if ( !defined( 'MEDIAWIKI' ) ) {
 	die( 'This file is an extension to MediaWiki and thus not a valid entry point.' );
 }
 
-define( 'Foxway_VERSION' , '0.0.11' );
+define( 'Foxway_VERSION' , '0.1.0' );
 
 // Register this extension on Special:Version
 $wgExtensionCredits['parserhook'][] = array(
@@ -47,29 +47,25 @@ $wgHooks['ParserFirstCallInit'][] = function( Parser &$parser ) {
    return true;
 };
 
-//Preparing classes for autoloading
-$wgAutoloadClasses['Foxway']				= $dir . '/Foxway.body.php';
+// Preparing classes for autoloading
+$wgAutoloadClasses['Foxway']					= $dir . '/Foxway.body.php';
 
-$wgAutoloadClasses['Foxway\\Interpreter']	= $dir . '/includes/Interpreter.php';
-//$wgAutoloadClasses['Foxway\\ORM']			= $dir . '/includes/ORM.php';
-$wgAutoloadClasses['Foxway\\Runtime']		= $dir . '/includes/Runtime.php';
+$wgAutoloadClasses['Foxway\\iRawOutput']		= $dir . '/includes/iRawOutput.php';
 
-//$wgAutoloadClasses['Foxway\\BaseValue']		= $dir . '/includes/ORMValues/BaseValue.php';
-//$wgAutoloadClasses['Foxway\\ValueNumber']	= $dir . '/includes/ORMValues/ValueNumber.php';
+$wgAutoloadClasses['Foxway\\Debug']				= $dir . '/includes/Debug.php';
+$wgAutoloadClasses['Foxway\\ErrorMessage']		= $dir . '/includes/ErrorMessage.php';
+$wgAutoloadClasses['Foxway\\Interpreter']		= $dir . '/includes/Interpreter.php';
+$wgAutoloadClasses['Foxway\\Runtime']			= $dir . '/includes/Runtime.php';
+$wgAutoloadClasses['Foxway\\RuntimeDebug']		= $dir . '/includes/RuntimeDebug.php';
 
-/******** DB UPDATING ********/
-/**
- * Schema changes
- * @codeCoverageIgnore
- */
-$wgHooks['LoadExtensionSchemaUpdates'][] = function( DatabaseUpdater $updater ) {
-	$dirsql = __DIR__ . '/sql';
-
-	//$updater->addExtensionTable( 'foxway_properties', "$dirsql/foxway_properties.sql" );
-	//$updater->addExtensionTable( 'foxway_links', "$dirsql/foxway_links.sql" );
-
-	return true;
-};
+// Resources
+$wgResourceModules['ext.Foxway.Debug'] = array(
+	'styles' => 'resources/ext.foxway.debug.css',
+	'scripts' => 'resources/ext.foxway.debug.js',
+	'dependencies' => 'jquery.tipsy',
+	'localBasePath' => __DIR__,
+	'remoteExtPath' => 'Foxway'
+);
 
 /**
  * Add files to phpunit test
