@@ -37,6 +37,14 @@ $messages['de'] = array(
 	'foxway-php-syntax-error-unexpected' => 'PHP-Parserfehler: Syntaxfehler, unerwartete $1 im Befehlszeilencode in Zeile $2.',
 );
 
+/** Spanish (español)
+ * @author Fitoschido
+ */
+$messages['es'] = array(
+	'foxway-desc' => 'Permite almacenar datos orientados a objetos e implementa su propio entorno de ejecución de código PHP en las páginas',
+	'foxway-php-syntax-error-unexpected' => 'Error de análisis de PHP: Error de sintaxis, no se esperaba $1 en el código de línea de órdenes, en la línea $2.',
+);
+
 /** French (français)
  * @author Gomoko
  */
