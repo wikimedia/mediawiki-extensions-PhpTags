@@ -9,8 +9,20 @@ namespace Foxway;
  * @licence GNU General Public Licence 2.0 or later
  */
 class Runtime {
+	protected $args;
+
 	protected $lastCommand = false;
+
+	/**
+	 *
+	 * @var RValue
+	 */
 	protected $lastParam = null;
+
+	/**
+	 *
+	 * @var array
+	 */
 	protected $listParams = array();
 	protected $lastOperator = false;
 	protected $variableOperator = false;
@@ -46,6 +58,12 @@ class Runtime {
 		array(T_LOGICAL_OR), // or
 		array(','),
 	);
+	private $countPrecedences;
+
+	public function __construct( array $args, array $predefinedVariables ) {
+		$this->args = $args;
+		$this->countPrecedences = count(self::$operatorsPrecedence)-1;
+	}
 
 	public function getOperators() {
 		static $operators = array();
@@ -91,20 +109,30 @@ class Runtime {
 	}
 
 	public function addCommand( $name ) {
-		if( $this->lastCommand ) {
-			$this->pushStack();
+		if( $this->lastOperator ) {
+			$precedence = $this->getOperatorPrecedence( $this->lastOperator );
+			$this->mathMemory[$precedence] = array($this->lastOperator, $this->lastParam);
+			$this->lastOperator = false;
 		}
+		$this->pushStack();
 		$this->lastCommand = $name;
 	}
 
-	public function addParam( $param ) {
+	public function addParamVariable( $variable ) {
+		$this->addParam( new RVariable($variable, self::$variables) );
+	}
+
+	public function addParamValue( $value ) {
+		$this->addParam( new RValue($value) );
+	}
+
+	protected function addParam(RValue $param) {
 		if( $this->lastOperator ) {
 			$precedence = $this->getOperatorPrecedence( $this->lastOperator );
 			$this->mathMemory[$precedence] = array($this->lastOperator, $this->lastParam);
 			$this->lastOperator = false;
 		}
 		$this->lastParam = $param;
-		$this->doMath(0);
 	}
 
 	protected function parenthesesOpen() {
@@ -118,33 +146,71 @@ class Runtime {
 
 	protected function parenthesesClose() {
 		$this->doMath();
-		$this->popStack();
-		if( !is_null($this->lastCommand) && $this->lastCommand != T_ECHO ) {
-			return $this->lastCommand;
+		if( count($this->listParams) ) {
+			if( $this->lastParam instanceof RValue ) {
+				$this->listParams[] = $this->lastParam->getValue();
+			}
+			$this->lastParam = $this->listParams;
 		}
+		$this->popStack();
 	}
 
 	public function addOperator( $operator ) {
 		switch ($operator) {
+			case ',':
+				$this->doMath( $this->getOperatorPrecedence($operator) );
+				if( $this->lastOperator == T_DOUBLE_ARROW ) {
+					$this->lastOperator = false;
+				}else{
+					$this->listParams[] = $this->lastParam->getValue();
+				}
+				$this->lastParam = null;
+				break;
+			case '?':
+				$this->doMath( $this->getOperatorPrecedence($operator) );
+				return $this->lastParam->getValue();
+				break;
 			case '"(':
 			case '(':
 				$this->parenthesesOpen();
 				break;
 			case '")':
+				$this->lastOperator = false;
+				$this->parenthesesClose();
+				break;
+			case ',)':
+				if( !is_null($this->lastParam) ) {
+					$this->addOperator(',');
+				}
+				// break is not necessary here
 			case ')':
 				$this->parenthesesClose();
-				if( $this->lastCommand && $this->lastCommand != T_ECHO ) {
-					if( substr($this->lastParam, 0, 2) == "\0$" ) {
-						$variableLastParam = substr($this->lastParam, 2);
-						if( !isset(self::$variables[$variableLastParam]) ) {
-							//TODO
-							return array( $this->lastCommand, null);
-						} else {
-							return array( $this->lastCommand, self::$variables[$variableLastParam]);
-						}
-					}
-					return array( $this->lastCommand, $this->lastParam);
+				switch ($this->lastCommand) {
+					case false:
+						break;
+					case T_IF:
+						$this->lastCommand = false;
+						return array( T_IF, $this->lastParam->getValue() );
+						break;
+					case T_ARRAY:
+						$this->lastCommand = false;
+						$this->lastParam = new RValue( (array)$this->lastParam );
+						$this->popStack();
+						$this->doMath();
+						break;
+					default:
+						$this->doCommand();
+						break;
 				}
+				break;
+			case '[':
+				$this->addCommand( $this->lastParam );
+				break;
+			case ']':
+				$this->doMath();
+				$this->lastParam = new RArray( $this->lastCommand, $this->lastParam );
+				$this->lastCommand = false;
+				$this->popStack();
 				break;
 			default:
 				$precedence = $this->getOperatorPrecedence( $operator );
@@ -160,45 +226,15 @@ class Runtime {
 						case T_STRING_CAST:
 						case T_ARRAY_CAST:
 						case T_BOOL_CAST:
+						case T_INC:
+						case T_DEC:
 							if( !isset($this->mathMemory[0]) ) {
 								$this->mathMemory[0] = array();
 							}
 							$this->mathMemory[0][] = $operator;
-							break;
-						case T_INC: // TODO
-							if( $this->lastOperator || is_null($this->lastParam) ) {
-								if( !isset($this->mathMemory[0]) ) {
-									$this->mathMemory[0] = array();
-								}
-								$this->mathMemory[0][] = $operator;
-							} else {
-								$variableLastParam = false;
-								if( substr($this->lastParam, 0, 2) == "\0$" ) {
-									$variableLastParam = substr($this->lastParam, 2);
-									if( !isset(self::$variables[$variableLastParam]) ) {
-										self::$variables[$variableLastParam] = null;
-									}
-									$this->lastParam = self::$variables[$variableLastParam];
-									self::$variables[$variableLastParam]++;
-								}
-							}
-							break;
-						case T_DEC: // TODO
-							if( $this->lastOperator || is_null($this->lastParam) ) {
-								if( !isset($this->mathMemory[0]) ) {
-									$this->mathMemory[0] = array();
-								}
-								$this->mathMemory[0][] = $operator;
-							} else {
-								$variableLastParam = false;
-								if( substr($this->lastParam, 0, 2) == "\0$" ) {
-									$variableLastParam = substr($this->lastParam, 2);
-									if( !isset(self::$variables[$variableLastParam]) ) {
-										self::$variables[$variableLastParam] = null;
-									}
-									$this->lastParam = self::$variables[$variableLastParam];
-									self::$variables[$variableLastParam]--;
-								}
+							if( $this->lastParam instanceof RVariable && !$this->lastOperator ) {
+								$this->lastOperator = $operator;
+								$this->doMath(0);
 							}
 							break;
 						default:
@@ -212,24 +248,18 @@ class Runtime {
 				}
 				break;
 		}
-		if( substr($this->lastParam, 0, 2) == "\0$" ) {
-			$variableLastParam = substr($this->lastParam, 2);
-			if( !isset(self::$variables[$variableLastParam]) ) {
-				//TODO
-				return null;
-			} else {
-				return self::$variables[$variableLastParam];
-			}
-		}
-		return $this->lastParam;
 	}
 
-	protected function doMath( $precedence = 17 ) { //17 = count($operatorsPrecedence)-1
+	protected function doMath( $precedence = false ) {
+
 		if( isset($this->mathMemory[0]) ) {
 			while( $mathZerroMemory = array_pop($this->mathMemory[0]) ) {
 				$this->doOperation($mathZerroMemory);
 			}
 			unset($this->mathMemory[0]);
+		}
+		if($precedence === false){
+			$precedence = $this->countPrecedences;
 		}
 		for($n = 1; $n <= $precedence; $n++) {
 			if( isset($this->mathMemory[$n]) ) {
@@ -239,164 +269,121 @@ class Runtime {
 		}
 	}
 
+	/**
+	 *
+	 * @param mixed $operator
+	 * @param RVariable $param
+	 */
 	protected function doOperation($operator, $param = null) {
-		$variableParam = false;
-		if( substr($param, 0, 2) == "\0$" ) {
-			$variableParam = substr($param, 2);
-			if( !isset(self::$variables[$variableParam]) ) {
-				self::$variables[$variableParam] = null;
-				// TODO show warning
-			}
-			$param = self::$variables[$variableParam];
-		}
-
-		$variableLastParam = false;
-		if( substr($this->lastParam, 0, 2) == "\0$" ) {
-			$variableLastParam = substr($this->lastParam, 2);
-			if( !isset(self::$variables[$variableLastParam]) ) {
-				self::$variables[$variableLastParam] = null;
-				// TODO show warning
-			}
-			$this->lastParam = self::$variables[$variableLastParam];
-		}
+		$lastParam = $this->lastParam->getValue();
 
 		switch ($operator) {
+			case T_INC: // ++
+			case T_DEC: // --
+				$lastParam = $this->lastOperator;
+				$this->lastOperator = false;
+				$param = $this->lastParam;
+				// break is not necessary here
 			case '=':
-				self::$variables[$variableParam] = $this->lastParam;
-				break;
 			case T_CONCAT_EQUAL:// .=
-				self::$variables[$variableParam] .= $this->lastParam;
-				$this->lastParam = self::$variables[$variableParam];
-				break;
 			case T_PLUS_EQUAL:// +=
-				self::$variables[$variableParam] += $this->lastParam;
-				$this->lastParam = self::$variables[$variableParam];
-				break;
 			case T_MINUS_EQUAL:// -=
-				self::$variables[$variableParam] -= $this->lastParam;
-				$this->lastParam = self::$variables[$variableParam];
-				break;
 			case T_MUL_EQUAL: // *=
-				self::$variables[$variableParam] *= $this->lastParam;
-				$this->lastParam = self::$variables[$variableParam];
-				break;
 			case T_DIV_EQUAL: // /=
-				self::$variables[$variableParam] /= $this->lastParam;
-				$this->lastParam = self::$variables[$variableParam];
-				break;
 			case T_MOD_EQUAL: // %=
-				self::$variables[$variableParam] %= $this->lastParam;
-				$this->lastParam = self::$variables[$variableParam];
-				break;
 			case T_AND_EQUAL:// &=
-				self::$variables[$variableParam] &= $this->lastParam;
-				$this->lastParam = self::$variables[$variableParam];
-				break;
 			case T_OR_EQUAL:// |=
-				self::$variables[$variableParam] |= $this->lastParam;
-				$this->lastParam = self::$variables[$variableParam];
-				break;
 			case T_XOR_EQUAL:// ^=
-				self::$variables[$variableParam] ^= $this->lastParam;
-				$this->lastParam = self::$variables[$variableParam];
-				break;
 			case T_SL_EQUAL:// <<=
-				self::$variables[$variableParam] <<= $this->lastParam;
-				$this->lastParam = self::$variables[$variableParam];
-				break;
 			case T_SR_EQUAL:// >>=
-				self::$variables[$variableParam] >>= $this->lastParam;
-				$this->lastParam = self::$variables[$variableParam];
+				$this->lastParam = $param->doOperation( $operator, $lastParam );
 				break;
-			case T_INC: // ++$variable
-				$this->lastParam = ++self::$variables[$variableLastParam];
-				break;
-			case T_DEC: // --$variable
-				$this->lastParam = --self::$variables[$variableLastParam];
-				break;
-			case ',':
-				$this->listParams[] = $param;
+			case T_DOUBLE_ARROW:// =>
+				$this->listParams[$param->getValue()] = $lastParam;
+				$this->lastOperator = T_DOUBLE_ARROW;
 				break;
 			case '.':
-				$this->lastParam = $param . $this->lastParam;
+				$this->lastParam = new RValue( $param->getValue() . $lastParam );
 				break;
 			case '+':
-				$this->lastParam += $param;
+				$this->lastParam = new RValue( $param->getValue() + $lastParam );
 				break;
 			case '-':
-				if( is_null($param) ) { // Negation
-					$this->lastParam = -$this->lastParam;
-				} else { // Subtraction
-					$this->lastParam = $param - $this->lastParam;
-				}
+				$this->lastParam = $param === null ? new RValue( -$lastParam ) : new RValue( $param->getValue() - $lastParam );
 				break;
 			case '*':
-				$this->lastParam *= $param;
+				$this->lastParam = new RValue( $param->getValue() * $lastParam );
 				break;
 			case '/':
-				$this->lastParam = $param / $this->lastParam;
+				if( $lastParam == 0 ) { // Division by zero
+					$this->lastParam = new RValue( false );
+				} else {
+					$this->lastParam = new RValue( $param->getValue() / $lastParam );
+				}
 				break;
 			case '%':
-				$this->lastParam = $param % $this->lastParam;
+				if( $lastParam == 0 ) { // Division by zero
+					$this->lastParam = new RValue( false );
+				} else {
+					$this->lastParam = new RValue( $param->getValue() % $lastParam );
+				}
 				break;
 			case '&':
-				$this->lastParam &= $param;
+				$this->lastParam = new RValue( $param->getValue() & $lastParam );
 				break;
 			case '|':
-				$this->lastParam = $param | $this->lastParam;
+				$this->lastParam = new RValue( $param->getValue() | $lastParam );
 				break;
 			case '^':
-				$this->lastParam = $param ^ $this->lastParam;
+				$this->lastParam = new RValue( $param->getValue() ^ $lastParam );
 				break;
 			case T_SL: // <<
-				$this->lastParam = $param << $this->lastParam;
+				$this->lastParam = new RValue( $param->getValue() << $lastParam );
 				break;
 			case T_SR: // >>
-				$this->lastParam = $param >> $this->lastParam;
+				$this->lastParam = new RValue( $param->getValue() >> $lastParam );
 				break;
 			case '~':
-				$this->lastParam = ~$this->lastParam;
+				$this->lastParam = new RValue( ~$lastParam );
 				break;
 			case T_INT_CAST:
-				$this->lastParam = (integer) $this->lastParam;
+				$this->lastParam = new RValue( (integer) $lastParam );
 				break;
 			case T_DOUBLE_CAST:
-				$this->lastParam = (float) $this->lastParam;
+				$this->lastParam = new RValue( (float) $lastParam );
 				break;
 			case T_STRING_CAST:
-				$this->lastParam = (string) $this->lastParam;
+				$this->lastParam = new RValue( (string) $lastParam );
 				break;
 			case T_ARRAY_CAST:
-				$this->lastParam = (array) $this->lastParam;
+				$this->lastParam = new RValue( (array) $lastParam );
 				break;
 			case T_BOOL_CAST:
-				$this->lastParam = (bool) $this->lastParam;
+				$this->lastParam = new RValue( (bool) $lastParam );
 				break;
 			case '<':
-				$this->lastParam = $param < $this->lastParam;
+				$this->lastParam = new RValue( $param->getValue() < $lastParam );
 				break;
 			case '>':
-				$this->lastParam = $param > $this->lastParam;
+				$this->lastParam = new RValue( $param->getValue() > $lastParam );
 				break;
 			case T_IS_SMALLER_OR_EQUAL: // <=
-				$this->lastParam = $param <= $this->lastParam;
+				$this->lastParam = new RValue( $param->getValue() <= $lastParam );
 				break;
 			case T_IS_GREATER_OR_EQUAL: // >=
-				$this->lastParam = $param >= $this->lastParam;
+				$this->lastParam = new RValue( $param->getValue() >= $lastParam );
 				break;
 			case T_IS_EQUAL: // ==
-				$this->lastParam = $param == $this->lastParam;
+				$this->lastParam = new RValue( $param->getValue() == $lastParam );
 				break;
 			case T_IS_NOT_EQUAL: // !=
-				$this->lastParam = $param != $this->lastParam;
+				$this->lastParam = new RValue( $param->getValue() != $lastParam );
 				break;
 			case T_IS_IDENTICAL: // ===
-				$this->lastParam = $param === $this->lastParam;
+				$this->lastParam = new RValue( $param->getValue() === $lastParam );
 				break;
 			case T_IS_NOT_IDENTICAL: // !==
-				$this->lastParam = $param !== $this->lastParam;
-				break;
-			case '?':
+				$this->lastParam = new RValue( $param->getValue() !== $lastParam );
 				break;
 			default:
 				\MWDebug::log( __METHOD__ . " unknown operator '$operator'" );
@@ -406,14 +393,13 @@ class Runtime {
 
 	// Remember the child class RuntimeDebug
 	public function getCommandResult( ) {
-		$this->doMath();
-		$this->doOperation(',', $this->lastParam);
+		$this->addOperator(',');
 		$return = null;
 
 		// Remember the child class RuntimeDebug
 		switch ($this->lastCommand) {
 			case T_ECHO:
-				$return = array( $this->lastCommand, implode('', $this->listParams) );
+				$return = array( $this->lastCommand, $this->listParams );
 				break;
 			case false:
 				break; // exsample: $foo = 'foobar';
@@ -423,8 +409,11 @@ class Runtime {
 				\MWDebug::log($return);
 		}
 		$this->popStack();
-		$this->lastParam = null;
+		//$this->lastParam = null;
 		return $return;
+	}
+
+	private function doCommand() {
 	}
 
 }

@@ -6,6 +6,22 @@ define( 'FOXWAY_ENDIF', 1 );
 define( 'FOXWAY_ELSE' , 2 );
 define( 'FOXWAY_VALUE', 3 );
 
+define( 'FOXWAY_ALLOW_PARENTHES_WITH_VOID_PARAMS', 1 << 0 );
+define( 'FOXWAY_EXPECT_CURLY_CLOSE', 1 << 1 );
+define( 'FOXWAY_EXPECT_QUOTES_CLOSE', 1 << 2 );
+define( 'FOXWAY_EXPECT_LIST_PARAMS', 1 << 3 );
+define( 'FOXWAY_EXPECT_PARENTHES_CLOSE', 1 << 4 );
+define( 'FOXWAY_EXPECT_BRACKET_CLOSE', 1 << 5 );
+define( 'FOXWAY_EXPECT_PARENTHES_WITH_LIST_PARAMS', 1 << 6 );
+define( 'FOXWAY_ALLOW_PARAMS_ENDING_BY_COMMA', 1 << 7 );
+define( 'FOXWAY_EXPECT_PARENTHES_ENDING_BY_COMMA', 1 << 8 );
+define( 'FOXWAY_EXPECT_SEMICOLON', 1 << 9 );
+define( 'FOXWAY_EXPECT_FUNCTION_PARENTHESES', 1 << 10 );
+define( 'FOXWAY_ALLOW_ASSIGMENT', 1 << 11 );
+define( 'FOXWAY_EXPECT_PARENTHES_WITH_DOUBLE_ARROW', 1 << 12 );
+define( 'FOXWAY_ALLOW_DOUBLE_ARROW', 1 << 13 );
+define( 'FOXWAY_NEED_CONCATENATION_OPERATOR', 1 << 14 );
+
 /**
  * Interpreter class of Foxway extension.
  *
@@ -16,13 +32,13 @@ define( 'FOXWAY_VALUE', 3 );
  */
 class Interpreter {
 
-	protected static $skipTokenIds = array(
+	private static $skipTokenIds = array(
 		T_WHITESPACE,
 		T_COMMENT,
 		T_DOC_COMMENT,
 	);
 
-	protected static $arrayOperators = array(
+	private static $arrayOperators = array(
 		';',
 		'.',
 		'+',
@@ -48,13 +64,16 @@ class Interpreter {
 		':',
 		'}',
 		',',
+		')',
+		T_DOUBLE_ARROW,
 	);
 
-	protected static $arrayParams = array(
+	private static $arrayParams = array(
 		T_CONSTANT_ENCAPSED_STRING, // "foo" or 'bar'
 		T_ENCAPSED_AND_WHITESPACE, // " $a"
 		T_LNUMBER, // 123, 012, 0x1ac
 		T_DNUMBER, // 0.12
+		T_NUM_STRING, // "$a[0]"
 		T_VARIABLE, // $foo
 		T_STRING,
 		T_INC, // ++
@@ -73,19 +92,30 @@ class Interpreter {
 		T_ARRAY,	// array()
 	);
 
-	public static function run($source, $is_debug = false) {
+	private static $assigmentOperators = array(
+		'=',
+		T_CONCAT_EQUAL,
+		T_PLUS_EQUAL,
+		T_MINUS_EQUAL,
+		T_MUL_EQUAL,
+		T_DIV_EQUAL,
+		T_MOD_EQUAL,
+		T_AND_EQUAL,
+		T_OR_EQUAL,
+		T_XOR_EQUAL,
+		T_SL_EQUAL,
+		T_SR_EQUAL,
+	);
+
+	public static function run($source, array $args=array(), array $predefinedVariables=array(), $is_debug=false) {
 		$tokens = self::getTokens($source);
 
 		$return = array();
 		$debug = $is_debug ? new Debug() : false;
 		$blocks = array();
 		$expected = false;
-		$expectVoidParams = false;
-		$expectCurlyClose = false;
-		$expectQuotesClose = false;
-		$parenthesesLevels = array(0);
-		$expectListParams = array(-1);
-		$commandsEmbedded = 0;
+		$parentheses = array();
+		$parenthesFlags = FOXWAY_EXPECT_SEMICOLON;
 		$curlyLever = 0;
 		$IfIndex = false;
 		$incrementVariable = false;
@@ -93,9 +123,9 @@ class Interpreter {
 		$tokenLine = 1;
 
 		if( $debug ) {
-			$runtime = new RuntimeDebug();
+			$runtime = new RuntimeDebug( $args, $predefinedVariables );
 		} else {
-			$runtime = new Runtime();
+			$runtime = new Runtime( $args, $predefinedVariables );
 		}
 
 		$operators = $runtime->getOperators();
@@ -117,26 +147,53 @@ class Interpreter {
 
 			switch ($id) {
 				case ';':
-					// TODO: check parenthess level???
+					$parenthesFlags = FOXWAY_EXPECT_SEMICOLON;
+					if ( !($parenthesFlags & FOXWAY_EXPECT_SEMICOLON) ) {
+						$return[] = new ErrorMessage(__LINE__, $tokenLine, E_PARSE, $id);
+						break 2;
+					}
 					$commandResult = $runtime->getCommandResult();
 					break;
 				case ',':
-					if ( $parenthesesLevels[$commandsEmbedded] != $expectListParams[$commandsEmbedded] ) {
-						$r = new ErrorMessage(__LINE__, $tokenLine, E_PARSE, $id);
-						$return[] = $r;
+					if ( !($parenthesFlags & FOXWAY_EXPECT_LIST_PARAMS) ) {
+						$return[] = new ErrorMessage(__LINE__, $tokenLine, E_PARSE, $id);
+						break 2;
+					}
+					$runtime->addOperator($id);
+					break;
+				case T_DOUBLE_ARROW: // =>
+					if ( !($parenthesFlags & FOXWAY_ALLOW_DOUBLE_ARROW) ) {
+						$return[] = new ErrorMessage(__LINE__, $tokenLine, E_PARSE, $id);
 						break 2;
 					}
 					$runtime->addOperator($id);
 					break;
 				case '(':
-					$parenthesesLevels[$commandsEmbedded]++;
+				case '[':
+					$parentheses[] = $parenthesFlags;
+					$runtime->addOperator( $id );
+					break;
+				case ']':
+					$parenthesFlags = array_pop( $parentheses );
 					$runtime->addOperator( $id );
 					break;
 				case ')':
-					$parenthesesLevels[$commandsEmbedded]--;
-					$commandResult = $runtime->addOperator( $id );
-					if( $parenthesesLevels[$commandsEmbedded] == 0 ) {
-						unset($expected[array_search(')', $expected)]);
+					if ( !($parenthesFlags & FOXWAY_EXPECT_PARENTHES_CLOSE) ) {
+						$return[] = new ErrorMessage(__LINE__, $tokenLine, E_PARSE, $id);
+						break 2;
+					}
+					$parenthesFlags = array_pop($parentheses);
+					if( $parenthesFlags & FOXWAY_EXPECT_PARENTHES_ENDING_BY_COMMA ) {
+						$commandResult = $runtime->addOperator( ',)' );
+					}else{
+						$commandResult = $runtime->addOperator( $id );
+					}
+					if( $parenthesFlags & FOXWAY_EXPECT_FUNCTION_PARENTHESES ) {
+						$parenthesFlags = array_pop($parentheses);
+					}
+					$expected = self::$arrayOperators;
+					if( $parenthesFlags & FOXWAY_EXPECT_BRACKET_CLOSE ) {
+						$expected[] = ']';
 					}
 					break;
 				case '?':
@@ -171,7 +228,7 @@ class Interpreter {
 					}
 					if( $blocks[$index][FOXWAY_VALUE] == false ) { // for true just go next
 						$index = $blocks[$index][FOXWAY_ENDBLOCK]-1;
-						$expected = array('?', ',',';');
+						$expected = array('?', ',', ';');
 						if( $debug ) {
 							$debug[] = $token;
 							$debug[] = 'skip';
@@ -186,11 +243,15 @@ class Interpreter {
 						$expected = array( T_VARIABLE );
 					} else {
 						$expected = self::$arrayOperators;
+						if( $parenthesFlags & FOXWAY_EXPECT_BRACKET_CLOSE ) {
+							$expected[] = ']';
+						}
 					}
 					$runtime->addOperator($id);
 					break;
 				case T_ELSEIF:
-					$commandsEmbedded++;
+					$parentheses[] = $parenthesFlags;
+					$parenthesFlags = FOXWAY_EXPECT_FUNCTION_PARENTHESES;
 					// break is not necessary here
 				case T_ELSE:
 					if( isset($blocks[$index]) ) {
@@ -200,99 +261,91 @@ class Interpreter {
 						break 2;
 					}
 					break;
-				case T_IF:
-					$IfIndex = $index;
-					// break is not necessary here
 				case T_ARRAY:
 					$expected = array('(');
-					// break is not necessary here
+					$runtime->addCommand($id);
+					$parentheses[] = $parenthesFlags;
+					$parenthesFlags = FOXWAY_EXPECT_PARENTHES_WITH_LIST_PARAMS |
+							FOXWAY_EXPECT_PARENTHES_ENDING_BY_COMMA |
+							FOXWAY_EXPECT_FUNCTION_PARENTHESES |
+							FOXWAY_EXPECT_PARENTHES_WITH_DOUBLE_ARROW;
+					break;
+				case T_IF:
+					$parentheses[] = $parenthesFlags; //TODO check &= ~FOXWAY_EXPECT_SEMICOLON;
+					$parenthesFlags = FOXWAY_EXPECT_FUNCTION_PARENTHESES;
+					$IfIndex = $index;
+					$expected = array('(');
+					$runtime->addCommand($id);
+					break;
 				case T_ECHO:
-					$runtime->addCommand($id, $index);
-					$commandsEmbedded++;
-					$parenthesesLevels[$commandsEmbedded] = 0;
-					$expectListParams[$commandsEmbedded] = 0; // Allow echo "one", "two", "three";
+					$runtime->addCommand($id);
+					$parenthesFlags = FOXWAY_EXPECT_LIST_PARAMS | FOXWAY_EXPECT_SEMICOLON;
 					break;
 				case T_CONSTANT_ENCAPSED_STRING:
 					$is_apostrophe = substr($text, 0, 1) == '\'' ? true : false;
 					$string = substr($text, 1, -1);
-					$runtime->addParam( self::process_slashes($string, $is_apostrophe) );
+					$runtime->addParamValue( self::process_slashes($string, $is_apostrophe) );
 					break;
+				case T_NUM_STRING:
 				case T_LNUMBER:
-					$runtime->addParam( (integer)$text );
+					$runtime->addParamValue( (integer)$text );
 					break;
 				case T_DNUMBER:
-					$runtime->addParam( (float)$text );
+					$runtime->addParamValue( (float)$text );
 					break;
 				case T_ENCAPSED_AND_WHITESPACE: // " $a"
-					if( $expectQuotesClose ) {
+					if( $parenthesFlags & FOXWAY_NEED_CONCATENATION_OPERATOR ) {
 						$runtime->addOperator('.');
+					}elseif( $parenthesFlags & FOXWAY_EXPECT_QUOTES_CLOSE ){
+						$parenthesFlags |= FOXWAY_NEED_CONCATENATION_OPERATOR;
 					}
-					$runtime->addParam( self::process_slashes($text, false) );
+					$runtime->addParamValue( self::process_slashes($text, false) );
+					if( $parenthesFlags & FOXWAY_EXPECT_QUOTES_CLOSE ) {
+						$expected[] = '"'; //TODO check it
+					}
 					break;
 				case T_VARIABLE:
 					if( $expected && in_array(T_VARIABLE, $expected) ) {
-						if( $expectCurlyClose ) {
+						if( $parenthesFlags & FOXWAY_EXPECT_CURLY_CLOSE ) {
 							$expected = array( '}' );
 						} else {
-							$expected = array_merge(
-									self::$arrayOperators,
-									array(
-										'=',
-										T_CONCAT_EQUAL,
-										T_PLUS_EQUAL,
-										T_MINUS_EQUAL,
-										T_MUL_EQUAL,
-										T_DIV_EQUAL,
-										T_MOD_EQUAL,
-										T_AND_EQUAL,
-										T_OR_EQUAL,
-										T_XOR_EQUAL,
-										T_SL_EQUAL,
-										T_SR_EQUAL,
-									)
-							);
-							if( $parenthesesLevels[$commandsEmbedded] ) {
-								$expected[] = ')';
-							}
+							$expected = array_merge( self::$arrayOperators,	self::$assigmentOperators );
+							$parenthesFlags |= FOXWAY_ALLOW_ASSIGMENT;
 							if( $incrementVariable ) {
 								$incrementVariable = false;
 							} else {
 								$expected[] = T_INC; // ++
 								$expected[] = T_DEC; // --
 							}
+							if( $parenthesFlags & FOXWAY_EXPECT_BRACKET_CLOSE ) {
+								$expected[] = ']';
+							}
 						}
-						if( $expectQuotesClose ) {
+						if( $parenthesFlags & FOXWAY_NEED_CONCATENATION_OPERATOR ) {
+							$runtime->addOperator('.');
+						}elseif( $parenthesFlags & FOXWAY_EXPECT_QUOTES_CLOSE ){
+							$parenthesFlags |= FOXWAY_NEED_CONCATENATION_OPERATOR;
+						}
+						if( $parenthesFlags & FOXWAY_EXPECT_QUOTES_CLOSE || $parenthesFlags & FOXWAY_EXPECT_CURLY_CLOSE ) {
 							$expected[] = T_VARIABLE; // Allow: echo "$s$s";
 							$expected[] = T_CURLY_OPEN; // Allow: echo "$s{$s}";
-							$expected[] = '"';
-							$runtime->addOperator('.');
+							$expected[] = '"'; //TODO check it
+							//$runtime->addOperator('.');
 						}
 					} else {
-						$expected = array(
-							'=',
-							T_CONCAT_EQUAL,
-							T_PLUS_EQUAL,
-							T_MINUS_EQUAL,
-							T_MUL_EQUAL,
-							T_DIV_EQUAL,
-							T_MOD_EQUAL,
-							T_AND_EQUAL,
-							T_OR_EQUAL,
-							T_XOR_EQUAL,
-							T_SL_EQUAL,
-							T_SR_EQUAL,
-							T_INC,
-							T_DEC,
-							',',
-							);
+						$parenthesFlags |= FOXWAY_ALLOW_ASSIGMENT;
+						$expected = array_merge( self::$assigmentOperators, array(T_INC, T_DEC, ',') );
 					}
-					$runtime->addParam( "\0$text" );
+					$runtime->addParamVariable( $text );
+					$expected[] = '[';
 					break;
 				case T_STRING:
 					if( strcasecmp($text, 'true') == 0 ) {
-						$runtime->addParam( true );
+						$runtime->addParamValue( true );
 					} elseif( strcasecmp($text, 'false') == 0 ) {
-						$runtime->addParam( false );
+						$runtime->addParamValue( false );
+					} elseif( strcasecmp($text, 'null') == 0 ) {
+						$runtime->addParamValue( null );
 					} else {
 						$return[] = new ErrorMessage(__LINE__, $tokenLine, E_PARSE, $id);
 						break 2;
@@ -324,11 +377,9 @@ class Interpreter {
 					}
 					switch ($command) {
 						case T_ECHO:
-							$commandsEmbedded--;
-							$return[] = $result;
+							$return = array_merge($return, $result);
 							break;
 						case T_IF:
-							$commandsEmbedded--;
 							if( !isset($blocks[$IfIndex]) ) {
 								if( self::findIfElseIndexes($tokens, $blocks, $IfIndex, $index) !== true ) {
 									$return[] = new ErrorMessage(__LINE__, $tokenLine, E_PARSE, '$end');
@@ -362,7 +413,6 @@ class Interpreter {
 							}
 							break;
 						case T_ELSEIF:
-							$commandsEmbedded--;
 							if( $result ) { // chek for IF
 								// this code from previus swith( $id ) case T_IF: & case T_ECHO:
 								$IfIndex = $index;
@@ -385,7 +435,6 @@ class Interpreter {
 								$commandResult = null;
 								$expected = false;
 								if( $debug ) {
-									//$debug[] = $token;
 									$debug[] = 'skip';
 								}
 								continue 2;
@@ -403,24 +452,26 @@ class Interpreter {
 					$expected = false;
 					break;
 				case '"':
-					if( $expectQuotesClose === false ) {
+					if( $parenthesFlags & FOXWAY_EXPECT_QUOTES_CLOSE ) {
+						$parenthesFlags = array_pop($parentheses);
+						$runtime->addOperator('")');
+					} else {
+						$parentheses[] = $parenthesFlags;
+						$parenthesFlags = FOXWAY_EXPECT_QUOTES_CLOSE;
 						$runtime->addOperator('"(');
-						$runtime->addParam('');
-						$expectQuotesClose = true;
 						$expected = array(T_ENCAPSED_AND_WHITESPACE, T_CURLY_OPEN, T_VARIABLE, '"');
 						break;
-					} else {
-						$runtime->addOperator('")');
-						$expectQuotesClose = false;
 					}
 					// break is not necessary here
 				case T_CONSTANT_ENCAPSED_STRING:
+				case T_NUM_STRING:
 				case T_LNUMBER:
 				case T_DNUMBER:
 				case T_STRING:
+				case ']':
 					$expected = self::$arrayOperators;
-					if( $parenthesesLevels[$commandsEmbedded] ) {
-						$expected[] = ')';
+					if( $parenthesFlags & FOXWAY_EXPECT_BRACKET_CLOSE ) {
+						$expected[] = ']';
 					}
 					break;
 				case '(':
@@ -442,6 +493,7 @@ class Interpreter {
 				case T_XOR_EQUAL:		// ^=
 				case T_SL_EQUAL:		// <<=
 				case T_SR_EQUAL:		// >>=
+				case T_DOUBLE_ARROW:	// =>
 				case '.':
 				case '+':
 				case '-':
@@ -462,6 +514,7 @@ class Interpreter {
 				case T_IS_IDENTICAL: // ===
 				case T_IS_NOT_IDENTICAL: // !==
 				case '?':
+				case '[':
 					$expected = self::$arrayParams;
 					break;
 				case ':':
@@ -469,8 +522,10 @@ class Interpreter {
 					$expected[] = '?';
 					break;
 				case T_CURLY_OPEN:
-					if( $expectQuotesClose === true ) {
-						$expectCurlyClose = true;
+					if( $parenthesFlags & FOXWAY_EXPECT_QUOTES_CLOSE ) {
+						$parentheses[] = $parenthesFlags;
+						$parenthesFlags = FOXWAY_EXPECT_CURLY_CLOSE |
+								( $parenthesFlags & FOXWAY_NEED_CONCATENATION_OPERATOR ? FOXWAY_NEED_CONCATENATION_OPERATOR : 0 );
 						$expected = array( T_VARIABLE );
 					} else {
 						$return[] = new ErrorMessage(__LINE__, $tokenLine, E_PARSE, $id);
@@ -478,8 +533,8 @@ class Interpreter {
 					}
 					break;
 				case '}':
-					if( $expectCurlyClose ) {
-						$expectCurlyClose = false;
+					if( $parenthesFlags & FOXWAY_EXPECT_CURLY_CLOSE ) {
+						$parenthesFlags = array_pop($parentheses);
 						$expected = array(
 							T_CONSTANT_ENCAPSED_STRING,
 							T_ENCAPSED_AND_WHITESPACE,
@@ -490,7 +545,7 @@ class Interpreter {
 							'"',
 							);
 					} elseif( $curlyLever ) {
-						$curlyLever++;
+						$curlyLever--;
 					}else {
 						$return[] = new ErrorMessage(__LINE__, $tokenLine, E_PARSE, $id);
 						break 2;
@@ -504,13 +559,31 @@ class Interpreter {
 			/*****************   EXPECT  PHASE  TWO  **************************/
 			switch ($id) {
 				case T_ARRAY:
-					$expectVoidParams = true;
+					$parenthesFlags |= FOXWAY_ALLOW_PARENTHES_WITH_VOID_PARAMS;
 					break;
 				case '(':
-					if( $expectVoidParams ) {
+					if( $parenthesFlags & FOXWAY_ALLOW_PARENTHES_WITH_VOID_PARAMS ) {
 						$expected[] = ')';
 					}
+					$parenthesFlags = FOXWAY_EXPECT_PARENTHES_CLOSE |
+							( $parenthesFlags & FOXWAY_EXPECT_PARENTHES_WITH_LIST_PARAMS ? FOXWAY_EXPECT_LIST_PARAMS : 0 ) |
+							( $parenthesFlags & FOXWAY_EXPECT_PARENTHES_ENDING_BY_COMMA ? FOXWAY_ALLOW_PARAMS_ENDING_BY_COMMA : 0 ) |
+							( $parenthesFlags & FOXWAY_EXPECT_PARENTHES_WITH_DOUBLE_ARROW ? FOXWAY_ALLOW_DOUBLE_ARROW : 0 );
 					break;
+				case '[':
+					$parenthesFlags = FOXWAY_EXPECT_BRACKET_CLOSE;
+					$expected[] = ']';
+					break;
+				case ']':
+					$expected[] = '[';
+					if( $parenthesFlags & FOXWAY_ALLOW_ASSIGMENT ) {
+						$expected = array_merge( $expected, self::$assigmentOperators );
+					}
+					break;
+				case ',':
+					if( $parenthesFlags & FOXWAY_ALLOW_PARAMS_ENDING_BY_COMMA ) {
+						$expected[] = ')';
+					}
 			}
 		}
 		if( $debug ) {
@@ -519,7 +592,7 @@ class Interpreter {
 		return $return;
 	}
 
-	protected static function process_slashes($string, $is_apostrophe) {
+	private static function process_slashes($string, $is_apostrophe) {
 		if( $is_apostrophe ) {
 			//					(\\)*+\'				\\
 			$pattern = array('/(\\\\\\\\)*+\\\\\'/', '/\\\\\\\\/');
@@ -532,7 +605,7 @@ class Interpreter {
 		return preg_replace($pattern, $replacement, $string);
 	}
 
-	protected static function findTernaryIndexes( &$tokens, &$blocks, $index ) {
+	private static function findTernaryIndexes( &$tokens, &$blocks, $index ) {
 		$embedded = 0;
 		$count = count($tokens);
 		for( $i = $index+1; $i < $count; $i++ ) { // find ternary separator ':'
@@ -576,7 +649,7 @@ class Interpreter {
 		}
 	}
 
-	protected static function findIfElseIndexes(&$tokens, &$blocks, $ifIndex, $index) {
+	private static function findIfElseIndexes(&$tokens, &$blocks, $ifIndex, $index) {
 		$count = count($tokens);
 
 		$nestedBlocks = 0;
@@ -655,7 +728,7 @@ class Interpreter {
 		return true;
 	}
 
-	protected static function findLastParenthesis(&$tokens, $index) {
+	private static function findLastParenthesis(&$tokens, $index) {
 		$parenthesesLevel = 0;
 		$count = count($tokens);
 		for( $i = $index; $i < $count; $i++ ) {

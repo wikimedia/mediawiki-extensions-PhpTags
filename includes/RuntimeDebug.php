@@ -11,6 +11,31 @@ namespace Foxway;
 class RuntimeDebug extends Runtime {
 
 	private $debug = array();
+	private $listParamsDebug = array();
+	private $savedListParams;
+	private $stackDebug = array();
+	private $lastCommandDebug;
+
+	protected function pushStack() {
+		parent::pushStack();
+		$this->stackDebug[] = $this->listParamsDebug;
+	}
+
+	protected function popStack() {
+		parent::popStack();
+
+		$this->savedListParams = $this->listParamsDebug;
+		if( count($this->stackDebug) == 0 ) {
+			$this->listParamsDebug = array();
+		} else {
+			$this->listParamsDebug = array_pop($this->stackDebug);
+		}
+	}
+
+	protected function parenthesesClose() {
+		parent::parenthesesClose();
+		$this->lastCommandDebug = $this->lastCommand;
+	}
 
 	public function getDebug() {
 		$return = implode('<br>', $this->debug);
@@ -18,178 +43,146 @@ class RuntimeDebug extends Runtime {
 		return $return;
 	}
 
+	/**
+	 *
+	 * @param mixed $operator
+	 * @param RVariable $param
+	 */
 	protected function doOperation($operator, $param = null) {
-		if( $operator == ',' || $operator == '?' ) {
-			return parent::doOperation($operator, $param);
-		}
-
-		if( substr($param, 0, 2) == "\0$" ) {
-			$variableParam = substr($param, 2);
-			$undefined = '';
-			if( !isset(self::$variables[$variableParam]) ) {
-				$undefined = \Html::element('span', array('class'=>'foxway_undefined'), "Undefined ");
-				$thisparam = null;
+		if( $operator == '=' ) {
+			if( $param instanceof RArray ) {
+				$i = $param->getIndex();
+				$return = \Html::element( 'span', array('class'=>'foxway_variable'), $param->getParent()->getName() ) .
+						( $i instanceof RValue ? '['.self::getHTMLForValue($i).']' : '[]' ) .
+						'&nbsp;<b>=></b>&nbsp;=&nbsp;';
 			}else{
-				$thisparam = self::$variables[$variableParam];
+				$return = \Html::element( 'span', array('class'=>'foxway_variable'), $param->getName() ) .
+						'&nbsp;<b>=></b>&nbsp;=&nbsp;';
 			}
-			$thisparam = $undefined . \Html::element('span', array('class'=>'foxway_variable'), "\$$variableParam") .
-					'(' . self::getHTMLForValue($thisparam) . ')';
 		} else {
-			$thisparam = self::getHTMLForValue($param);
-		}
-
-		if( substr($this->lastParam, 0, 2) == "\0$" ) {
-			$variableLastParam = substr($this->lastParam, 2);
-			$undefined = '';
-			if( !isset(self::$variables[$variableLastParam]) ) {
-				$undefined = \Html::element('span', array('class'=>'foxway_undefined'), "Undefined ");
-				$lastParam = null;
+			if( ($operator == T_INC || $operator == T_DEC) && $this->lastOperator ) {
+				$v = $this->lastParam->getValue();
+				$return = self::getHTMLForValue($this->lastParam) .
+					self::getHTMLForOperator($operator) .
+					' = (' . self::getHTMLForValue( new RValue($operator == T_INC ? $v+1 : $v-1) ) . ')' .
+					'&nbsp;<b>=></b>&nbsp;';
 			} else {
-				$lastParam = self::$variables[$variableLastParam];
-			}
-			$lastParam = $undefined . \Html::element('span', array('class'=>'foxway_variable'), "\$$variableLastParam") .
-					'(' . self::getHTMLForValue($lastParam) . ')';
-		} else {
-			$lastParam = self::getHTMLForValue($this->lastParam);
-		}
-
-		if( $operator == '=' ){
-			$return = \Html::element('span', array('class'=>'foxway_variable'), "\$$variableParam") . '&nbsp;<b>=></b>&nbsp;=&nbsp;';
-		} else {
-			if( $variableParam || $variableLastParam ) {
-				$return = ($variableParam ? \Html::element('span', array('class'=>'foxway_variable'), "\$$variableParam") : self::getHTMLForValue($thisparam)) .
+				$return = ($param === null ? '' : self::getHTMLForValue($param)) .
 						self::getHTMLForOperator($operator) .
-						($variableLastParam ? \Html::element('span', array('class'=>'foxway_variable'), "\$$variableLastParam") : self::getHTMLForValue($lastParam)) .
-						" <b>=></b> ";
+						self::getHTMLForValue($this->lastParam) .
+						'&nbsp;<b>=></b>&nbsp;';
 			}
-			$return = $thisparam . self::getHTMLForOperator($operator) . $lastParam . '&nbsp;<b>=></b>&nbsp;';
 		}
 
 		parent::doOperation($operator, $param);
 
-		$this->debug[] = $return . self::getHTMLForValue($this->lastParam);
+		$this->debug[] = $return . self::getHTMLForValue( $this->lastParam );
 	}
 
 	public function addOperator($operator) {
-		if( ($operator == T_INC || $operator == T_DEC) && (!$this->lastOperator && !is_null($this->lastParam)) ) {
-			$variableLastParam = substr($this->lastParam, 2);
-			$variable = '';
-			$value = null;
-			if( !isset(self::$variables[$variableLastParam]) ) {
-				$variable = \Html::element('span', array('class'=>'foxway_undefined'), 'Undefined ');
-			}else{
-				$value = self::$variables[$variableLastParam];
-			}
-			$this->debug[] = $variable . \Html::element('span', array('class'=>'foxway_variable'), "\$$variableLastParam") .
-					'(' . self::getHTMLForValue($value) . ')' .
-					($operator == T_INC ? '++' : '--') .
-					'&nbsp;<b>=></b>&nbsp;' .
-					'(' . self::getHTMLForValue($operator == T_INC ? $value+1 : $value-1) . ')&nbsp' . self::getHTMLForValue($value);
+		if( $operator == ',' ) {
+			$this->doMath();
+			$this->listParamsDebug[] = self::getHTMLForValue($this->lastParam);
 		}
 
 		$return = parent::addOperator($operator);
 
 		if( $operator == '?' ) {
-
-			if( substr($this->lastParam, 0, 2) == "\0$" ) {
-				$variableLastParam = substr($this->lastParam, 2);
-				$variable = '';
-				if( !isset(self::$variables[$variableLastParam]) ) {
-					$variable = \Html::element('span', array('class'=>'foxway_undefined'), 'Undefined ');
-				}
-				$variable .= \Html::element('span', array('class'=>'foxway_variable'), "\$$variableLastParam");
-				$variable .= '(' . self::getHTMLForValue($return) . ')';
-			}else{
-				$variable = self::getHTMLForValue($return);
-			}
-			$this->debug[] = $variable . "&nbsp;?&nbsp;<b>=></b>&nbsp;" . self::getHTMLForValue($return?true:false);
-		}elseif( $operator == ')' && is_array($return) ) {
-			list($command, $result) = $return;
-			switch ($command) {
+			$this->debug[] = self::getHTMLForValue($this->lastParam) . "&nbsp;?&nbsp;<b>=></b>&nbsp;" . self::getHTMLForValue( new RValue($return?true:false) );
+		}elseif( $operator == ')' ) {
+			switch ($this->lastCommandDebug) {
+				case false:
+				case T_ARRAY:
+				case T_ECHO:
+					break;
 				case T_IF:
-					if( substr($this->lastParam, 0, 2) == "\0$" ) {
-						$variableLastParam = substr($this->lastParam, 2);
-						$variable = '';
-						if( !isset(self::$variables[$variableLastParam]) ) {
-							$variable = \Html::element('span', array('class'=>'foxway_undefined'), 'Undefined ');
-						}
-						$variable .= \Html::element('span', array('class'=>'foxway_variable'), "\$$variableLastParam");
-						$variable .= '(' . self::getHTMLForValue($result) . ')';
-					}else{
-						$variable = self::getHTMLForValue($result);
-					}
-					$t = self::getHTMLForCommand($command) . "(&nbsp;" . $variable . "&nbsp;)&nbsp;<b>=></b>&nbsp;";
-					if( $result ) {
-						$t .= self::getHTMLForValue(true);
-					} else {
-						$t .= self::getHTMLForValue(false);
-					}
-					$this->debug[] = $t;
+					$this->debug[] = self::getHTMLForCommand(T_IF).
+							"(&nbsp;" . self::getHTMLForValue( $this->lastParam ) .
+							"&nbsp;)&nbsp;<b>=></b>&nbsp;" .
+							self::getHTMLForValue( new RValue($this->lastParam->getValue() ? true : false) );
 					break;
 				default:
-					$this->debug[] = self::getHTMLForCommand($command) . "( " . self::getHTMLForValue($result) . " )";
+					$this->debug[] = self::getHTMLForCommand($this->lastCommandDebug) . "( " . self::getHTMLForValue($this->lastParam) . " )";
 					break;
 			}
 		}
 		return $return;
 	}
 
-	// This is a modified copy of the parent
 	public function getCommandResult( ) {
-		$this->doMath();
-		$this->doOperation(',', $this->lastParam);
-		$return = null;
+		$lastCommand = $this->lastCommand;
 
-		// Remember the child class RuntimeDebug
-		switch ($this->lastCommand) {
+		$return = parent::getCommandResult();
+
+		switch ($lastCommand) {
 			case T_ECHO:
-				$return = array( $this->lastCommand, implode('', $this->listParams) );
-				$this->debug[] = self::getHTMLForCommand($this->lastCommand) . '&nbsp;' . $this->getHTMLForListParams() . ';';
-				$this->debug[] = $return[1];
+				$this->debug[] = self::getHTMLForCommand($lastCommand) . '&nbsp;' . implode(', ', $this->savedListParams) . ';';
+				$this->debug[] = implode('', $return[1]);
 				break;
-			case false:
-				break; // exsample: $foo = 'foobar';
-			default:
-				// TODO
-				$return = 'Error! Unknown command "' . htmlspecialchars($this->lastCommand) . '" in ' . __METHOD__;
-				$this->debug[] = $return;
-				\MWDebug::log($return);
+			default :
+				$this->debug[] = is_array($return) ? $return[1] : $return ;
+				break;
 		}
-		$this->popStack();
-		$this->lastParam = null;
 		return $return;
 	}
 
-	private function getHTMLForListParams() {
-		$return = array();
-		foreach ($this->listParams as $value) {
-			$return[] = self::getHTMLForValue($value);
-		}
-		return implode(',&nbsp;', $return);
-	}
-
-	private static function getHTMLForValue($param) {
+	/**
+	 *
+	 * @param RVariable $param
+	 * @return string
+	 */
+	private static function getHTMLForValue( $param) {
+		$value = $param->getValue();
 		$class = false;
-		if( $param === true ) {
+		if( $value === true ) {
 			$class = 'foxway_construct';
-			$param = 'true';
-		}elseif( $param === false ) {
+			$value = 'true';
+		}elseif( $value === false ) {
 			$class = 'foxway_construct';
-			$param = 'false';
-		}elseif( $param === null ) {
+			$value = 'false';
+		}elseif( $value === null ) {
 			$class = 'foxway_construct';
-			$param = 'null';
-		}elseif( is_string($param) ) {
+			$value = 'null';
+		}elseif( is_string($value) ) {
 			$class = 'foxway_string';
-			$param = "'$param'";
-		}elseif( is_numeric($param) ) {
+			$value = "'$value'";
+		}elseif( is_numeric($value) ) {
 			$class = 'foxway_number';
+		}  elseif( is_array($value) ) {
+			if( count($value) <= 3 ) {
+				return var_export($value, true);
+			} else {
+				return 'array';
+			}
+		}
+		if( $class ) {
+			$value = \Html::element('span', array('class'=>$class), $value);
+		} else {
+			$value = strtr( $value, array('&'=>'&amp;', '<'=>'&lt;') );
 		}
 
-		if( $class ) {
-			return \Html::element('span', array('class'=>$class), $param);
+		if( $param instanceof RArray ) {
+			$indexes = array();
+			do {
+				if( $param->getIndex() === null ) {
+					array_unshift( $indexes, '[]' );
+				}elseif( $param->is_set() ) {
+					array_unshift( $indexes, '[' . self::getHTMLForValue( $param->getIndex() ) . ']' );
+				} else {
+					array_unshift( $indexes, \Html::element( 'span', array('class'=>'foxway_undefined'), "[" ) .
+							self::getHTMLForValue( $param->getIndex() ) .
+							\Html::element( 'span', array('class'=>'foxway_undefined'), "]" ) );
+				}
+				$param = $param->getParent();
+			} while ( $param instanceof RArray );
+			return ($param->is_set() ? '' : \Html::element( 'span', array('class'=>'foxway_undefined'), "Undefined " ) ) .
+					\Html::element( 'span', array('class'=>'foxway_variable'), $param->getName() ) .
+					implode('', $indexes) .	"($value)";
+		} elseif( $param instanceof RVariable ) {
+			return ($param->is_set() ? '' : \Html::element( 'span', array('class'=>'foxway_undefined'), "Undefined " ) ) .
+					\Html::element( 'span', array('class'=>'foxway_variable'), $param->getName() ) . "($value)";
 		}
-		return strtr( $param, array('&'=>'&amp;', '<'=>'&lt;') );
+		return $value;
 	}
 
 	private static function getHTMLForCommand($command) {
@@ -199,6 +192,9 @@ class RuntimeDebug extends Runtime {
 				break;
 			case T_IF:
 				$return = \Html::element('span', array('class'=>'foxway_construct'), 'if');
+				break;
+			case T_ARRAY:
+				$return = \Html::element('span', array('class'=>'foxway_construct'), 'array');
 				break;
 			default:
 				$return = $command;
@@ -242,11 +238,14 @@ class RuntimeDebug extends Runtime {
 			case T_SR_EQUAL:// >>=
 				$operator = '>>=';
 				break;
+			case T_DOUBLE_ARROW:// =>
+				$operator = '=>';
+				break;
 			case T_INC:// ++
-				$operator = '++';
+				return '++';
 				break;
 			case T_DEC:// --
-				$operator = '--';
+				return '--';
 				break;
 			case T_IS_SMALLER_OR_EQUAL: // <=
 				$operator = '<=';
