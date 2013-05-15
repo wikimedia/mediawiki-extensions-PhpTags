@@ -44,7 +44,7 @@ class Foxway {
 		$is_debug = isset($args['debug']);
 		$return = '';
 
-		$result = Foxway\Interpreter::run( $input, $is_debug );
+		$result = Foxway\Interpreter::run( $input, $frame->getArguments(), array(), $is_debug );
 
 		foreach ($result as &$value) {
 			if( $value instanceof Foxway\iRawOutput ) {

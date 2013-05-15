@@ -38,12 +38,14 @@ class Debug implements \ArrayAccess, iRawOutput {
     }
 
 	private static function getHTMLbyToken( $token ) {
-		if ( is_string($token) ) {
+		if ( is_array($token) ) {
+			list($id, $t) = $token;
+			$text = strtr( $t, array('&'=>'&amp;', '<'=>'&lt;') );
+			$tokenName = token_name($id);
+		} else {
 			$id = $token;
 			$text = strtr( $id, array('&'=>'&amp;', '<'=>'&lt;') );
-		} else {
-			list($id, $text) = $token;
-			$text = strtr( $text, array('&'=>'&amp;', '<'=>'&lt;') );
+			$tokenName = false;
 		}
 
 		$class = false;
@@ -63,6 +65,7 @@ class Debug implements \ArrayAccess, iRawOutput {
 			case T_ENCAPSED_AND_WHITESPACE:
 				$class = 'foxway_string';
 				break;
+			case T_NUM_STRING:
 			case T_LNUMBER:
 			case T_DNUMBER:
 				$class = 'foxway_number';
@@ -76,13 +79,14 @@ class Debug implements \ArrayAccess, iRawOutput {
 			case T_IF:
 			case T_ELSE:
 			case T_ELSEIF:
+			case T_ARRAY:
 				$class = 'foxway_construct';
 				break;
 			case T_VARIABLE:
 				$class = 'foxway_variable';
 				break;
 			case T_STRING:
-				if( strcasecmp($text, 'true') == 0 || strcasecmp($text, 'false') == 0 ) {
+				if( strcasecmp($text, 'true') == 0 || strcasecmp($text, 'false') == 0 || strcasecmp($text, 'null') == 0) {
 					$class = 'foxway_construct';
 				}
 				break;
@@ -95,11 +99,15 @@ class Debug implements \ArrayAccess, iRawOutput {
 				return '';
 		}
 
+		$attribs = array();
 		if( $class !== false ) {
-			return \Html::rawElement( 'span', array('class'=>$class, 'title'=>token_name($id)), $text );
+			$attribs['class'] = $class;
 		}
-		if( is_array($token) ) {
-			return \Html::rawElement( 'span', array('title'=>token_name($id)), $text );
+		if( $tokenName ) {
+			$attribs['title'] = $tokenName;
+		}
+		if( count($attribs) > 0 ) {
+			return \Html::rawElement( 'span', $attribs, $text );
 		}
 		return $text;
 	}

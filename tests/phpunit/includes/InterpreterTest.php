@@ -37,13 +37,13 @@ class InterpreterTest extends \PHPUnit_Framework_TestCase {
 	public function testRun_echo_parameters_1() {
 		$this->assertEquals(
 				Interpreter::run('echo "Parameter1","Parameter2" , "Parameter3";'),
-				array('Parameter1Parameter2Parameter3')
+				array('Parameter1', 'Parameter2', 'Parameter3')
 				);
 	}
 	public function testRun_echo_parameters_2() {
 		$this->assertEquals(
 				Interpreter::run('echo \'This \', \'string \', \'was \', \'made \', \'with multiple parameters.\';'),
-				array('This string was made with multiple parameters.')
+				array('This ', 'string ', 'was ', 'made ', 'with multiple parameters.')
 				);
 	}
 
@@ -98,7 +98,7 @@ echo "foo is $foo"; // foo is foobar'),
 	public function testRun_echo_variables_6() {
 		$this->assertEquals(
 				Interpreter::run('echo $foo,$bar;'),
-				array('foobarbarbaz')
+				array('foobar', 'barbaz')
 				);
 	}
 	public function testRun_echo_variables_7() {
@@ -128,7 +128,7 @@ echo "foo is $foo"; // foo is foobar'),
 	public function testRun_echo_variables_11() {
 		$this->assertEquals(
 				Interpreter::run('echo "This ", \'string \', "was $foo ", \'with multiple parameters.\';'),
-				array('This string was foobar with multiple parameters.')
+				array('This ', 'string ', 'was foobar ', 'with multiple parameters.')
 				);
 	}
 
@@ -155,7 +155,7 @@ echo "foo is $foo"; // foo is foobar'),
 	public function testRun_echo_math_1() {
 		$this->assertEquals(
 				Interpreter::run('echo \'5 + 5 * 10 = \', 5 + 5 * 10;'),
-				array('5 + 5 * 10 = 55')
+				array('5 + 5 * 10 = ', '55')
 				);
 	}
 	public function testRun_echo_math_2() {
@@ -192,7 +192,7 @@ echo "foo is $foo"; // foo is foobar'),
 	public function testRun_echo_math_params() {
 		$this->assertEquals(
 				Interpreter::run('echo \'10 + 5 * 5 = \', 10 + 5 * 5, "\n\n";'),
-				array("10 + 5 * 5 = 35\n\n")
+				array('10 + 5 * 5 = ', '35', "\n\n")
 				);
 	}
 
@@ -202,15 +202,15 @@ echo "foo is $foo"; // foo is foobar'),
 $foo = 100;
 $bar = \'5\';
 echo "\$foo * \$bar = $foo * $bar = ", $foo * $bar, "\n\n";'),
-				array("\$foo * \$bar = 100 * 5 = 500\n\n")
+				array('$foo * $bar = 100 * 5 = ', '500', "\n\n")
 				);
 		$this->assertEquals(
 				Interpreter::run('echo "\$foo / \$bar = $foo / $bar = ", $foo / $bar, "\n\n";'),
-				array("\$foo / \$bar = 100 / 5 = 20\n\n")
+				array('$foo / $bar = 100 / 5 = ', '20', "\n\n")
 				);
 		$this->assertEquals(
 				Interpreter::run('echo "-\$foo / -\$bar = {-$foo} / {-$bar} = ", -$foo / -$bar, "\n\n";'),
-				array("-\$foo / -\$bar = {-100} / {-5} = 20\n\n")
+				array('-$foo / -$bar = {-100} / {-5} = ', '20', "\n\n")
 				);
 	}
 
@@ -345,7 +345,7 @@ echo "\$foo * \$bar = $foo * $bar = ", $foo * $bar, "\n\n";'),
 	public function testRun_echo_math_Increment_1() {
 		$this->assertEquals(
 				Interpreter::run('$a = 10; echo $a++, $a, ++$a;'),
-				array('101112')
+				array('10', '11', '12')
 				);
 	}
 	public function testRun_echo_math_Increment_2() {
@@ -361,13 +361,13 @@ $a = 10;
 $a++;
 ++$a;
 echo "$a, ", $a++ + -5, ", " . ++$a, ", $a.";'),
-				array('12, 7, 14, 14.')
+				array('12, ', '7', ', 14', ', 14.')
 				);
 	}
 	public function testRun_echo_math_Decrement_1() {
 		$this->assertEquals(
 				Interpreter::run('$a = 10; echo $a--, $a, --$a;'),
-				array('1098')
+				array('10', '9', '8')
 				);
 	}
 	public function testRun_echo_math_Decrement_2() {
@@ -377,7 +377,7 @@ $a = 10;
 $a--;
 --$a;
 echo "$a, ", $a-- + -5, ", " . --$a, ", $a.";'),
-				array('8, 3, 6, 6.')
+				array('8, ', '3', ', 6', ', 6.')
 				);
 	}
 
@@ -424,13 +424,13 @@ echo "$a, ", $a-- + -5, ", " . --$a, ", $a.";'),
 	public function testRun_echo_parentheses_7() {
 		$this->assertEquals(
 				Interpreter::run('echo("hello "), $foo;'),
-				array('hello foo')
+				array('hello ', 'foo')
 				);
 	}
 	public function testRun_echo_parentheses_8() {
 		$this->assertEquals(
 				Interpreter::run('echo ($foo), (" is "), $foo;'),
-				array('foo is foo')
+				array('foo', ' is ', 'foo')
 				);
 	}
 
@@ -691,6 +691,12 @@ if ( ((74+4)*(4+6)+88)*4 ) echo "!!!";'),
 				array('hello', 'world', '!!!')
 				);
 	}
+	public function testRun_echo_if_simple_4() {
+		$this->assertEquals(
+				Interpreter::run('if ( true ) { echo "true"; } $bar = "BAR";'),
+				array('true')
+				);
+	}
 	public function testRun_echo_if_else_simple_1() {
 		$this->assertEquals(
 				Interpreter::run('if ( true ) echo "true"; else echo "false";'),
@@ -824,6 +830,159 @@ if ( $foo + $bar ) echo "\$foo + \$bar";'),
 		$this->assertEquals(
 				Interpreter::run('if( false ) { echo "*"; echo "one"; } elseif( false ) { echo "*"; echo "two"; } else { echo "*"; echo "three"; }'),
 				array('*', 'three')
+				);
+	}
+
+	public function testRun_echo_assignment_1() {
+		$this->assertEquals(
+				Interpreter::run('echo $foo = 1;'),
+				array('1')
+				);
+	}
+	public function testRun_echo_assignment_2() {
+		$this->assertEquals(
+				Interpreter::run('echo $foo = 1 + 2;'),
+				array('3')
+				);
+	}
+	public function testRun_echo_assignment_3() {
+		$this->assertEquals(
+				Interpreter::run('$foo=1; echo $foo += 2;'),
+				array('3')
+				);
+	}
+	public function testRun_echo_assignment_4() {
+		$this->assertEquals(
+				Interpreter::run('$foo=1; echo $foo += 2 + 3;'),
+				array('6')
+				);
+	}/*
+	public function testRun_echo_assignment_5() {
+		$this->assertEquals(
+				Interpreter::run('echo $bar = $foo = 1, $foo, $bar;'),
+				array('1', '1', '1')
+				);
+	}*/
+	public function testRun_echo_assignment_6() {
+		$this->assertEquals(
+				Interpreter::run('$foo=1; $bar=2; $foo+=$bar; echo $foo,$bar;'),
+				array('3', '2')
+				);
+	}
+
+	public function testRun_echo_array_1() {
+		$this->assertEquals(
+				Interpreter::run('$foo=array( 5 ); echo $foo[0];'),
+				array('5')
+				);
+	}
+	public function testRun_echo_array_2() {
+		$this->assertEquals(
+				Interpreter::run('$foo=array( 5, ); echo $foo[0];'),
+				array('5')
+				);
+	}
+	public function testRun_echo_array_3() {
+		$this->assertEquals(
+				Interpreter::run('$foo=array( 5, 6, 7 ); echo $foo[0],$foo[1],$foo[2];'),
+				array('5', '6', '7')
+				);
+	}
+	public function testRun_echo_array_4() {
+		$this->assertEquals(
+				Interpreter::run('$bar="BAR"; $foo=array( 5, 6, $bar ); echo $foo[0],$foo[1],$foo[2];'),
+				array('5', '6', 'BAR')
+				);
+	}
+	public function testRun_echo_array_5() {
+		$this->assertEquals(
+				Interpreter::run('$foo="FOO"; $foo=array( 5, 6, $foo ); echo $foo[0],$foo[1],$foo[2];'),
+				array('5', '6', 'FOO')
+				);
+	}
+	public function testRun_echo_array_6() {
+		$this->assertEquals(
+				Interpreter::run('$foo=1; $foo=array($foo++,$foo,++$foo); echo $foo[0],$foo[1],$foo[2];'),
+				array('1', '2', '3')
+				);
+	}
+	public function testRun_echo_array_7() {
+		$this->assertEquals(
+				Interpreter::run('$foo=array(); $foo[5]=5; $foo[6]=6; $foo[7]=7; echo $foo[5],$foo[6],$foo[7];'),
+				array('5', '6', '7')
+				);
+	}
+	public function testRun_echo_array_8() {
+		$this->assertEquals(
+				Interpreter::run('$foo=array(); $foo[]=5; $foo[]=6; $foo[]=7; echo $foo[0],$foo[1],$foo[2];'),
+				array('5', '6', '7')
+				);
+	}
+	public function testRun_echo_array_9() {
+		$this->assertEquals(
+				Interpreter::run('$foo=array(); $foo[50]=5; $foo[]=6; $foo[]=7; echo $foo[50],$foo[51],$foo[52];'),
+				array('5', '6', '7')
+				);
+	}
+	public function testRun_echo_array_10() {
+		$this->assertEquals(
+				Interpreter::run('$foo=(array)"this is string"; echo $foo[0];'),
+				array('this is string')
+				);
+	}
+	public function testRun_echo_array_11() {
+		$this->assertEquals(
+				Interpreter::run('$foo=(array)5; echo $foo[0], "*".$foo[0]."*", "*$foo[0]*", "*{$foo[0]}*";'),
+				array('5', '*5*', '*5*', '*5*')
+				);
+	}
+	public function testRun_echo_array_double_arrow_1() {
+		$this->assertEquals(
+				Interpreter::run('$bar="BAR"; $foo=array( $bar => $bar ); echo $foo[$bar];'),
+				array('BAR')
+				);
+	}
+	public function testRun_echo_array_double_arrow_2() {
+		$this->assertEquals(
+				Interpreter::run('$bar = "BAR"; $foo=array( 5 => 5, $bar => $bar, "string" => "string" ); echo "*$foo[5]*"; echo "*$foo[$bar]*"; echo "*{$foo["string"]}*";'),
+				array('*5*', '*BAR*', '*string*')
+				);
+	}
+
+	public function testRun_echo_empty_array_push_1() {
+		$this->assertEquals(
+				Interpreter::run('$foo=array(); $foo[]+=5; $foo[]-=6; $foo[].=7; echo $foo[0],$foo[1],$foo[2];'),
+				array('5', '-6', '7')
+				);
+	}
+	public function testRun_echo_empty_array_push_2() {
+		$this->assertEquals(
+				Interpreter::run('$foo=array(); $foo[]+="5"; $foo[]-="6"; $foo[].="7"; echo $foo[0],$foo[1],$foo[2];'),
+				array('5', '-6', '7')
+				);
+	}
+	public function testRun_echo_empty_array_push_3() {
+		$this->assertEquals(
+				Interpreter::run('$foo=array(); $foo[]+="v"; $foo[]-="b"; $foo[].="n"; echo $foo[0],$foo[1],$foo[2];'),
+				array('0', '0', 'n')
+				);
+	}
+	public function testRun_echo_empty_array_push_4() {
+		$this->assertEquals(
+				Interpreter::run('$foo=array(); $foo[]*=5; $foo[]/=6; $foo[]%=7; $foo[]&=8; echo $foo[0],$foo[1],$foo[2],$foo[3];'),
+				array('0', '0', '0', '0')
+				);
+	}
+	public function testRun_echo_empty_array_push_5() {
+		$this->assertEquals(
+				Interpreter::run('$foo=array(); $foo[]*="v"; $foo[]/="b"; $foo[]%="n"; $foo[]&="m"; echo $foo[0],$foo[1],$foo[2],$foo[3];'),
+				array('0', '', '', '0')
+				);
+	}
+	public function testRun_echo_empty_array_push_6() {
+		$this->assertEquals(
+				Interpreter::run('$foo=array(); $foo[]|=5; $foo[]^=6; $foo[]<<=7; $foo[]>>=8; echo $foo[0],$foo[1],$foo[2],$foo[3];'),
+				array('5', '6', '0', '0')
 				);
 	}
 
