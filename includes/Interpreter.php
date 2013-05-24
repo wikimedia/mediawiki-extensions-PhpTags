@@ -107,7 +107,7 @@ class Interpreter {
 		T_SR_EQUAL,
 	);
 
-	public static function run($source, array $args=array(), array $predefinedVariables=array(), $is_debug=false) {
+	public static function run($source, array $args=array(), $is_debug=false) {
 		$tokens = self::getTokens($source);
 
 		$return = array();
@@ -123,9 +123,9 @@ class Interpreter {
 		$tokenLine = 1;
 
 		if( $debug ) {
-			$runtime = new RuntimeDebug( $args, $predefinedVariables );
+			$runtime = new RuntimeDebug( $args );
 		} else {
-			$runtime = new Runtime( $args, $predefinedVariables );
+			$runtime = new Runtime( $args );
 		}
 
 		$operators = $runtime->getOperators();
@@ -300,9 +300,7 @@ class Interpreter {
 						$parenthesFlags |= FOXWAY_NEED_CONCATENATION_OPERATOR;
 					}
 					$runtime->addParamValue( self::process_slashes($text, false) );
-					if( $parenthesFlags & FOXWAY_EXPECT_QUOTES_CLOSE ) {
-						$expected[] = '"'; //TODO check it
-					}
+					$expected = array(T_ENCAPSED_AND_WHITESPACE, T_CURLY_OPEN, T_VARIABLE, '"');
 					break;
 				case T_VARIABLE:
 					if( $expected && in_array(T_VARIABLE, $expected) ) {
@@ -578,6 +576,9 @@ class Interpreter {
 					$expected[] = '[';
 					if( $parenthesFlags & FOXWAY_ALLOW_ASSIGMENT ) {
 						$expected = array_merge( $expected, self::$assigmentOperators );
+					}
+					if( $parenthesFlags & FOXWAY_EXPECT_QUOTES_CLOSE ) {
+						$expected[] = '"';
 					}
 					break;
 				case ',':

@@ -27,7 +27,7 @@ class Foxway {
 		switch ($action) {
 			case 'set':
 				$matches = array();
-				if( preg_match('/^\s*([^=]+)\s*=\s*(.+)\s*$/si', $params[1], &$matches) ) {
+				if( preg_match('/^\s*([^=]+)\s*=\s*(.+)\s*$/si', $params[1], $matches) ) {
 				$propertyName = $matches[1];
 				$propertyValue = $matches[2];
 				return \Foxway\ORM::SetProperty($propertyName, $propertyValue);
@@ -44,7 +44,11 @@ class Foxway {
 		$is_debug = isset($args['debug']);
 		$return = '';
 
-		$result = Foxway\Interpreter::run( $input, $frame->getArguments(), array(), $is_debug );
+		$result = Foxway\Interpreter::run(
+				$input,
+				array_merge((array)$frame->getTitle()->getPrefixedText(),$frame->getArguments()),
+				$is_debug
+			);
 
 		foreach ($result as &$value) {
 			if( $value instanceof Foxway\iRawOutput ) {

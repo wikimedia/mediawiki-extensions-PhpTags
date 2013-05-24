@@ -986,4 +986,29 @@ if ( $foo + $bar ) echo "\$foo + \$bar";'),
 				);
 	}
 
+	public function testRun_echo_array_string_1() {
+		$this->assertEquals(
+				Interpreter::run('$foo=array(5,6,7); echo "$foo[0]";'),
+				array('5')
+				);
+	}
+	public function testRun_echo_array_string_2() {
+		$this->assertEquals(
+				Interpreter::run('echo "start $foo[0]";'),
+				array('start 5')
+				);
+	}
+	public function testRun_echo_array_string_3() {
+		$this->assertEquals(
+				Interpreter::run('echo "start $foo[0] end";'),
+				array('start 5 end')
+				);
+	}
+	public function testRun_echo_array_string_4() {
+		$this->assertEquals(
+				Interpreter::run('echo "start $foo[0] middle $foo[1] end";'),
+				array('start 5 middle 6 end')
+				);
+	}
+
 }

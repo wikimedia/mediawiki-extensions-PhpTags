@@ -30,6 +30,7 @@ class Runtime {
 
 	protected $stack = array();
 	protected static $variables = array();
+	protected $thisVariables;
 
 	// @see http://www.php.net/manual/ru/language.operators.precedence.php
 	protected static $operatorsPrecedence = array(
@@ -60,8 +61,15 @@ class Runtime {
 	);
 	private $countPrecedences;
 
-	public function __construct( array $args, array $predefinedVariables ) {
+	public function __construct( array $args ) {
 		$this->args = $args;
+		$scope = isset($args[0]) ? $args[0] : '';
+		if( !isset(self::$variables[$scope]) ) {
+			self::$variables[$scope] = array();
+		}
+		$this->thisVariables = &self::$variables[$scope];
+		$this->thisVariables['$argv'] = $args;
+		$this->thisVariables['$argc'] = count($args);
 		$this->countPrecedences = count(self::$operatorsPrecedence)-1;
 	}
 
@@ -119,7 +127,7 @@ class Runtime {
 	}
 
 	public function addParamVariable( $variable ) {
-		$this->addParam( new RVariable($variable, self::$variables) );
+		$this->addParam( new RVariable($variable, $this->thisVariables) );
 	}
 
 	public function addParamValue( $value ) {
