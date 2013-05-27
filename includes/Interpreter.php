@@ -107,7 +107,7 @@ class Interpreter {
 		T_SR_EQUAL,
 	);
 
-	public static function run($source, array $args=array(), $is_debug=false) {
+	public static function run($source, array $args=array(), $scope='', $is_debug=false) {
 		$tokens = self::getTokens($source);
 
 		$return = array();
@@ -123,9 +123,9 @@ class Interpreter {
 		$tokenLine = 1;
 
 		if( $debug ) {
-			$runtime = new RuntimeDebug( $args );
+			$runtime = new RuntimeDebug( $args, $scope );
 		} else {
-			$runtime = new Runtime( $args );
+			$runtime = new Runtime( $args, $scope );
 		}
 
 		$operators = $runtime->getOperators();

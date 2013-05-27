@@ -9,7 +9,6 @@ namespace Foxway;
  * @licence GNU General Public Licence 2.0 or later
  */
 class Runtime {
-	protected $args;
 
 	protected $lastCommand = false;
 
@@ -31,6 +30,8 @@ class Runtime {
 	protected $stack = array();
 	protected static $variables = array();
 	protected $thisVariables;
+	protected $args;
+	protected $scope;
 
 	// @see http://www.php.net/manual/ru/language.operators.precedence.php
 	protected static $operatorsPrecedence = array(
@@ -61,9 +62,8 @@ class Runtime {
 	);
 	private $countPrecedences;
 
-	public function __construct( array $args ) {
+	public function __construct( array $args, $scope ) {
 		$this->args = $args;
-		$scope = isset($args[0]) ? $args[0] : '';
 		if( !isset(self::$variables[$scope]) ) {
 			self::$variables[$scope] = array();
 		}

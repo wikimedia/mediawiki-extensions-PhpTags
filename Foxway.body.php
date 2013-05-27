@@ -9,6 +9,8 @@
  */
 class Foxway {
 
+	static $frames=array();
+
 	/**
 	 * Render function used in hook ParserFirstCallInit
 	 *
@@ -47,6 +49,7 @@ class Foxway {
 		$result = Foxway\Interpreter::run(
 				$input,
 				array_merge((array)$frame->getTitle()->getPrefixedText(),$frame->getArguments()),
+				self::getScope($frame),
 				$is_debug
 			);
 
@@ -86,5 +89,16 @@ class Foxway {
 		$parser->mMarkerIndex++;
 		$parser->mStripState->addNoWiki( $rnd, $text );
 		return $rnd;
+	}
+
+	private static function getScope(PPFrame $frame) {
+		foreach (self::$frames as $value) {
+			if( $value[0] === $frame ) {
+				return $value[1];
+			}
+		}
+		$scope=count(self::$frames);
+		self::$frames[] = array($frame, $scope);
+		return $scope;
 	}
 }
