@@ -1011,4 +1011,47 @@ if ( $foo + $bar ) echo "\$foo + \$bar";'),
 				);
 	}
 
+	/**
+	 * Test static variable $stat in testTemplate
+	 */
+	public function testRun_echo_scope_static_1() {
+		// start testScope
+		$this->assertEquals(
+				Interpreter::run('$foo = "local foo variable from testScope";', array('testScope'), 0),
+				array()
+				);
+		// {{testTemplate|HELLO!}}
+		$this->assertEquals(
+				Interpreter::run('
+$foo = $argv[1];
+static $stat = 0;
+$bar++; $stat++;
+echo $foo, $argv[0], $argc, $bar, $stat, $argv["test"];', array('testTemplate', 'HELLO!'), 1),
+				array('HELLO!', 'testTemplate', 2, 1, 1, null)
+				);
+		// {{testTemplate|HELLO!|test="TEST!!!"}}
+		$this->assertEquals(
+				Interpreter::run('
+$foo = $argv[1];
+static $stat = 0;
+$bar++; $stat++;
+echo $foo, $argv[0], $argc, $bar, $stat, $argv["test"];', array('testTemplate', 'HELLO!', 'test'=>'TEST!!!'), 2),
+				array('HELLO!', 'testTemplate', 3, 1, 2, 'TEST!!!')
+				);
+		// {{testTemplate|HELLO!}}
+		$this->assertEquals(
+				Interpreter::run('
+$foo = $argv[1];
+static $stat = 0;
+$bar++; $stat++;
+echo $foo, $argv[0], $argc, $bar, $stat, $argv["test"];', array('testTemplate', 'HELLO!'), 3),
+				array('HELLO!', 'testTemplate', 2, 1, 3, null)
+				);
+		// end testScope
+		$this->assertEquals(
+				Interpreter::run('echo $foo;', array('testScope'), 0),
+				array('local foo variable from testScope')
+				);
+	}
+
 }

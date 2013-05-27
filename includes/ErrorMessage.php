@@ -7,21 +7,34 @@ namespace Foxway;
  * @ingroup Foxway
  * @author Pavel Astakhov <pastakhov@yandex.ru>
  * @licence GNU General Public Licence 2.0 or later
- *
- * @property-read int $type Type of error
- * @property-read mixed $params Params of error
  */
 class ErrorMessage implements iRawOutput {
-	private $line;
-	private $tokenLine;
-	private $type;
-	private $params;
+	/**
+	 * __LINE__ of source code returned error
+	 * @var int
+	 */
+	public $line;
+	/**
+	 * line parser source code that contains the error
+	 * @var int
+	 */
+	public $tokenLine;
+	/**
+	 * Type of error
+	 * @var int
+	 */
+	public $type;
+	/**
+	 * Params of error
+	 * @var mixed
+	 */
+	public $params;
 	private $caller;
 
 	public function __construct( $line, $tokenLine, $type, $params ) {
 		$this->line = $line;
-		$this->type = $type;
 		$this->tokenLine = $tokenLine;
+		$this->type = $type;
 		$this->params = $params;
 		$this->caller = wfGetCaller();
 
@@ -34,17 +47,6 @@ class ErrorMessage implements iRawOutput {
 				array( 'class' => 'error', 'title' => 'Report from ' .htmlspecialchars($this->caller). 'line '.htmlspecialchars($this->line) ), // TODO wfMessage
 				$this->getMessage()
 				);
-	}
-
-	public function __get($name) {
-		switch ($name) {
-			case 'type':
-				return $this->type;
-				break;
-			case 'params':
-				return $this->params;
-				break;
-		}
 	}
 
 	public function getMessage() {

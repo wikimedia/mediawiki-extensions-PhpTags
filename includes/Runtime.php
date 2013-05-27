@@ -29,6 +29,7 @@ class Runtime {
 
 	protected $stack = array();
 	protected static $variables = array();
+	protected static $staticVariables = array();
 	protected $thisVariables;
 	protected $args;
 	protected $scope;
@@ -126,8 +127,32 @@ class Runtime {
 		$this->lastCommand = $name;
 	}
 
-	public function addParamVariable( $variable ) {
+	/**
+	 *
+	 * @param string $variable Variable name
+	 * @param integer $scope Variable scope (default, static, global)
+	 * @return boolean Normally return true, false for already initialized static variables
+	 */
+	public function addParamVariable( $variable, $scope = T_VARIABLE ) {
+		$return = true;
+		switch ($scope) {
+			case T_STATIC:
+				if( isset($this->thisVariables[$variable]) ) {
+					return new ErrorMessage(__LINE__, null, E_PARSE, T_STATIC);
+				}
+				$args0 = isset($this->args[0]) ? $this->args[0] : '';
+				if( !isset(self::$staticVariables[$args0]) ) {
+					self::$staticVariables[$args0] = array();
+				}
+				if( !isset(self::$staticVariables[$args0][$variable]) ) {
+					self::$staticVariables[$args0][$variable] = null;
+				}else{
+					$return = false;
+				}
+				$this->thisVariables[$variable] = &self::$staticVariables[$args0][$variable];
+		}
 		$this->addParam( new RVariable($variable, $this->thisVariables) );
+		return $return;
 	}
 
 	public function addParamValue( $value ) {

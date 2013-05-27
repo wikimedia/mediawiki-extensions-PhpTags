@@ -80,6 +80,7 @@ class Debug implements \ArrayAccess, iRawOutput {
 			case T_ELSE:
 			case T_ELSEIF:
 			case T_ARRAY:
+			case T_STATIC:
 				$class = 'foxway_construct';
 				break;
 			case T_VARIABLE:

@@ -21,6 +21,7 @@ define( 'FOXWAY_ALLOW_ASSIGMENT', 1 << 11 );
 define( 'FOXWAY_EXPECT_PARENTHES_WITH_DOUBLE_ARROW', 1 << 12 );
 define( 'FOXWAY_ALLOW_DOUBLE_ARROW', 1 << 13 );
 define( 'FOXWAY_NEED_CONCATENATION_OPERATOR', 1 << 14 );
+define( 'FOXWAY_EXPECT_STATIC_VARIABLE', 1 << 15 );
 
 /**
  * Interpreter class of Foxway extension.
@@ -155,6 +156,9 @@ class Interpreter {
 					$commandResult = $runtime->getCommandResult();
 					break;
 				case ',':
+					if( $parenthesFlags & FOXWAY_EXPECT_STATIC_VARIABLE ) {
+						continue;
+					}
 					if ( !($parenthesFlags & FOXWAY_EXPECT_LIST_PARAMS) ) {
 						$return[] = new ErrorMessage(__LINE__, $tokenLine, E_PARSE, $id);
 						break 2;
@@ -306,6 +310,32 @@ class Interpreter {
 					if( $expected && in_array(T_VARIABLE, $expected) ) {
 						if( $parenthesFlags & FOXWAY_EXPECT_CURLY_CLOSE ) {
 							$expected = array( '}' );
+						} elseif( $parenthesFlags & FOXWAY_EXPECT_STATIC_VARIABLE ) {
+							$r = $runtime->addParamVariable($text, T_STATIC);
+							if( $r instanceof ErrorMessage ) {
+								$r->tokenLine = $tokenLine;
+								$return[] = $r;
+								break 2;
+							}
+							if( $r === false ) {
+								$count = count($tokens);
+								for( ; $index < $count; $index++ ) { // skip already initialized static variable;
+									switch ($tokens[$index]) {
+									   case ',':
+										   $expected = array(T_VARIABLE);
+										   continue 3;
+									   case ';':
+										   $index--;
+										   $expected = array(';');
+										   continue 3;
+								   }
+								}
+								$return[] = new ErrorMessage(__LINE__, $tokenLine, E_PARSE, '$end');
+								break 2;
+							} else {
+								$expected = array( '=', ',', ';' );
+							}
+							continue;
 						} else {
 							$expected = array_merge( self::$arrayOperators,	self::$assigmentOperators );
 							$parenthesFlags |= FOXWAY_ALLOW_ASSIGMENT;
@@ -479,7 +509,6 @@ class Interpreter {
 					// break is not necessary here
 				case T_ECHO:
 				case ',':
-				case '=':
 				case T_CONCAT_EQUAL:	// .=
 				case T_PLUS_EQUAL:		// +=
 				case T_MINUS_EQUAL:		// -=
@@ -514,6 +543,13 @@ class Interpreter {
 				case '?':
 				case '[':
 					$expected = self::$arrayParams;
+					break;
+				case '=':
+					if( $parenthesFlags & FOXWAY_EXPECT_STATIC_VARIABLE ) {
+						$expected = array( T_CONSTANT_ENCAPSED_STRING, T_LNUMBER, T_DNUMBER ); // static and global variables
+					}else{
+						$expected = self::$arrayParams;
+					}
 					break;
 				case ':':
 					$expected = self::$arrayParams;
@@ -551,6 +587,10 @@ class Interpreter {
 					break;
 				case '{':
 					$curlyLever++;
+					break;
+				case T_STATIC:
+					$parenthesFlags |= FOXWAY_EXPECT_STATIC_VARIABLE;
+					$expected = array(T_VARIABLE);
 					break;
 			}
 
