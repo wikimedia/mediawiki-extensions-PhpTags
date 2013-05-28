@@ -30,6 +30,7 @@ class Runtime {
 	protected $stack = array();
 	protected static $variables = array();
 	protected static $staticVariables = array();
+	protected static $globalVariables = array();
 	protected $thisVariables;
 	protected $args;
 	protected $scope;
@@ -69,8 +70,9 @@ class Runtime {
 			self::$variables[$scope] = array();
 		}
 		$this->thisVariables = &self::$variables[$scope];
-		$this->thisVariables['$argv'] = $args;
-		$this->thisVariables['$argc'] = count($args);
+		$this->thisVariables['argv'] = $args;
+		$this->thisVariables['argc'] = count($args);
+		$this->thisVariables['GLOBALS'] = &self::$globalVariables;
 		$this->countPrecedences = count(self::$operatorsPrecedence)-1;
 	}
 
@@ -135,6 +137,8 @@ class Runtime {
 	 */
 	public function addParamVariable( $variable, $scope = T_VARIABLE ) {
 		$return = true;
+		$variable = substr($variable, 1);
+
 		switch ($scope) {
 			case T_STATIC:
 				if( isset($this->thisVariables[$variable]) ) {
@@ -150,8 +154,17 @@ class Runtime {
 					$return = false;
 				}
 				$this->thisVariables[$variable] = &self::$staticVariables[$args0][$variable];
+				break;
+			case T_GLOBAL:
+				if( !isset(self::$globalVariables[$variable]) ) {
+					self::$globalVariables[$variable] = null;
+				}
+				$this->thisVariables[$variable] = &self::$globalVariables[$variable];
+				return $return;
+				break;
 		}
 		$this->addParam( new RVariable($variable, $this->thisVariables) );
+
 		return $return;
 	}
 
@@ -426,7 +439,9 @@ class Runtime {
 
 	// Remember the child class RuntimeDebug
 	public function getCommandResult( ) {
-		$this->addOperator(',');
+		if( $this->lastParam !== null ) {
+			$this->addOperator(',');
+		}
 		$return = null;
 
 		// Remember the child class RuntimeDebug

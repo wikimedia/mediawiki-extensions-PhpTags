@@ -22,6 +22,7 @@ define( 'FOXWAY_EXPECT_PARENTHES_WITH_DOUBLE_ARROW', 1 << 12 );
 define( 'FOXWAY_ALLOW_DOUBLE_ARROW', 1 << 13 );
 define( 'FOXWAY_NEED_CONCATENATION_OPERATOR', 1 << 14 );
 define( 'FOXWAY_EXPECT_STATIC_VARIABLE', 1 << 15 );
+define( 'FOXWAY_EXPECT_GLOBAL_VARIABLE', 1 << 16 );
 
 /**
  * Interpreter class of Foxway extension.
@@ -156,7 +157,7 @@ class Interpreter {
 					$commandResult = $runtime->getCommandResult();
 					break;
 				case ',':
-					if( $parenthesFlags & FOXWAY_EXPECT_STATIC_VARIABLE ) {
+					if( $parenthesFlags & (FOXWAY_EXPECT_STATIC_VARIABLE|FOXWAY_EXPECT_GLOBAL_VARIABLE) ) {
 						continue;
 					}
 					if ( !($parenthesFlags & FOXWAY_EXPECT_LIST_PARAMS) ) {
@@ -310,6 +311,10 @@ class Interpreter {
 					if( $expected && in_array(T_VARIABLE, $expected) ) {
 						if( $parenthesFlags & FOXWAY_EXPECT_CURLY_CLOSE ) {
 							$expected = array( '}' );
+						} elseif( $parenthesFlags & FOXWAY_EXPECT_GLOBAL_VARIABLE ) {
+							$runtime->addParamVariable($text, T_GLOBAL);
+							$expected = array( ',', ';' );
+							continue;
 						} elseif( $parenthesFlags & FOXWAY_EXPECT_STATIC_VARIABLE ) {
 							$r = $runtime->addParamVariable($text, T_STATIC);
 							if( $r instanceof ErrorMessage ) {
@@ -590,6 +595,10 @@ class Interpreter {
 					break;
 				case T_STATIC:
 					$parenthesFlags |= FOXWAY_EXPECT_STATIC_VARIABLE;
+					$expected = array(T_VARIABLE);
+					break;
+				case T_GLOBAL:
+					$parenthesFlags |= FOXWAY_EXPECT_GLOBAL_VARIABLE;
 					$expected = array(T_VARIABLE);
 					break;
 			}

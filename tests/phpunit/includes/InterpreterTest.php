@@ -1054,4 +1054,35 @@ echo $foo, $argv[0], $argc, $bar, $stat, $argv["test"];', array('testTemplate', 
 				);
 	}
 
+	/**
+	 * Test global variable $glob
+	 */
+	public function testRun_echo_scope_static_2() {
+		// start testScope
+		$this->assertEquals(
+				Interpreter::run('global $glob; $glob=1000;', array('testScope'), 0),
+				array()
+				);
+		// {{testTemplate}}
+		$this->assertEquals(
+				Interpreter::run('global $glob; echo ++$glob;', array('testTemplate'), 1),
+				array('1001')
+				);
+		// {{testTemplate}}
+		$this->assertEquals(
+				Interpreter::run('global $glob; echo ++$glob;', array('testTemplate'), 2),
+				array('1002')
+				);
+		// {{testTemplateGLOBAL}}
+		$this->assertEquals(
+				Interpreter::run('echo ++$GLOBALS["glob"];', array('testTemplateGLOBAL'), 3),
+				array('1003')
+				);
+		// end testScope
+		$this->assertEquals(
+				Interpreter::run('echo $glob;', array('testScope'), 0),
+				array('1003')
+				);
+	}
+
 }
