@@ -82,7 +82,7 @@ $messages['ja'] = array(
  */
 $messages['ksh'] = array(
 	'foxway-desc' => 'Määd_et möjjelesch, objägg_orrejänteerde Daat faßzehallde un brängg_en eije Ömjävong met sesch, öm <i lang="en">PHP</i>-Projramme loufe ze lohße.',
-	'foxway-php-syntax-error-unexpected' => 'Ene <i lang="en">PHP</i>-Projrammfähler wood jevonge: e „$1“ es en däm Projramm en dä Reih $2, woh mer dat nit äwaade deiht.', # Fuzzy
+	'foxway-php-syntax-error-unexpected' => 'Ene <i lang="en">PHP</i>-Projrammfähler wood jevonge: e „$1“ es en däm Projramm en dä Reih $2, woh mer dat nit äwaade deiht.',
 );
 
 /** Luxembourgish (Lëtzebuergesch)
