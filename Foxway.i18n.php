@@ -27,6 +27,14 @@ $messages['qqq'] = array(
 * $2 - the line number where the error occurred',
 );
 
+/** Asturian (asturianu)
+ * @author Xuacu
+ */
+$messages['ast'] = array(
+	'foxway-desc' => "Permite guardar un datu orientáu a oxetos y prepara'l so propiu tiempu d'execución pal códigu PHP de les páxines",
+	'foxway-php-syntax-error-unexpected' => 'Error d\'análisis PHP: Error de sintaxis, "$1" inesperáu nel códigu de la llinia de comandos na llinia $2.',
+);
+
 /** German (Deutsch)
  * @author HvW
  * @author Metalhead64
@@ -75,6 +83,13 @@ $messages['ja'] = array(
 $messages['ksh'] = array(
 	'foxway-desc' => 'Määd_et möjjelesch, objägg_orrejänteerde Daat faßzehallde un brängg_en eije Ömjävong met sesch, öm <i lang="en">PHP</i>-Projramme loufe ze lohße.',
 	'foxway-php-syntax-error-unexpected' => 'Ene <i lang="en">PHP</i>-Projrammfähler wood jevonge: e „$1“ es en däm Projramm en dä Reih $2, woh mer dat nit äwaade deiht.', # Fuzzy
+);
+
+/** Luxembourgish (Lëtzebuergesch)
+ * @author Robby
+ */
+$messages['lb'] = array(
+	'foxway-php-syntax-error-unexpected' => 'PHP-Parser-Feeler:Syntaxfeeler, onerwaarte(n) $1 am Code vun der Programmatiounszeil $2.',
 );
 
 /** Macedonian (македонски)
