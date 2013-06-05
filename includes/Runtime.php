@@ -11,6 +11,7 @@ namespace Foxway;
 class Runtime {
 
 	protected $lastCommand = false;
+	protected $passByReference = 0;
 
 	/**
 	 *
@@ -38,8 +39,8 @@ class Runtime {
 	// @see http://www.php.net/manual/ru/language.operators.precedence.php
 	protected static $operatorsPrecedence = array(
 		//array('['),
-		//		++		--		(int)			(float)		(string)		(array)		(bool)
-		array(T_INC, T_DEC, '~', T_INT_CAST, T_DOUBLE_CAST, T_STRING_CAST, T_ARRAY_CAST, T_BOOL_CAST),
+		//		++		--		(int)			(float)		(string)		(array)		(bool)			(unset)
+		array(T_INC, T_DEC, '~', T_INT_CAST, T_DOUBLE_CAST, T_STRING_CAST, T_ARRAY_CAST, T_BOOL_CAST, T_UNSET_CAST),
 		array('!'),
 		array('*', '/', '%'),
 		array('+', '-', '.'),
@@ -98,7 +99,7 @@ class Runtime {
 	}
 
 	protected function pushStack() {
-		$this->stack[] = array($this->lastCommand, $this->listParams, $this->lastOperator, $this->variableOperator, $this->mathMemory);
+		$this->stack[] = array($this->lastCommand, $this->passByReference, $this->listParams, $this->lastOperator, $this->variableOperator, $this->mathMemory);
 		$this->resetRegisters();
 	}
 
@@ -106,12 +107,13 @@ class Runtime {
 		if( count($this->stack) == 0 ) {
 			$this->resetRegisters();
 		} else {
-			list($this->lastCommand, $this->listParams, $this->lastOperator, $this->variableOperator, $this->mathMemory) = array_pop($this->stack);
+			list($this->lastCommand, $this->passByReference, $this->listParams, $this->lastOperator, $this->variableOperator, $this->mathMemory) = array_pop($this->stack);
 		}
 	}
 
 	protected function resetRegisters() {
 		$this->lastCommand = false;
+		$this->passByReference = 0;
 		$this->lastParam = null;
 		$this->listParams = array();
 		$this->lastOperator = false;
@@ -182,19 +184,34 @@ class Runtime {
 	}
 
 	protected function parenthesesOpen() {
+		global $wgFoxwayPassByReference;
+
 		if( $this->lastOperator ) {
 			$precedence = $this->getOperatorPrecedence( $this->lastOperator );
 			$this->mathMemory[$precedence] = array($this->lastOperator, $this->lastParam);
 			$this->lastOperator = false;
 		}
+
+		$lastCommand = $this->lastCommand;
 		$this->pushStack();
+		if( is_scalar($lastCommand) && isset($wgFoxwayPassByReference[$lastCommand]) ) {
+			$this->passByReference = $wgFoxwayPassByReference[$lastCommand];
+		}
+
 	}
 
 	protected function parenthesesClose() {
 		$this->doMath();
 		if( count($this->listParams) ) {
 			if( $this->lastParam instanceof RValue ) {
-				$this->listParams[] = $this->lastParam->getValue();
+				if( $this->passByReference & 1 ) {
+					$this->listParams[] = $this->lastParam;
+				}else{
+					$this->listParams[] = $this->lastParam->getValue();
+				}
+				if( $this->passByReference > 0 ) {
+					$this->passByReference <<= 1;
+				}
 			}
 			$this->lastParam = $this->listParams;
 		}
@@ -208,7 +225,14 @@ class Runtime {
 				if( $this->lastOperator == T_DOUBLE_ARROW ) {
 					$this->lastOperator = false;
 				}else{
-					$this->listParams[] = $this->lastParam->getValue();
+					if( $this->passByReference & 1 ) {
+						$this->listParams[] = $this->lastParam;
+					}else{
+						$this->listParams[] = $this->lastParam->getValue();
+					}
+					if( $this->passByReference > 0 ) {
+						$this->passByReference <<= 1;
+					}
 				}
 				$this->lastParam = null;
 				break;
@@ -231,23 +255,33 @@ class Runtime {
 				// break is not necessary here
 			case ')':
 				$this->parenthesesClose();
+				$return = null;
 				switch ($this->lastCommand) {
 					case false:
-						break;
+					case T_ECHO:
+						break 2;
 					case T_IF:
 						$this->lastCommand = false;
 						return array( T_IF, $this->lastParam->getValue() );
 						break;
 					case T_ARRAY:
-						$this->lastCommand = false;
 						$this->lastParam = new RValue( (array)$this->lastParam );
-						$this->popStack();
-						$this->doMath();
+						break;
+					case 'get_defined_vars': //Returns an array of all defined variables  @see http://www.php.net/manual/en/function.get-defined-vars.php
+						if( count($this->lastParam) != 0 ) {
+							$return = BaseFunction::wrongParameterCount('f_get_defined_vars', __LINE__);
+							$return->params[2] = isset($this->args[0]) ? $this->args[0] : 'n\a';
+						}
+						$this->lastParam = new RValue( $this->thisVariables );
 						break;
 					default:
-						$this->doCommand();
+						$return = $this->doCommand();
 						break;
 				}
+				$this->lastCommand = false;
+				$this->popStack();
+				//$this->doMath();
+				return $return;
 				break;
 			case '[':
 				$this->addCommand( $this->lastParam );
@@ -255,7 +289,6 @@ class Runtime {
 			case ']':
 				$this->doMath();
 				$this->lastParam = new RArray( $this->lastCommand, $this->lastParam );
-				$this->lastCommand = false;
 				$this->popStack();
 				break;
 			default:
@@ -272,6 +305,7 @@ class Runtime {
 						case T_STRING_CAST:
 						case T_ARRAY_CAST:
 						case T_BOOL_CAST:
+						case T_UNSET_CAST:
 						case T_INC:
 						case T_DEC:
 							if( !isset($this->mathMemory[0]) ) {
@@ -407,6 +441,9 @@ class Runtime {
 			case T_BOOL_CAST:
 				$this->lastParam = new RValue( (bool) $lastParam );
 				break;
+			case T_UNSET_CAST:
+				$this->lastParam = new RValue( (unset) $lastParam );
+				break;
 			case '<':
 				$this->lastParam = new RValue( $param->getValue() < $lastParam );
 				break;
@@ -447,7 +484,7 @@ class Runtime {
 		// Remember the child class RuntimeDebug
 		switch ($this->lastCommand) {
 			case T_ECHO:
-				$return = array( $this->lastCommand, $this->listParams );
+				$return = array( T_ECHO, $this->listParams );
 				break;
 			case false:
 				break; // exsample: $foo = 'foobar';
@@ -461,7 +498,48 @@ class Runtime {
 		return $return;
 	}
 
-	private function doCommand() {
+	protected function doCommand() {
+		$return = null;
+
+		$functionName = "f_{$this->lastCommand}";
+		$functionClass = 'Foxway\\' . Interpreter::getClassNameForFunction($this->lastCommand);
+
+		$class = new \ReflectionClass($functionClass);
+		if( $class->isSubclassOf("Foxway\\BaseFunction") ) {
+			try {
+				$this->lastParam = $functionClass::$functionName( $this->lastParam );
+			} catch (Exception $exc) {
+				$this->lastParam = new RValue(null);
+				$return = new ErrorMessage(
+					__LINE__,
+					null,
+					E_WARNING,
+					array(
+						'foxway-php-warning-exception-in-function',
+						"{$functionClass}->{$functionName}",
+						isset($this->args[0]) ? $this->args[0] : 'n\a',
+						$exc->getMessage(),
+					)
+				);
+			}
+			if( $this->lastParam instanceof iRawOutput ) {
+				$return = $this->lastParam;
+				if( $this->lastParam instanceof ErrorMessage ) {
+					$return->params[2] = isset($this->args[0]) ? $this->args[0] : 'n\a';
+					$this->lastParam = new RValue(null);
+				}
+			}
+		} else {
+			$this->lastParam = new RValue(null);
+			return new ErrorMessage(
+					__LINE__,
+					null,
+					E_ERROR,
+					array('faxway-unexpected-result-work-function', __METHOD__, isset($this->args[0]) ? $this->args[0] : 'n\a')
+				);
+		}
+
+		return $return;
 	}
 
 }

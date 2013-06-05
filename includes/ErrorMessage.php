@@ -44,7 +44,7 @@ class ErrorMessage implements iRawOutput {
 	public function __toString( ) {
 		return \Html::rawElement(
 				'span',
-				array( 'class' => 'error', 'title' => 'Report from ' .htmlspecialchars($this->caller). 'line '.htmlspecialchars($this->line) ), // TODO wfMessage
+				array( 'class' => 'error', 'title' => 'Report from ' .htmlspecialchars($this->caller). ' line '.htmlspecialchars($this->line) ), // TODO wfMessage
 				$this->getMessage()
 				);
 	}
@@ -57,7 +57,25 @@ class ErrorMessage implements iRawOutput {
 				$return =  wfMessage(
 						'foxway-php-syntax-error-unexpected',
 						is_string($unexpected) ? htmlspecialchars($unexpected) : token_name($unexpected),
-						$this->tokenLine )->escaped();
+						$this->tokenLine
+					)->escaped();
+				break;
+			case E_ERROR:
+				$return =  wfMessage(
+						$this->params[0],
+						$this->params[1],
+						$this->params[2],
+						$this->tokenLine
+					)->escaped();
+				break;
+			case E_WARNING:
+				$return =  wfMessage(
+						$this->params[0],
+						$this->params[1],
+						$this->params[2],
+						$this->tokenLine,
+						isset($this->params[3]) ? $this->params[3] : null
+					)->escaped();
 				break;
 		}
 		return $return;

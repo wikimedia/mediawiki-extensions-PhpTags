@@ -17,10 +17,7 @@ class RVariable extends RValue {
 	}
 
 	public function getValue() {
-		if( isset($this->variablesArray[$this->value]) ) {
-			return $this->variablesArray[$this->value];
-		}
-		return null;
+		return isset($this->variablesArray[$this->value]) ? $this->variablesArray[$this->value] : null;
 	}
 
 	public function setValue($value) {
@@ -106,7 +103,13 @@ class RVariable extends RValue {
 	}
 
 	public function is_set() {
-		return isset( $this->variablesArray[$this->value] );
+		return isset($this->variablesArray[$this->value]);
+	}
+
+	public function un_set() {
+		if( $this->value != 'GLOBALS' ) {
+			unset($this->variablesArray[$this->value]);
+		}
 	}
 
 }

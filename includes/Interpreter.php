@@ -9,7 +9,7 @@ define( 'FOXWAY_VALUE', 3 );
 define( 'FOXWAY_ALLOW_PARENTHES_WITH_VOID_PARAMS', 1 << 0 );
 define( 'FOXWAY_EXPECT_CURLY_CLOSE', 1 << 1 );
 define( 'FOXWAY_EXPECT_QUOTES_CLOSE', 1 << 2 );
-define( 'FOXWAY_EXPECT_LIST_PARAMS', 1 << 3 );
+define( 'FOXWAY_ALLOW_LIST_PARAMS', 1 << 3 );
 define( 'FOXWAY_EXPECT_PARENTHES_CLOSE', 1 << 4 );
 define( 'FOXWAY_EXPECT_BRACKET_CLOSE', 1 << 5 );
 define( 'FOXWAY_EXPECT_PARENTHES_WITH_LIST_PARAMS', 1 << 6 );
@@ -23,6 +23,8 @@ define( 'FOXWAY_ALLOW_DOUBLE_ARROW', 1 << 13 );
 define( 'FOXWAY_NEED_CONCATENATION_OPERATOR', 1 << 14 );
 define( 'FOXWAY_EXPECT_STATIC_VARIABLE', 1 << 15 );
 define( 'FOXWAY_EXPECT_GLOBAL_VARIABLE', 1 << 16 );
+define( 'FOXWAY_EXPECT_PARENTHES_WITH_VARIABLE_ONLY', 1 << 17 );
+define( 'FOXWAY_ALLOW_PARENTHES_WITH_VARIABLE_ONLY', 1 << 18 );
 
 /**
  * Interpreter class of Foxway extension.
@@ -67,7 +69,7 @@ class Interpreter {
 		'}',
 		',',
 		')',
-		T_DOUBLE_ARROW,
+		T_DOUBLE_ARROW,				// =>
 	);
 
 	private static $arrayParams = array(
@@ -91,7 +93,11 @@ class Interpreter {
 		T_STRING_CAST, // (string)
 		T_ARRAY_CAST, // (array)
 		T_BOOL_CAST, // (bool)
+		T_UNSET_CAST, // (unset)
 		T_ARRAY,	// array()
+		T_ISSET,	// isset()
+		T_UNSET,	// unset()
+		T_EMPTY,	// empty()
 	);
 
 	private static $assigmentOperators = array(
@@ -160,7 +166,7 @@ class Interpreter {
 					if( $parenthesFlags & (FOXWAY_EXPECT_STATIC_VARIABLE|FOXWAY_EXPECT_GLOBAL_VARIABLE) ) {
 						continue;
 					}
-					if ( !($parenthesFlags & FOXWAY_EXPECT_LIST_PARAMS) ) {
+					if ( !($parenthesFlags & FOXWAY_ALLOW_LIST_PARAMS) ) {
 						$return[] = new ErrorMessage(__LINE__, $tokenLine, E_PARSE, $id);
 						break 2;
 					}
@@ -188,7 +194,7 @@ class Interpreter {
 						break 2;
 					}
 					$parenthesFlags = array_pop($parentheses);
-					if( $parenthesFlags & FOXWAY_EXPECT_PARENTHES_ENDING_BY_COMMA ) {
+					if( $parenthesFlags & FOXWAY_EXPECT_PARENTHES_WITH_LIST_PARAMS && !($parenthesFlags & FOXWAY_EXPECT_SEMICOLON) ) {
 						$commandResult = $runtime->addOperator( ',)' );
 					}else{
 						$commandResult = $runtime->addOperator( $id );
@@ -233,7 +239,7 @@ class Interpreter {
 					}
 					if( $blocks[$index][FOXWAY_VALUE] == false ) { // for true just go next
 						$index = $blocks[$index][FOXWAY_ENDBLOCK]-1;
-						$expected = array('?', ',', ';');
+						$expected = array('?', ',', ';', ')');
 						if( $debug ) {
 							$debug[] = $token;
 							$debug[] = 'skip';
@@ -284,7 +290,7 @@ class Interpreter {
 					break;
 				case T_ECHO:
 					$runtime->addCommand($id);
-					$parenthesFlags = FOXWAY_EXPECT_LIST_PARAMS | FOXWAY_EXPECT_SEMICOLON;
+					$parenthesFlags = FOXWAY_ALLOW_LIST_PARAMS | FOXWAY_EXPECT_SEMICOLON;
 					break;
 				case T_CONSTANT_ENCAPSED_STRING:
 					$is_apostrophe = substr($text, 0, 1) == '\'' ? true : false;
@@ -293,10 +299,10 @@ class Interpreter {
 					break;
 				case T_NUM_STRING:
 				case T_LNUMBER:
-					$runtime->addParamValue( (integer)$text );
+					$runtime->addParamValue( self::getIntegerFromString($text) );
 					break;
 				case T_DNUMBER:
-					$runtime->addParamValue( (float)$text );
+					$runtime->addParamValue( self::getFloatFromString($text) );
 					break;
 				case T_ENCAPSED_AND_WHITESPACE: // " $a"
 					if( $parenthesFlags & FOXWAY_NEED_CONCATENATION_OPERATOR ) {
@@ -314,7 +320,7 @@ class Interpreter {
 						} elseif( $parenthesFlags & FOXWAY_EXPECT_GLOBAL_VARIABLE ) {
 							$runtime->addParamVariable($text, T_GLOBAL);
 							$expected = array( ',', ';' );
-							continue;
+							continue 2;
 						} elseif( $parenthesFlags & FOXWAY_EXPECT_STATIC_VARIABLE ) {
 							$r = $runtime->addParamVariable($text, T_STATIC);
 							if( $r instanceof ErrorMessage ) {
@@ -379,10 +385,37 @@ class Interpreter {
 						$runtime->addParamValue( false );
 					} elseif( strcasecmp($text, 'null') == 0 ) {
 						$runtime->addParamValue( null );
+					} elseif( self::stringIsFunction($tokens, $index+1) ) {
+						if( self::getClassNameForFunction($text) === false ){
+							$return[] = new ErrorMessage(
+									__LINE__,
+									$tokenLine,
+									E_ERROR,
+									array( 'foxway-php-fatal-error-undefined-function', $text, isset($args[0])?$args[0]:'n\a' )
+								);
+							break 2;
+						}
+						$runtime->addCommand($text);
+						$expected = array('(');
+						$parentheses[] = $parenthesFlags;
+						$parenthesFlags = FOXWAY_EXPECT_FUNCTION_PARENTHESES | FOXWAY_EXPECT_PARENTHES_WITH_LIST_PARAMS | FOXWAY_ALLOW_PARENTHES_WITH_VOID_PARAMS;
+						if( $debug ) {
+							$debug[] = $token;
+						}
+						continue 2;
 					} else {
 						$return[] = new ErrorMessage(__LINE__, $tokenLine, E_PARSE, $id);
 						break 2;
 					}
+					break;
+				case T_ISSET:
+					$runtime->addCommand('isset');
+					break;
+				case T_UNSET:
+					$runtime->addCommand('unset');
+					break;
+				case T_EMPTY:
+					$runtime->addCommand('empty');
 					break;
 				default:
 					if( in_array($id, $operators) ) {
@@ -401,9 +434,7 @@ class Interpreter {
 
 			/*****************  COMMAND RESULT  *******************************/
 			if( !is_null($commandResult) ) {
-				if( $commandResult instanceof ErrorMessage ) {
-					$return[] = $commandResult;
-				}elseif( is_array($commandResult) ) {
+				if( is_array($commandResult) ) {
 					list($command, $result) = $commandResult;
 					if( $debug && $command != T_ELSEIF && $command != T_ELSE ) {
 						$debug->addCommandResult($runtime);
@@ -474,6 +505,14 @@ class Interpreter {
 							}
 							break;
 					}
+				}elseif( $commandResult instanceof ErrorMessage ) {
+					$commandResult->tokenLine = $tokenLine;
+					$return[] = $commandResult;
+					if( $commandResult->type == E_ERROR ) {
+						break;
+					}
+				}elseif( $commandResult instanceof iRawOutput ) {
+					$return[] = $commandResult;
 				}
 				$commandResult = null;
 			}
@@ -601,6 +640,13 @@ class Interpreter {
 					$parenthesFlags |= FOXWAY_EXPECT_GLOBAL_VARIABLE;
 					$expected = array(T_VARIABLE);
 					break;
+				case T_ISSET:
+				case T_UNSET:
+				case T_EMPTY:
+					$parentheses[] = $parenthesFlags;
+					$parenthesFlags = FOXWAY_EXPECT_FUNCTION_PARENTHESES | FOXWAY_EXPECT_PARENTHES_WITH_LIST_PARAMS | FOXWAY_ALLOW_PARENTHES_WITH_VOID_PARAMS;
+					$expected = array('(');
+					break;
 			}
 
 			/*****************   EXPECT  PHASE  TWO  **************************/
@@ -612,10 +658,15 @@ class Interpreter {
 					if( $parenthesFlags & FOXWAY_ALLOW_PARENTHES_WITH_VOID_PARAMS ) {
 						$expected[] = ')';
 					}
+					// @todo OPTIMIZE IT!!!
 					$parenthesFlags = FOXWAY_EXPECT_PARENTHES_CLOSE |
-							( $parenthesFlags & FOXWAY_EXPECT_PARENTHES_WITH_LIST_PARAMS ? FOXWAY_EXPECT_LIST_PARAMS : 0 ) |
+							( $parenthesFlags & FOXWAY_EXPECT_PARENTHES_WITH_LIST_PARAMS ? FOXWAY_ALLOW_LIST_PARAMS : 0 ) |
 							( $parenthesFlags & FOXWAY_EXPECT_PARENTHES_ENDING_BY_COMMA ? FOXWAY_ALLOW_PARAMS_ENDING_BY_COMMA : 0 ) |
-							( $parenthesFlags & FOXWAY_EXPECT_PARENTHES_WITH_DOUBLE_ARROW ? FOXWAY_ALLOW_DOUBLE_ARROW : 0 );
+							( $parenthesFlags & FOXWAY_EXPECT_PARENTHES_WITH_DOUBLE_ARROW ? FOXWAY_ALLOW_DOUBLE_ARROW : 0 ) |
+							( $parenthesFlags & FOXWAY_EXPECT_PARENTHES_WITH_VARIABLE_ONLY ? FOXWAY_ALLOW_PARENTHES_WITH_VARIABLE_ONLY : 0 );
+					if( $parenthesFlags & FOXWAY_ALLOW_PARENTHES_WITH_VARIABLE_ONLY ) {
+						$expected = array( T_VARIABLE );
+					}
 					break;
 				case '[':
 					$parenthesFlags = FOXWAY_EXPECT_BRACKET_CLOSE;
@@ -633,6 +684,9 @@ class Interpreter {
 				case ',':
 					if( $parenthesFlags & FOXWAY_ALLOW_PARAMS_ENDING_BY_COMMA ) {
 						$expected[] = ')';
+					}
+					if( $parenthesFlags & FOXWAY_ALLOW_PARENTHES_WITH_VARIABLE_ONLY ) {
+						$expected = array( T_VARIABLE );
 					}
 			}
 		}
@@ -685,8 +739,18 @@ class Interpreter {
 					break;
 			}
 		}
+		$parentheses = 0;
 		for( ; $i < $count; $i++ ) { // find end of ternary operator
 			switch ( $tokens[$i] ) {
+				case '(':
+					$parentheses++;
+					break;
+				case ')':
+					if( $parentheses != 0 ) {
+						$parentheses--;
+						break;
+					}
+					// break is not necessary here
 				case ',':
 				case ';':
 				case '?':
@@ -808,6 +872,91 @@ class Interpreter {
 		}
 
 		return $tokens;
+	}
+
+	/**
+	 * Checks whether the T_STRING function
+	 * @param array $tokens
+	 * @param int $index
+	 * @return boolean TRUE if T_STRING is function
+	 */
+	private static function stringIsFunction(&$tokens, $index) {
+		$count = count($tokens);
+		for( $i = $index; $i < $count; $i++ ) {
+			$token = $tokens[$i];
+			if ( is_string($token) ) {
+				$id = $token;
+			} else {
+				list($id) = $token;
+			}
+			switch( $id ) {
+				case '(':
+					return true;
+					break;
+				case T_COMMENT:
+				case T_DOC_COMMENT:
+				case T_WHITESPACE:
+					break; // ignore it
+				default :
+					break 2;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * Checks whether the $name is function defined in $wgFoxwayFunctions
+	 * @global array $wgFoxwayFunctions
+	 * @param string $name
+	 * @return boolean
+	 */
+	public static function getClassNameForFunction($name) {
+		global $wgFoxwayFunctions;
+		foreach ($wgFoxwayFunctions as $key => &$value) {
+			if( array_search($name, $value) !== false ) {
+				return $key;
+			}
+		}
+		return false;
+	}
+
+	/**
+	 * @todo Need to select the most optimal variant
+	 * Conversion string to integer the same way as PHP
+	 * @see http://www.php.net/manual/ru/language.types.integer.php
+	 * @param string $text
+	 * @return int
+	 */
+	private static function getIntegerFromString($string) {
+		if( stripos($string, 'x') === false && (strncmp('0', $string, 1) == 0 || strncmp('+0', $string, 2) == 0 || strncmp('-0', $string, 2) == 0) ) {
+			return intval( $string, 8 );
+		}
+		return 0 + $string; // (int)$string fails for 0x1A (InterpreterTest::testRun_echo_intval_10)
+		/*
+		if( preg_match('/^[+-]?(?:[1-9][0-9]*|0)$/', $string) ) {
+			return (int)$string;
+		}
+		if( preg_match('/^[+-]?0[xX][0-9a-fA-F]+$/', $string) ) {
+			return 0 + $string; // (int)$string fails for 0x1A (InterpreterTest::testRun_echo_intval_10)
+		}
+		$matches = array();
+		if( preg_match('/^[+-]?(:?0[0-7]+)/', $string, $matches) ) {
+			return intval( $matches[0], 8 );
+		}*/
+	}
+
+	/**
+	 * Conversion string to float the same way as PHP
+	 * @see http://www.php.net/manual/ru/language.types.integer.php
+	 * @param string $text
+	 * @return int
+	 */
+	private static function getFloatFromString($string) {
+		$epos = stripos($string, 'e');
+		if( $epos === false ) {
+			return (float)$string;
+		}
+		return (float)( substr($string, 0, $epos) * pow(10, substr($string, $epos+1)) );
 	}
 
 }

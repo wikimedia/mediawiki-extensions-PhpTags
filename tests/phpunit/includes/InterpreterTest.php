@@ -7,16 +7,28 @@ namespace Foxway;
  */
 class InterpreterTest extends \PHPUnit_Framework_TestCase {
 
-	public function testRun_echo_apostrophe() {
+	public function testRun_echo_apostrophe_1() {
 		$this->assertEquals(
 				Interpreter::run('echo "Hello!";'),
 				array('Hello!')
 				);
 	}
+	public function testRun_echo_apostrophe_2() {
+		$this->assertEquals(
+				Interpreter::run('echo ("Hello!");'),
+				array('Hello!')
+				);
+	}
 
-	public function testRun_echo_quotes() {
+	public function testRun_echo_quotes_1() {
 		$this->assertEquals(
 				Interpreter::run("echo 'Hello!';"),
+				array('Hello!')
+				);
+	}
+	public function testRun_echo_quotes_2() {
+		$this->assertEquals(
+				Interpreter::run("echo ('Hello!');"),
 				array('Hello!')
 				);
 	}
@@ -31,6 +43,12 @@ class InterpreterTest extends \PHPUnit_Framework_TestCase {
 		$this->assertEquals(
 				Interpreter::run('echo \'This \' . \'string \' . \'was \' . \'made \' . \'with concatenation.\' . "\n";'),
 				array("This string was made with concatenation.\n")
+				);
+	}
+	public function testRun_echo_union_3() {
+		$this->assertEquals(
+				Interpreter::run('echo ("String" . "Union");'),
+				array('StringUnion')
 				);
 	}
 
@@ -655,6 +673,30 @@ echo "$a, ", $a-- + -5, ", " . --$a, ", $a.";'),
 				array('false')
 				);
 	}
+	public function testRun_echo_ternary_9() {
+		$this->assertEquals(
+				Interpreter::run('echo (true?"true":"false");'),
+				array('true')
+				);
+	}
+	public function testRun_echo_ternary_10() {
+		$this->assertEquals(
+				Interpreter::run('echo (false?"true":"false");'),
+				array('false')
+				);
+	}
+	public function testRun_echo_ternary_11() {
+		$this->assertEquals(
+				Interpreter::run('echo ((true)?("tr"."ue"):("fa"."lse"));'),
+				array('true')
+				);
+	}
+	public function testRun_echo_ternary_12() {
+		$this->assertEquals(
+				Interpreter::run('echo ((false)?("tr"."ue"):("fa"."lse"));'),
+				array('false')
+				);
+	}
 	public function testRun_echo_ternary_variable_1() {
 		$this->assertEquals(
 				Interpreter::run('$foo=true; echo $foo?"true":"false";'),
@@ -1085,4 +1127,825 @@ echo $foo, $argv[0], $argc, $bar, $stat, $argv["test"];', array('testTemplate', 
 				);
 	}
 
+	/**
+	 * @see http://www.php.net/manual/en/function.intval.php
+	 */
+	public function testRun_echo_intval_1() {
+		$this->assertEquals(
+				Interpreter::run('echo intval(42);'),
+				array('42')
+				);
+	}
+	public function testRun_echo_intval_2() {
+		$this->assertEquals(
+				Interpreter::run('echo intval(4.2);'),
+				array('4')
+				);
+	}
+	public function testRun_echo_intval_3() {
+		$this->assertEquals(
+				Interpreter::run('echo intval("42");'),
+				array('42')
+				);
+	}
+	public function testRun_echo_intval_4() {
+		$this->assertEquals(
+				Interpreter::run('echo intval("+42");'),
+				array('42')
+				);
+	}
+	public function testRun_echo_intval_5() {
+		$this->assertEquals(
+				Interpreter::run('echo intval("-42");'),
+				array('-42')
+				);
+	}
+	public function testRun_echo_intval_6() {
+		$this->assertEquals(
+				Interpreter::run('echo intval(042);'),
+				array('34')
+				);
+	}
+	public function testRun_echo_intval_7() {
+		$this->assertEquals(
+				Interpreter::run('echo intval("042");'),
+				array('42')
+				);
+	}
+	public function testRun_echo_intval_8() {
+		$this->assertEquals(
+				Interpreter::run('echo intval(1e10);'),
+				array('10000000000') // 1410065408 ???
+				);
+	}
+	public function testRun_echo_intval_9() {
+		$this->assertEquals(
+				Interpreter::run('echo intval("1e10");'),
+				array('1')
+				);
+	}
+	public function testRun_echo_intval_10() {
+		$this->assertEquals(
+				Interpreter::run('echo intval(0x1A);'),
+				array('26')
+				);
+	}
+	public function testRun_echo_intval_11() {
+		$this->assertEquals(
+				Interpreter::run('echo intval(42000000);'),
+				array('42000000')
+				);
+	}
+	public function testRun_echo_intval_12() {
+		$this->assertEquals(
+				Interpreter::run('echo intval(420000000000000000000);'),
+				array('0')
+				);
+	}
+	public function testRun_echo_intval_13() {
+		$this->assertEquals(
+				Interpreter::run('echo intval("420000000000000000000");'),
+				array('9223372036854775807') //2147483647 for 32 bit systems
+				);
+	}
+	public function testRun_echo_intval_14() {
+		$this->assertEquals(
+				Interpreter::run('echo intval(42, 8);'),
+				array('42')
+				);
+	}
+	public function testRun_echo_intval_15() {
+		$this->assertEquals(
+				Interpreter::run('echo intval("42", 8);'),
+				array('34')
+				);
+	}
+	public function testRun_echo_intval_16() {
+		$this->assertEquals(
+				Interpreter::run('echo intval(array());'),
+				array('0')
+				);
+	}
+	public function testRun_echo_intval_17() {
+		$this->assertEquals(
+				Interpreter::run('echo intval(array("foo", "bar"));'),
+				array('1')
+				);
+	}
+	public function testRun_echo_intval_18() {
+		$this->assertEquals(
+				Interpreter::run('echo intval(01090);'),
+				array('8')
+				);
+	}
+	public function testRun_echo_intval_19() {
+		$this->assertEquals(
+				Interpreter::run('echo intval(+42);'),
+				array('42')
+				);
+	}
+	public function testRun_echo_intval_20() {
+		$this->assertEquals(
+				Interpreter::run('echo intval(-42);'),
+				array('-42')
+				);
+	}
+	public function testRun_echo_intval_21() {
+		$this->assertEquals(
+				Interpreter::run('echo intval(-042);'),
+				array('-34')
+				);
+	}
+
+	public function testRun_echo_boolval_1() {
+		$this->assertEquals(
+				Interpreter::run('echo boolval(0) ? "true" : "false";'),
+				array('false')
+				);
+	}
+	public function testRun_echo_boolval_2() {
+		$this->assertEquals(
+				Interpreter::run('echo boolval(42) ? "true" : "false";'),
+				array('true')
+				);
+	}
+	public function testRun_echo_boolval_3() {
+		$this->assertEquals(
+				Interpreter::run('echo boolval(0.0) ? "true" : "false";'),
+				array('false')
+				);
+	}
+	public function testRun_echo_boolval_4() {
+		$this->assertEquals(
+				Interpreter::run('echo boolval(4.2) ? "true" : "false";'),
+				array('true')
+				);
+	}
+	public function testRun_echo_boolval_5() {
+		$this->assertEquals(
+				Interpreter::run('echo boolval("") ? "true" : "false";'),
+				array('false')
+				);
+	}
+	public function testRun_echo_boolval_6() {
+		$this->assertEquals(
+				Interpreter::run('echo boolval("string") ? "true" : "false";'),
+				array('true')
+				);
+	}
+	public function testRun_echo_boolval_7() {
+		$this->assertEquals(
+				Interpreter::run('echo boolval(array(1,2)) ? "true" : "false";'),
+				array('true')
+				);
+	}
+	public function testRun_echo_boolval_8() {
+		$this->assertEquals(
+				Interpreter::run('echo boolval(array()) ? "true" : "false";'),
+				array('false')
+				);
+	}
+	/*  @todo
+	public function testRun_echo_boolval_9() {
+		$this->assertEquals(
+				Interpreter::run('echo boolval([1, 2]) ? "true" : "false";'),
+				array('true')
+				);
+	}
+	public function testRun_echo_boolval_10() {
+		$this->assertEquals(
+				Interpreter::run('echo boolval(new stdClass) ? "true" : "false";'),
+				array('true')
+				);
+	}*/
+
+	public function testRun_echo_doubleval() {
+		$this->assertEquals(
+				Interpreter::run('echo doubleval(100000000.75);'),
+				array('100000000.75')
+				);
+	}
+
+	public function testRun_echo_empty_1() {
+		$this->assertEquals(
+				Interpreter::run('$a = 0.00; echo (empty($a)? "empty": "not empty");'),
+				array('empty')
+				);
+	}
+	public function testRun_echo_empty_2() {
+		$this->assertEquals(
+				Interpreter::run('$b = "0.00"; echo (empty($b)? "empty": "not empty");'),
+				array('not empty')
+				);
+	}
+	public function testRun_echo_empty_key_string_1() {
+		$this->assertEquals(
+				Interpreter::run('$expected_array_got_string = "somestring";
+echo empty($expected_array_got_string[0]) ? "true" : "false";'),
+				array('false')
+				);
+	}
+	public function testRun_echo_empty_key_string_2() {
+		$this->assertEquals(
+				Interpreter::run('echo empty($expected_array_got_string["0"]) ? "true" : "false";'),
+				array('false')
+				);
+	}
+	public function testRun_echo_empty_key_string_3() {
+		$this->assertEquals(
+				Interpreter::run('echo empty($expected_array_got_string[0.5]) ? "true" : "false";'),
+				array('false')
+				);
+	}
+	public function testRun_echo_empty_key_string_4() { //PHP 5.4 changes how isset() behaves when passed string offsets.
+		$this->assertEquals(
+				Interpreter::run('echo empty($expected_array_got_string["some_key"]) ? "true" : "false";'),
+				array('true')
+				);
+	}
+	public function testRun_echo_empty_key_string_5() { //PHP 5.4 changes how isset() behaves when passed string offsets.
+		$this->assertEquals(
+				Interpreter::run('echo empty($expected_array_got_string["0.5"]) ? "true" : "false";'),
+				array('true')
+				);
+	}
+	public function testRun_echo_empty_key_string_6() { //PHP 5.4 changes how isset() behaves when passed string offsets.
+		$this->assertEquals(
+				Interpreter::run('echo empty($expected_array_got_string["0 Mostel"]) ? "true" : "false";'),
+				array('true')
+				);
+	}
+
+	public function testRun_echo_floatval_1() {
+		$this->assertEquals(
+				Interpreter::run('$var = "122.34343The"; $float_value_of_var = floatval($var); echo $float_value_of_var;'),
+				array('122.34343')
+				);
+	}
+
+	public function testRun_echo_gettype_1() {
+		$this->assertEquals(
+				Interpreter::run('echo gettype(1);'),
+				array('integer')
+				);
+	}
+	public function testRun_echo_gettype_2() {
+		$this->assertEquals(
+				Interpreter::run('echo gettype(1.);'),
+				array('double')
+				);
+	}
+	public function testRun_echo_gettype_3() {
+		$this->assertEquals(
+				Interpreter::run('echo gettype(NULL);'),
+				array('NULL')
+				);
+	}
+	public function testRun_echo_gettype_4() {
+		$this->assertEquals(
+				Interpreter::run('echo gettype("foo");'),
+				array('string')
+				);
+	}
+	/* @todo
+	public function testRun_echo_gettype_5() {
+		$this->assertEquals(
+				Interpreter::run('echo gettype("new stdClass");'),
+				array('object')
+				);
+	}*/
+
+	public function testRun_echo_is_array_1() {
+		$this->assertEquals(
+				Interpreter::run('$yes = array("this", "is", "an array"); echo is_array($yes) ? "Array" : "not an Array";'),
+				array('Array')
+				);
+	}
+	public function testRun_echo_is_array_2() {
+		$this->assertEquals(
+				Interpreter::run('$no = "this is a string"; echo is_array($no) ? "Array" : "not an Array";'),
+				array('not an Array')
+				);
+	}
+
+	public function testRun_echo_is_bool_1() {
+		$this->assertEquals(
+				Interpreter::run('$a = false; if (is_bool($a) === true) echo "Yes, this is a boolean";'),
+				array('Yes, this is a boolean')
+				);
+	}
+	public function testRun_echo_is_bool_2() {
+		$this->assertEquals(
+				Interpreter::run('$b = 0; if (is_bool($b) === false) {  echo "No, this is not a boolean"; }'),
+				array('No, this is not a boolean')
+				);
+	}
+
+	public function testRun_echo_is_double() {
+		$this->assertEquals(
+				Interpreter::run('if (is_double(27.25)) { echo "is float"; } else { echo "is not float"; }'),
+				array('is float')
+				);
+	}
+	public function testRun_echo_is_float_1() {
+		$this->assertEquals(
+				Interpreter::run('echo is_float("abc") ? "true" : "false";'),
+				array('false')
+				);
+	}
+	public function testRun_echo_is_float_2() {
+		$this->assertEquals(
+				Interpreter::run('echo is_float(23) ? "true" : "false";'),
+				array('false')
+				);
+	}
+	public function testRun_echo_is_float_3() {
+		$this->assertEquals(
+				Interpreter::run('echo is_float(23.5) ? "true" : "false";'),
+				array('true')
+				);
+	}
+	public function testRun_echo_is_float_4() {
+		$this->assertEquals(
+				Interpreter::run('echo is_float(1e7) ? "true" : "false";'),
+				array('true')
+				);
+	}
+	public function testRun_echo_is_real() {
+		$this->assertEquals(
+				Interpreter::run('echo is_real(true) ? "true" : "false";'),
+				array('false')
+				);
+	}
+
+	public function testRun_echo_is_int_1() {
+		$this->assertEquals(
+				Interpreter::run('echo is_int(23) ? "true" : "false";'),
+				array('true')
+				);
+	}
+	public function testRun_echo_is_int_2() {
+		$this->assertEquals(
+				Interpreter::run('echo is_int("23") ? "true" : "false";'),
+				array('false')
+				);
+	}
+	public function testRun_echo_is_int_3() {
+		$this->assertEquals(
+				Interpreter::run('echo is_int(23.5) ? "true" : "false";'),
+				array('false')
+				);
+	}
+	public function testRun_echo_is_int_4() {
+		$this->assertEquals(
+				Interpreter::run('echo is_int("23.5") ? "true" : "false";'),
+				array('false')
+				);
+	}
+	public function testRun_echo_is_int_5() {
+		$this->assertEquals(
+				Interpreter::run('echo is_int(null) ? "true" : "false";'),
+				array('false')
+				);
+	}
+	public function testRun_echo_is_long() {
+		$this->assertEquals(
+				Interpreter::run('echo is_long(true) ? "true" : "false";'),
+				array('false')
+				);
+	}
+	public function testRun_echo_is_integer() {
+		$this->assertEquals(
+				Interpreter::run('echo is_integer(false) ? "true" : "false";'),
+				array('false')
+				);
+	}
+
+	public function testRun_echo_is_null_1() {
+		$this->assertEquals(
+				Interpreter::run('echo is_null($inexistent) ? "true" : "false";'),
+				array('true')
+				);
+	}
+	public function testRun_echo_is_null_2() {
+		$this->assertEquals(
+				Interpreter::run('$foo = NULL; echo is_null($foo) ? "true" : "false";'),
+				array('true')
+				);
+	}
+	public function testRun_echo_is_null_3() {
+		$this->assertEquals(
+				Interpreter::run('$foo = true; echo is_null($foo) ? "true" : "false";'),
+				array('false')
+				);
+	}
+
+	public function testRun_echo_is_numeric_1() {
+		$this->assertEquals(
+				Interpreter::run('echo is_numeric("42") ? "true" : "false";'),
+				array('true')
+				);
+	}
+	public function testRun_echo_is_numeric_2() {
+		$this->assertEquals(
+				Interpreter::run('echo is_numeric(1337) ? "true" : "false";'),
+				array('true')
+				);
+	}
+	public function testRun_echo_is_numeric_3() {
+		$this->assertEquals(
+				Interpreter::run('echo is_numeric(0x539) ? "true" : "false";'),
+				array('true')
+				);
+	}
+	public function testRun_echo_is_numeric_4() {
+		$this->assertEquals(
+				Interpreter::run('echo is_numeric(02471) ? "true" : "false";'),
+				array('true')
+				);
+	}/* @todo
+	public function testRun_echo_is_numeric_5() {
+		$this->assertEquals(
+				Interpreter::run('echo is_numeric(0b10100111001) ? "true" : "false";'),
+				array('true')
+				);
+	}*/
+	public function testRun_echo_is_numeric_6() {
+		$this->assertEquals(
+				Interpreter::run('echo is_numeric(1337e0) ? "true" : "false";'),
+				array('true')
+				);
+	}
+	public function testRun_echo_is_numeric_7() {
+		$this->assertEquals(
+				Interpreter::run('echo is_numeric("not numeric") ? "true" : "false";'),
+				array('false')
+				);
+	}
+	public function testRun_echo_is_numeric_8() {
+		$this->assertEquals(
+				Interpreter::run('echo is_numeric(array()) ? "true" : "false";'),
+				array('false')
+				);
+	}
+	public function testRun_echo_is_numeric_9() {
+		$this->assertEquals(
+				Interpreter::run('echo is_numeric(9.1) ? "true" : "false";'),
+				array('true')
+				);
+	}
+
+	public function testRun_echo_is_scalar_1() {
+		$this->assertEquals(
+				Interpreter::run('echo is_scalar(3.1416) ? "true" : "false";'),
+				array('true')
+				);
+	}
+	public function testRun_echo_is_scalar_2() {
+		$this->assertEquals(
+				Interpreter::run('echo is_scalar(array("foo","bar")) ? "true" : "false";'),
+				array('false')
+				);
+	}
+
+	public function testRun_echo_is_string_1() {
+		$this->assertEquals(
+				Interpreter::run('echo is_string(false) ? "true" : "false";'),
+				array('false')
+				);
+	}
+	public function testRun_echo_is_string_2() {
+		$this->assertEquals(
+				Interpreter::run('echo is_string(true) ? "true" : "false";'),
+				array('false')
+				);
+	}
+	public function testRun_echo_is_string_3() {
+		$this->assertEquals(
+				Interpreter::run('echo is_string(null) ? "true" : "false";'),
+				array('false')
+				);
+	}
+	public function testRun_echo_is_string_4() {
+		$this->assertEquals(
+				Interpreter::run('echo is_string("abc") ? "true" : "false";'),
+				array('true')
+				);
+	}
+	public function testRun_echo_is_string_5() {
+		$this->assertEquals(
+				Interpreter::run('echo is_string("23") ? "true" : "false";'),
+				array('true')
+				);
+	}
+	public function testRun_echo_is_string_6() {
+		$this->assertEquals(
+				Interpreter::run('echo is_string(23) ? "true" : "false";'),
+				array('false')
+				);
+	}
+	public function testRun_echo_is_string_7() {
+		$this->assertEquals(
+				Interpreter::run('echo is_string("23.5") ? "true" : "false";'),
+				array('true')
+				);
+	}
+	public function testRun_echo_is_string_8() {
+		$this->assertEquals(
+				Interpreter::run('echo is_string(23.5) ? "true" : "false";'),
+				array('false')
+				);
+	}
+	public function testRun_echo_is_string_9() {
+		$this->assertEquals(
+				Interpreter::run('echo is_string("") ? "true" : "false";'),
+				array('true')
+				);
+	}
+	public function testRun_echo_is_string_10() {
+		$this->assertEquals(
+				Interpreter::run('echo is_string(" ") ? "true" : "false";'),
+				array('true')
+				);
+	}
+	public function testRun_echo_is_string_11() {
+		$this->assertEquals(
+				Interpreter::run('echo is_string("0") ? "true" : "false";'),
+				array('true')
+				);
+	}
+	public function testRun_echo_is_string_12() {
+		$this->assertEquals(
+				Interpreter::run('echo is_string(0) ? "true" : "false";'),
+				array('false')
+				);
+	}
+
+	public function testRun_echo_isset_1() {
+		$this->assertEquals(
+				Interpreter::run('$var = ""; echo isset($var) ? "true" : "false";'),
+				array('true')
+				);
+	}
+	public function testRun_echo_isset_2() {
+		$this->assertEquals(
+				Interpreter::run('echo isset($varForIsset) ? "true" : "false";'),
+				array('false')
+				);
+	}
+	public function testRun_echo_isset_3() {
+		$this->assertEquals(
+				Interpreter::run('echo isset($var, $varForIsset) ? "true" : "false";'),
+				array('false')
+				);
+	}
+	public function testRun_echo_isset_4() {
+		$this->assertEquals(
+				Interpreter::run('echo isset($varForIsset, $var) ? "true" : "false";'),
+				array('false')
+				);
+	}
+	public function testRun_echo_isset_5() {
+		$this->assertEquals(
+				Interpreter::run('$varForIsset = "test"; echo isset($varForIsset, $var) ? "true" : "false";'),
+				array('true')
+				);
+	}
+	public function testRun_echo_isset_6() {
+		$this->assertEquals(
+				Interpreter::run('$varForIsset = NULL; echo isset($varForIsset, $var) ? "true" : "false";'),
+				array('false')
+				);
+	}
+	public function testRun_echo_isset_array_1() {
+		$this->assertEquals(
+				Interpreter::run('$a = array ("test" => 1, "hello" => NULL, "pie" => array("a" => "apple"));
+echo isset($a["test"]) ? "true" : "false";'),
+				array('true')
+				);
+	}
+	public function testRun_echo_isset_array_2() {
+		$this->assertEquals(
+				Interpreter::run('echo isset($a["foo"]) ? "true" : "false";'),
+				array('false')
+				);
+	}
+	public function testRun_echo_isset_array_3() {
+		$this->assertEquals(
+				Interpreter::run('echo isset($a["hello"]) ? "true" : "false";'),
+				array('false')
+				);
+	}
+	public function testRun_echo_isset_array_4() {
+		$this->assertEquals(
+				Interpreter::run('echo isset($a["pie"]["a"]) ? "true" : "false";'),
+				array('true')
+				);
+	}
+	public function testRun_echo_isset_array_5() {
+		$this->assertEquals(
+				Interpreter::run('echo isset($a["pie"]["b"]) ? "true" : "false";'),
+				array('false')
+				);
+	}
+	public function testRun_echo_isset_array_6() {
+		$this->assertEquals(
+				Interpreter::run('echo isset($a["pie"]["a"]["b"]) ? "true" : "false";'),
+				array('false')
+				);
+	}
+	public function testRun_echo_isset_array_7() {
+		$this->assertEquals(
+				Interpreter::run('echo isset($a["pie"]["b"]["a"]) ? "true" : "false";'),
+				array('false')
+				);
+	}
+	public function testRun_echo_isset_key_string_1() {
+		$this->assertEquals(
+				Interpreter::run('$expected_array_got_string = "somestring";
+echo isset($expected_array_got_string[0]) ? "true" : "false";'),
+				array('true')
+				);
+	}
+	public function testRun_echo_isset_key_string_2() {
+		$this->assertEquals(
+				Interpreter::run('echo isset($expected_array_got_string["0"]) ? "true" : "false";'),
+				array('true')
+				);
+	}
+	public function testRun_echo_isset_key_string_3() {
+		$this->assertEquals(
+				Interpreter::run('echo isset($expected_array_got_string[0.5]) ? "true" : "false";'),
+				array('true')
+				);
+	}
+	public function testRun_echo_isset_key_string_4() { //PHP 5.4 changes how isset() behaves when passed string offsets.
+		$this->assertEquals(
+				Interpreter::run('echo isset($expected_array_got_string["some_key"]) ? "true" : "false";'),
+				array('false')
+				);
+	}
+	public function testRun_echo_isset_key_string_5() { //PHP 5.4 changes how isset() behaves when passed string offsets.
+		$this->assertEquals(
+				Interpreter::run('echo isset($expected_array_got_string["0.5"]) ? "true" : "false";'),
+				array('false')
+				);
+	}
+	public function testRun_echo_isset_key_string_6() { //PHP 5.4 changes how isset() behaves when passed string offsets.
+		$this->assertEquals(
+				Interpreter::run('echo isset($expected_array_got_string["0 Mostel"]) ? "true" : "false";'),
+				array('false')
+				);
+	}
+
+	public function testRun_print_r_1() {
+		$return = Interpreter::run('$a = array ("a" => "apple", "b" => "banana", "c" => array ("x", "y", "z")); print_r ($a);');
+		$this->assertInstanceOf(
+				'Foxway\\ROutput',
+				$return[0]
+				);
+		$this->assertEquals('<pre>Array
+(
+    [a] => apple
+    [b] => banana
+    [c] => Array
+        (
+            [0] => x
+            [1] => y
+            [2] => z
+        )
+
+)
+</pre>
+',
+				(string)$return[0]
+			);
+
+
+	}
+	public function testRun_print_r_2() {
+		$this->assertEquals(
+				Interpreter::run('$results = print_r ($a, true); echo $results;'),
+				array('Array
+(
+    [a] => apple
+    [b] => banana
+    [c] => Array
+        (
+            [0] => x
+            [1] => y
+            [2] => z
+        )
+
+)
+')
+				);
+	}
+
+	public function testRun_echo_settype_1() {
+		$this->assertEquals(
+				Interpreter::run('$foo = "5bar"; settype($foo, "int"); echo $foo;'),
+				array('5')
+				);
+	}
+	public function testRun_echo_settype_2() {
+		$this->assertEquals(
+				Interpreter::run('$foo = true; settype($foo, "string"); echo $foo==="1" ? "string" : "not string";'),
+				array('string')
+				);
+	}
+
+	public function testRun_echo_strval_1() {
+		$this->assertEquals(
+				Interpreter::run('$foo = true; $bar=strval($foo); echo $bar==="1" ? "string" : "not string";'),
+				array('string')
+				);
+	}
+
+	public function testRun_echo_unset_1() {
+		$this->assertEquals(
+				Interpreter::run('$var = "string"; echo isset($var) ? "true" : "false"; unset($var); echo isset($var) ? "true" : "false";'),
+				array('true', 'false')
+				);
+	}
+	public function testRun_echo_unset_2() {
+		$this->assertEquals(
+				Interpreter::run('$var = array("string"); echo isset($var[0]) ? "true" : "false"; unset($var[0]); echo isset($var[0]) ? "true" : "false";'),
+				array('true', 'false')
+				);
+	}
+	public function testRun_echo_unset_3() {
+		$this->assertEquals(
+				Interpreter::run('$var = array("foo" => "string"); echo isset($var["foo"]) ? "true" : "false"; unset($var["foo"]); echo isset($var["foo"]) ? "true" : "false";'),
+				array('true', 'false')
+				);
+	}
+
+	public function testRun_var_dump_1() {
+		$return = Interpreter::run('$a = array(1, 2, array("a", "b", "c")); var_dump($a);');
+		$this->assertInstanceOf(
+				'Foxway\\ROutput',
+				$return[0]
+				);
+		$this->assertRegExp('/<pre>array\(3\) {
+  \[0\] ?=>
+  int\(1\)
+  \[1\] ?=>
+  int\(2\)
+  \[2\] ?=>
+  array\(3\) {
+    \[0\] ?=>
+    string\(1\) "a"
+    \[1\] ?=>
+    string\(1\) "b"
+    \[2\] ?=>
+    string\(1\) "c"
+  }
 }
+<\/pre>
+/',
+				(string)$return[0]
+			);
+	}
+	public function testRun_var_dump_2() {
+		$return = Interpreter::run('$b = 3.1; $c = true; var_dump($b, $c);');
+		$this->assertInstanceOf(
+				'Foxway\\ROutput',
+				$return[0]
+				);
+		$this->assertRegExp(
+				'/<pre>(double|float)\(3.1\)\nbool\(true\)\n<\/pre>\n/',
+				(string)$return[0]
+			);
+	}
+
+	public function testRun_var_export_1() {
+		$return = Interpreter::run('$a = array (1, 2, array ("a", "b", "c")); var_export($a);');
+		$this->assertInstanceOf(
+				'Foxway\\ROutput',
+				$return[0]
+				);
+		$this->assertEquals("<pre>array (
+  0 => 1,
+  1 => 2,
+  2 => "."
+  array (
+    0 => 'a',
+    1 => 'b',
+    2 => 'c',
+  ),
+)</pre>
+",
+				(string)$return[0]
+			);
+	}
+	public function testRun_var_export_2() {
+		$this->assertEquals(
+				Interpreter::run('$b = 3.1; $v = var_export($b, true); echo $v;'),
+				array('3.1')
+				);
+	}
+
+}
+
+// @todo echo is_scalar(array("foo","bar") ? "true" : "false"; // most return error
