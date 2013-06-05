@@ -56,7 +56,9 @@ class Foxway {
 		foreach ($result as &$value) {
 			if( $value instanceof Foxway\iRawOutput ) {
 				$value = (string)$value;
-			}
+			}/*else{ // @todo ????
+				$value = strtr( $value, array('&'=>'&amp;', '<'=>'&lt;') );
+			}*/
 		}
 
 		if( $is_debug ) {

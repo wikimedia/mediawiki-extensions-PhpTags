@@ -75,6 +75,7 @@ class Debug implements \ArrayAccess, iRawOutput {
 			case T_STRING_CAST: // (string)
 			case T_ARRAY_CAST: // (array)
 			case T_BOOL_CAST: // (bool)
+			case T_UNSET_CAST: // (unset)
 			case T_ECHO:
 			case T_IF:
 			case T_ELSE:
@@ -82,6 +83,9 @@ class Debug implements \ArrayAccess, iRawOutput {
 			case T_ARRAY:
 			case T_STATIC:
 			case T_GLOBAL:
+			case T_ISSET:
+			case T_UNSET:
+			case T_EMPTY:
 				$class = 'foxway_construct';
 				break;
 			case T_VARIABLE:

@@ -31,8 +31,18 @@ class RArray extends RVariable {
 		if( $this->value->is_set() && $this->index !== null ) {
 			$reference = &$this->value->getReference();
 			$index = $this->index->getValue();
-			if( isset($reference[$index]) ) {
+
+			// @todo this do not work correctly for PHP 5.3, only for 5.4 see http://www.php.net/manual/en/function.isset.php Example #2 isset() on String Offsets
+			/*if( isset($reference[$index]) ) {
 				return $reference[$index];
+			}
+			 * OR return @ $reference[$index];
+			 */
+			if( is_array($reference) ) {
+				return @ $reference[$index];
+			}
+			if( is_string($reference) && (!is_string($index) || (string)(int)$index == $index) ) {
+				return @ $reference[(int)$index];
 			}
 		}
 		return null;
@@ -62,20 +72,32 @@ class RArray extends RVariable {
 	}
 
 	public function getName() {
-		if( $this->index === null ) {
-			$index = '[]';
-		}else{
-			$index = "[{$this->index->getValue()}]";
-		}
+		$index = $this->index === null ? '[]' : "[{$this->index->getValue()}]";
 		return $this->value->getName() . $index;
 	}
 
 	public function is_set() {
 		if( $this->value->is_set() && $this->index !== null ) {
 			$reference = &$this->value->getReference();
-			return isset( $reference[$this->index->getValue()] );
+
+			// @todo this do not work correctly for PHP 5.3, only for 5.4 see http://www.php.net/manual/en/function.isset.php Example #2 isset() on String Offsets
+			//return isset( $reference[$this->index->getValue()] );
+			$index = $this->index->getValue();
+			if( is_array($reference) ) {
+				return isset($reference[$index]);
+			}
+			if( is_string($reference) && (!is_string($index) || (string)(int)$index == $index) ) {
+				return (int)$index < strlen($reference) && (int)$index > 0;
+			}
 		}
 		return false;
+	}
+
+	public function un_set() {
+		if( $this->value->is_set() && $this->index !== null ) {
+			$reference = &$this->value->getReference();
+			unset($reference[$this->index->getValue()]);
+		}
 	}
 
 	/**

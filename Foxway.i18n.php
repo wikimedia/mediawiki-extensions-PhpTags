@@ -14,7 +14,12 @@ $messages = array();
  */
 $messages['en'] = array(
 	'foxway-desc' => 'Allows to store an object-oriented data and implements its own runtime for PHP code on pages',
-	'foxway-php-syntax-error-unexpected' => 'PHP parse error: Syntax error, unexpected $1 in command line code on line $2.'
+	'foxway-php-fatal-error-undefined-function' => 'PHP fatal error: Call to undefined function $1() on page $2 line $3.',
+	'foxway-php-not-variable-passed-by-reference' => 'PHP fatal error: Only variables can be passed by reference, function $1() on page $2 line $3.',
+	'foxway-php-syntax-error-unexpected' => 'PHP parse error: Syntax error, unexpected $1 in command line code on line $2.',
+	'foxway-php-warning-exception-in-function' => 'PHP warning: Function $1() on page $2 line $3 returns exception ($4).',
+	'foxway-php-wrong-parameter-count' => 'PHP warning: Wrong parameter count for $1() on page $2 line $3.',
+	'faxway-unexpected-result-work-function' => 'Unexpected result work function $1() of extension Foxway on page $2 line $3.',
 );
 
 /** Message documentation (Message documentation)
@@ -22,9 +27,30 @@ $messages['en'] = array(
  */
 $messages['qqq'] = array(
 	'foxway-desc' => '{{desc|name=Foxway|url=https://www.mediawiki.org/wiki/Extension:Foxway}}',
+	'foxway-php-fatal-error-undefined-function' => 'Error message, parameters:
+* $1 - user-specified function name
+* $2 - the name of the page on which the error occurred
+* $3 - the line number where the error occurred',
+	'foxway-php-not-variable-passed-by-reference' => 'Error message, parameters:
+* $1 - user-specified function name
+* $2 - the name of the page on which the error occurred
+* $3 - the line number where the error occurred',
 	'foxway-php-syntax-error-unexpected' => 'Error message, parameters:
 * $1 - token or user-specified string a quoted
 * $2 - the line number where the error occurred',
+	'foxway-php-warning-exception-in-function' => 'Error message, parameters:
+* $1 - function name
+* $2 - the name of the page on which the error occurred
+* $3 - the line number where the error occurred
+* $4 - error message from exception',
+	'foxway-php-wrong-parameter-count' => 'Error message, parameters:
+* $1 - function name
+* $2 - the name of the page on which the error occurred
+* $3 - the line number where the error occurred',
+	'faxway-unexpected-work-function' => 'Error message, parameters:
+* $1 - Foxway extension function name
+* $2 - the name of the page on which the error occurred
+* $3 - the line number where the error occurred',
 );
 
 /** Asturian (asturianu)

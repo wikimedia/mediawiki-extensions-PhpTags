@@ -19,6 +19,7 @@ class RuntimeDebug extends Runtime {
 	protected function pushStack() {
 		parent::pushStack();
 		$this->stackDebug[] = $this->listParamsDebug;
+		$this->listParamsDebug = array();
 	}
 
 	protected function popStack() {
@@ -33,7 +34,12 @@ class RuntimeDebug extends Runtime {
 	}
 
 	protected function parenthesesClose() {
+		if( $this->lastParam !== null ) {
+			$this->listParamsDebug[] = self::getHTMLForValue($this->lastParam);
+		}
+
 		parent::parenthesesClose();
+
 		$this->lastCommandDebug = $this->lastCommand;
 	}
 
@@ -66,7 +72,7 @@ class RuntimeDebug extends Runtime {
 					self::getHTMLForOperator($operator) .
 					' = (' . self::getHTMLForValue( new RValue($operator == T_INC ? $v+1 : $v-1) ) . ')' .
 					'&nbsp;<b>=></b>&nbsp;';
-			} else {
+			} elseif( $operator != T_DOUBLE_ARROW ) {
 				$return = ($param === null ? '' : self::getHTMLForValue($param)) .
 						self::getHTMLForOperator($operator) .
 						self::getHTMLForValue($this->lastParam) .
@@ -76,7 +82,9 @@ class RuntimeDebug extends Runtime {
 
 		parent::doOperation($operator, $param);
 
-		$this->debug[] = $return . self::getHTMLForValue( $this->lastParam );
+		if( $operator != T_DOUBLE_ARROW ) {
+			$this->debug[] = $return . self::getHTMLForValue( $this->lastParam );
+		}
 	}
 
 	public function addOperator($operator) {
@@ -96,13 +104,10 @@ class RuntimeDebug extends Runtime {
 				case T_ECHO:
 					break;
 				case T_IF:
-					$this->debug[] = self::getHTMLForCommand(T_IF).
+					$this->debug[] = self::getHTMLForCommand(T_IF) .
 							"(&nbsp;" . self::getHTMLForValue( $this->lastParam ) .
 							"&nbsp;)&nbsp;<b>=></b>&nbsp;" .
 							self::getHTMLForValue( new RValue($this->lastParam->getValue() ? true : false) );
-					break;
-				default:
-					$this->debug[] = self::getHTMLForCommand($this->lastCommandDebug) . "( " . self::getHTMLForValue($this->lastParam) . " )";
 					break;
 			}
 		}
@@ -134,26 +139,30 @@ class RuntimeDebug extends Runtime {
 	private static function getHTMLForValue( $param) {
 		$value = $param->getValue();
 		$class = false;
-		if( $value === true ) {
-			$class = 'foxway_construct';
-			$value = 'true';
-		}elseif( $value === false ) {
-			$class = 'foxway_construct';
-			$value = 'false';
-		}elseif( $value === null ) {
-			$class = 'foxway_construct';
-			$value = 'null';
-		}elseif( is_string($value) ) {
-			$class = 'foxway_string';
-			$value = "'$value'";
-		}elseif( is_numeric($value) ) {
-			$class = 'foxway_number';
-		}  elseif( is_array($value) ) {
-			if( count($value) <= 3 ) {
-				return var_export($value, true);
-			} else {
-				return 'array';
-			}
+		switch( gettype($value) ) {
+			case 'boolean':
+				$class = 'foxway_construct';
+				$value = $value ? 'true' : 'false';
+				break;
+			case 'NULL':
+				$class = 'foxway_construct';
+				$value = 'null';
+				break;
+			case 'string':
+				$class = 'foxway_string';
+				$value = "'$value'";
+				break;
+			case 'integer':
+			case 'double':
+				$class = 'foxway_number';
+				break;
+			case 'array': // @todo normalize it
+				if( count($value) <= 3 ) {
+					$value = var_export($value, true);
+				} else {
+					$value = 'array';
+				}
+				break;
 		}
 		if( $class ) {
 			$value = \Html::element('span', array('class'=>$class), $value);
@@ -195,6 +204,11 @@ class RuntimeDebug extends Runtime {
 				break;
 			case T_ARRAY:
 				$return = \Html::element('span', array('class'=>'foxway_construct'), 'array');
+				break;
+			case 'isset':
+			case 'unset':
+			case 'empty':
+				$return = \Html::element('span', array('class'=>'foxway_construct'), $command);
 				break;
 			default:
 				$return = $command;
@@ -282,6 +296,18 @@ class RuntimeDebug extends Runtime {
 				break;
 		}
 		return "&nbsp;$operator&nbsp;";
+	}
+
+	protected function doCommand() {
+		$listParams = $this->savedListParams;
+
+		$return = parent::doCommand();
+
+		$this->debug[] = self::getHTMLForCommand( $this->lastCommandDebug ) .
+				"(" . implode( ', ', $listParams ) .	")&nbsp;<b>=></b>&nbsp;" .
+				self::getHTMLForValue( $this->lastParam );
+
+		return  $return;
 	}
 
 }
