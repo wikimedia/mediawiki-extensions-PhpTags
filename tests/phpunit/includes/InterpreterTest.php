@@ -1946,6 +1946,55 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 				);
 	}
 
+	public function testRun_RArray_count() {
+		$this->assertEquals(
+				Interpreter::run('$transport = array("foot", "bike", "car", "plane"); echo count($transport);'),
+				array('4')
+				);
+	}
+	public function testRun_RArray_current() {
+		$this->assertEquals(
+				Interpreter::run('echo current($transport);'),
+				array('foot')
+				);
+	}
+	public function testRun_RArray_next() {
+		$this->assertEquals(
+				Interpreter::run('echo next($transport), next($transport);'),
+				array('bike', 'car')
+				);
+	}
+	public function testRun_RArray_end() {
+		$this->assertEquals(
+				Interpreter::run('echo end($transport);'),
+				array('plane')
+				);
+	}
+	public function testRun_RArray_prev() {
+		$this->assertEquals(
+				Interpreter::run('echo prev($transport), prev($transport);'),
+				array('car', 'bike')
+				);
+	}
+	public function testRun_RArray_each() {
+		$this->assertEquals(
+				Interpreter::run('$foo = each($transport); echo $foo[0], $foo[1];'),
+				array('1', 'bike')
+				);
+	}
+	public function testRun_RArray_key() {
+		$this->assertEquals(
+				Interpreter::run('echo key($transport);'),
+				array('2')
+				);
+	}
+	public function testRun_RArray_in_array_1() {
+		$this->assertEquals(
+				Interpreter::run('echo in_array("bike", $transport);'),
+				array('1')
+				);
+	}
+
 }
 
 // @todo echo is_scalar(array("foo","bar") ? "true" : "false"; // most return error

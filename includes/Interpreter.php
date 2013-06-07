@@ -403,6 +403,8 @@ class Interpreter {
 							$debug[] = $token;
 						}
 						continue 2;
+					} elseif( isset(self::$PHPConstants[$text]) ) {
+						$runtime->addParamValue( self::$PHPConstants[$text] );
 					} else {
 						$return[] = new ErrorMessage(__LINE__, $tokenLine, E_PARSE, $id);
 						break 2;
@@ -958,5 +960,19 @@ class Interpreter {
 		}
 		return (float)( substr($string, 0, $epos) * pow(10, substr($string, $epos+1)) );
 	}
+
+	private static $PHPConstants = array(
+		'CASE_UPPER' => CASE_UPPER,
+		'CASE_LOWER' => CASE_LOWER,
+		'SORT_ASC' => SORT_ASC,
+		'SORT_DESC' => SORT_DESC,
+		'SORT_REGULAR' => SORT_REGULAR,
+		'SORT_NUMERIC' => SORT_NUMERIC,
+		'SORT_STRING' => SORT_STRING,
+		'SORT_LOCALE_STRING' => SORT_LOCALE_STRING,
+		//'SORT_NATURAL' => SORT_NATURAL, // @todo PHP >= 5.4.0
+		//'SORT_FLAG_CASE' => SORT_FLAG_CASE, // @todo PHP >= 5.4.0
+		'COUNT_RECURSIVE' => COUNT_RECURSIVE,
+	);
 
 }

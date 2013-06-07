@@ -15,7 +15,7 @@ if ( !defined( 'MEDIAWIKI' ) ) {
 	die( 'This file is an extension to MediaWiki and thus not a valid entry point.' );
 }
 
-define( 'Foxway_VERSION' , '0.4.0' );
+define( 'Foxway_VERSION' , '0.4.1' );
 
 // Register this extension on Special:Version
 $wgExtensionCredits['parserhook'][] = array(
@@ -63,6 +63,7 @@ $wgAutoloadClasses['Foxway\\Runtime']			= $dir . '/includes/Runtime.php';
 $wgAutoloadClasses['Foxway\\RuntimeDebug']		= $dir . '/includes/RuntimeDebug.php';
 
 $wgAutoloadClasses['Foxway\\BaseFunction']		= $dir . '/includes/functions/BaseFunction.php';
+$wgAutoloadClasses['Foxway\\FArray']			= $dir . '/includes/functions/FArray.php';
 $wgAutoloadClasses['Foxway\\FVariable']			= $dir . '/includes/functions/FVariable.php';
 
 // Resources
@@ -87,10 +88,33 @@ $wgHooks['UnitTestsList'][] = function ( &$files ) {
 $wgFoxwayPassByReference = array(
 	'settype' => 1,
 	'unset' => -1,
+	'array_multisort' => -1,
+	'array_pop' => 1,
+	'array_push' => 1,
+	'array_shift' => 1,
+	'array_splice' => 1,
+	'array_unshift' => 1,
+	'arsort' => 1,
+	'asort' => 1,
+	'current' => 1,
+	'each' => 1,
+	'end' => 1,
+	'key' => 1,
+	'krsort' => 1,
+	'ksort' => 1,
+	'natcasesort' => 1,
+	'natsort' => 1,
+	'next' => 1,
+	'pos' => 1,
+	'prev' => 1,
+	'reset' => 1,
+	'rsort' => 1,
+	'shuffle' => 1,
+	'sort' => 1,
 );
 
 $wgFoxwayFunctions = array(
-	'FVariable' => array( // @see http://www.php.net/manual/en/ref.var.php
+	'FVariable' => array( // Variable handling Functions @see http://www.php.net/manual/en/ref.var.php
 		'boolval',
 		//'debug_zval_dump',
 		'doubleval',
@@ -125,5 +149,63 @@ $wgFoxwayFunctions = array(
 		'unset',
 		'var_dump',
 		'var_export',
+	),
+	'FArray' => array( // Array Functions @see http://www.php.net/manual/en/ref.array.php
+		'array_change_key_case',
+		'array_chunk',
+		//'array_column', @todo PHP 5 >= 5.5.0
+		'array_combine',
+		'array_count_values',
+		'array_diff_assoc',
+		'array_diff_key',
+		'array_diff',
+		'array_fill_keys',
+		'array_fill',
+		'array_flip',
+		'array_intersect_assoc',
+		'array_intersect_key',
+		'array_intersect',
+		'array_key_exists',
+		'array_keys',
+		'array_merge_recursive',
+		'array_merge',
+		'array_multisort',
+		'array_pad',
+		'array_pop',
+		'array_product',
+		'array_push',
+		'array_rand',
+		'array_replace_recursive',
+		'array_replace',
+		'array_reverse',
+		'array_search',
+		'array_shift',
+		'array_slice',
+		'array_splice',
+		'array_sum',
+		'array_unique',
+		'array_unshift',
+		'array_values',
+		'arsort',
+		'asort',
+		'count',
+		'current',
+		'each',
+		'end',
+		'in_array',
+		'key',
+		'krsort',
+		'ksort',
+		'natcasesort',
+		'natsort',
+		'next',
+		'pos',
+		'prev',
+		'range',
+		'reset',
+		'rsort',
+		'shuffle',
+		'sizeof',
+		'sort',
 	),
 );

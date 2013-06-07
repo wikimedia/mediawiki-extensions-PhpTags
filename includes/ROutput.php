@@ -23,6 +23,6 @@ class ROutput extends RValue implements iRawOutput {
 		if( $this->element !== null ){
 			return \Html::element( $this->element, array(), $this->string ) . "\n";
 		}
-		return $this->string . "\n";
+		return strtr( $this->string, array('&'=>'&amp;', '<'=>'&lt;') ) . "\n";
 	}
 }

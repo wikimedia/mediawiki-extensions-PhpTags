@@ -23,4 +23,8 @@ class RValue {
 		$this->value = $value;
 	}
 
+	public function getReference() {
+		return $this->value;
+	}
+
 }

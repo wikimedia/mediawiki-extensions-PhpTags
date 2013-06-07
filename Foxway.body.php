@@ -94,7 +94,7 @@ class Foxway {
 	}
 
 	private static function getScope(PPFrame $frame) {
-		foreach (self::$frames as $value) {
+		foreach (self::$frames as &$value) {
 			if( $value[0] === $frame ) {
 				return $value[1];
 			}

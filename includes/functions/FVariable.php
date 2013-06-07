@@ -28,8 +28,8 @@ namespace Foxway;
 class FVariable extends BaseFunction {
 
 	public static function __callStatic($name, $arguments) {
-		if( count($arguments) != 1 ) {
-			return self::wrongParameterCount(__FUNCTION__, __LINE__);
+		if( count($arguments[0]) != 1 ) {
+			return self::wrongParameterCount($name, __LINE__);
 		}
 		$arg = &$arguments[0][0];
 
@@ -79,7 +79,7 @@ class FVariable extends BaseFunction {
 				$return = strval($arg);
 				break;
 			default:
-				return self::callUnknownMethod(__FUNCTION__, __LINE__);
+				return parent::__callStatic($name, __LINE__);
 				break;
 		}
 		return new RValue($return);
@@ -112,7 +112,7 @@ class FVariable extends BaseFunction {
 	 * @return \Foxway\RValue
 	 */
 	public static function f_isset($arguments) {
-		foreach ( $arguments as $value ) {
+		foreach ( $arguments as &$value ) {
 			if( $value === null ) {
 				return new RValue(false);
 			}

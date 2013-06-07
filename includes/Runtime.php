@@ -80,7 +80,7 @@ class Runtime {
 	public function getOperators() {
 		static $operators = array();
 		if( count($operators) == 0 ) {
-			foreach (self::$operatorsPrecedence as $value) {
+			foreach (self::$operatorsPrecedence as &$value) {
 				$operators = array_merge($operators, $value);
 			}
 		}
@@ -89,7 +89,7 @@ class Runtime {
 
 	protected function getOperatorPrecedence( $operator ) {
 		$precendence = 0;
-		foreach (self::$operatorsPrecedence as $operators) {
+		foreach (self::$operatorsPrecedence as &$operators) {
 			if( in_array($operator, $operators) ) {
 				break;
 			}
@@ -504,6 +504,7 @@ class Runtime {
 		$functionName = "f_{$this->lastCommand}";
 		$functionClass = 'Foxway\\' . Interpreter::getClassNameForFunction($this->lastCommand);
 
+		// @todo check for $functionClass is exists class
 		$class = new \ReflectionClass($functionClass);
 		if( $class->isSubclassOf("Foxway\\BaseFunction") ) {
 			try {

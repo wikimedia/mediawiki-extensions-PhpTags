@@ -58,11 +58,11 @@ class RuntimeDebug extends Runtime {
 		if( $operator == '=' ) {
 			if( $param instanceof RArray ) {
 				$i = $param->getIndex();
-				$return = \Html::element( 'span', array('class'=>'foxway_variable'), $param->getParent()->getName() ) .
+				$return = \Html::element( 'span', array('class'=>'foxway_variable'), '$'.$param->getParent()->getName() ) .
 						( $i instanceof RValue ? '['.self::getHTMLForValue($i).']' : '[]' ) .
 						'&nbsp;<b>=></b>&nbsp;=&nbsp;';
 			}else{
-				$return = \Html::element( 'span', array('class'=>'foxway_variable'), $param->getName() ) .
+				$return = \Html::element( 'span', array('class'=>'foxway_variable'), '$'.$param->getName() ) .
 						'&nbsp;<b>=></b>&nbsp;=&nbsp;';
 			}
 		} else {
@@ -157,7 +157,7 @@ class RuntimeDebug extends Runtime {
 				$class = 'foxway_number';
 				break;
 			case 'array': // @todo normalize it
-				if( count($value) <= 3 ) {
+				if( count($value,  COUNT_RECURSIVE) <= 3 ) {
 					$value = var_export($value, true);
 				} else {
 					$value = 'array';
@@ -185,11 +185,11 @@ class RuntimeDebug extends Runtime {
 				$param = $param->getParent();
 			} while ( $param instanceof RArray );
 			return ($param->is_set() ? '' : \Html::element( 'span', array('class'=>'foxway_undefined'), "Undefined " ) ) .
-					\Html::element( 'span', array('class'=>'foxway_variable'), $param->getName() ) .
+					\Html::element( 'span', array('class'=>'foxway_variable'), '$'.$param->getName() ) .
 					implode('', $indexes) .	"($value)";
 		} elseif( $param instanceof RVariable ) {
 			return ($param->is_set() ? '' : \Html::element( 'span', array('class'=>'foxway_undefined'), "Undefined " ) ) .
-					\Html::element( 'span', array('class'=>'foxway_variable'), $param->getName() ) . "($value)";
+					\Html::element( 'span', array('class'=>'foxway_variable'), '$'.$param->getName() ) . "($value)";
 		}
 		return $value;
 	}
