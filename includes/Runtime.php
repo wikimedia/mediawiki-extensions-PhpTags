@@ -536,7 +536,7 @@ class Runtime {
 					__LINE__,
 					null,
 					E_ERROR,
-					array('faxway-unexpected-result-work-function', __METHOD__, isset($this->args[0]) ? $this->args[0] : 'n\a')
+					array('foxway-unexpected-result-work-function', __METHOD__, isset($this->args[0]) ? $this->args[0] : 'n\a')
 				);
 		}
 

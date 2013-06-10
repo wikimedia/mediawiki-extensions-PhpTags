@@ -19,7 +19,7 @@ $messages['en'] = array(
 	'foxway-php-syntax-error-unexpected' => 'PHP parse error: Syntax error, unexpected $1 in command line code on line $2.',
 	'foxway-php-warning-exception-in-function' => 'PHP warning: Function $1() on page $2 line $3 returns exception ($4).',
 	'foxway-php-wrong-parameter-count' => 'PHP warning: Wrong parameter count for $1() on page $2 line $3.',
-	'faxway-unexpected-result-work-function' => 'Unexpected result work function $1() of extension Foxway on page $2 line $3.',
+	'foxway-unexpected-result-work-function' => 'Unexpected result work function $1() of extension Foxway on page $2 line $3.',
 );
 
 /** Message documentation (Message documentation)

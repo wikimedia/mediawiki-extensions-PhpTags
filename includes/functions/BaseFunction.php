@@ -49,7 +49,7 @@ class BaseFunction {
 					null,
 					E_ERROR,
 					array(
-						'faxway-unexpected-result-work-function',
+						'foxway-unexpected-result-work-function',
 						substr( $function, 2 ),
 						null,
 					)
