@@ -47,10 +47,6 @@ $messages['qqq'] = array(
 * $1 - function name
 * $2 - the name of the page on which the error occurred
 * $3 - the line number where the error occurred',
-	'faxway-unexpected-work-function' => 'Error message, parameters:
-* $1 - Foxway extension function name
-* $2 - the name of the page on which the error occurred
-* $3 - the line number where the error occurred',
 );
 
 /** Asturian (asturianu)
@@ -148,4 +144,12 @@ $messages['nl'] = array(
 $messages['roa-tara'] = array(
 	'foxway-desc' => "Permette de stipà 'nu date oriendate a l'oggette e 'mblemende 'u combortamede in esecuzione pu codece PHP sus a le pàggene",
 	'foxway-php-syntax-error-unexpected' => "Errore de analisi de PHP: Errore de sindasse, inaspettate $1 jndr'à 'u linèe de codece $2.",
+);
+
+/** Traditional Chinese (中文（繁體）‎)
+ * @author Justincheng12345
+ */
+$messages['zh-hant'] = array(
+	'foxway-desc' => '容許於網頁上將物件導向的資料存儲並實現自己的PHP代碼運行',
+	'foxway-php-syntax-error-unexpected' => 'PHP解析錯誤：語法錯誤，$2行出現意外代碼$1。',
 );
