@@ -13,7 +13,8 @@ $messages = array();
  * @author pastakhov
  */
 $messages['en'] = array(
-	'foxway-desc' => 'Allows to store an object-oriented data and implements its own runtime for PHP code on pages',
+	'foxway-desc' => 'Adds in the wikitext parser the ability to use the syntax and functions of PHP',
+	'foxway-disabled-for-namespace' => 'Extension foxway disabled for this namespace $1',
 	'foxway-php-fatal-error-undefined-function' => 'PHP fatal error: Call to undefined function $1() on page $2 line $3.',
 	'foxway-php-not-variable-passed-by-reference' => 'PHP fatal error: Only variables can be passed by reference, function $1() on page $2 line $3.',
 	'foxway-php-syntax-error-unexpected' => 'PHP parse error: Syntax error, unexpected $1 in command line code on line $2.',
@@ -27,6 +28,8 @@ $messages['en'] = array(
  */
 $messages['qqq'] = array(
 	'foxway-desc' => '{{desc|name=Foxway|url=https://www.mediawiki.org/wiki/Extension:Foxway}}',
+	'foxway-disabled-for-namespace' => 'Error message when trying use this extension on the pages of the namespace where it is not permitted, parameters:
+* $1 - the namespace name',
 	'foxway-php-fatal-error-undefined-function' => 'Error message, parameters:
 * $1 - user-specified function name
 * $2 - the name of the page on which the error occurred

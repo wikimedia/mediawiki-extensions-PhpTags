@@ -1995,6 +1995,13 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 				);
 	}
 
+	public function testRun_RString_similar_text() {
+		$this->assertEquals(
+				Interpreter::run('$var_1 = "PHP IS GREAT"; $var_2 = "WITH MYSQL"; similar_text($var_1, $var_2, $percent); echo $percent;'),
+				array('27.272727272727')
+				);
+	}
+
 }
 
 // @todo echo is_scalar(array("foo","bar") ? "true" : "false"; // most return error

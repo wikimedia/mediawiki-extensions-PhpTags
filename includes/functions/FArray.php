@@ -90,12 +90,16 @@ class FArray extends BaseFunction {
 	);
 
 	public static function __callStatic($name, $arguments) {
+		global $wgFoxwayPassByReference;
+
 		if( isset(self::$listFunction[$name]) ) {
 			$funcData = &self::$listFunction[$name];
 			$refarg = &$arguments[0];
-			foreach ($refarg as $key => &$value) {
-				if( $value instanceof RValue ) {
-					$refarg[$key] = &$value->getReference();
+			if( isset($wgFoxwayPassByReference[$funcData[0]]) ) {
+				foreach ($refarg as $key => &$value) {
+					if( $value instanceof RValue ) {
+						$refarg[$key] = &$value->getReference();
+					}
 				}
 			}
 			$c = count($refarg);

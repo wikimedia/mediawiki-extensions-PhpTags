@@ -15,7 +15,7 @@ if ( !defined( 'MEDIAWIKI' ) ) {
 	die( 'This file is an extension to MediaWiki and thus not a valid entry point.' );
 }
 
-define( 'Foxway_VERSION' , '0.4.1' );
+define( 'Foxway_VERSION' , '0.4.2' );
 
 // Register this extension on Special:Version
 $wgExtensionCredits['parserhook'][] = array(
@@ -64,6 +64,7 @@ $wgAutoloadClasses['Foxway\\RuntimeDebug']		= $dir . '/includes/RuntimeDebug.php
 
 $wgAutoloadClasses['Foxway\\BaseFunction']		= $dir . '/includes/functions/BaseFunction.php';
 $wgAutoloadClasses['Foxway\\FArray']			= $dir . '/includes/functions/FArray.php';
+$wgAutoloadClasses['Foxway\\FString']			= $dir . '/includes/functions/FString.php';
 $wgAutoloadClasses['Foxway\\FVariable']			= $dir . '/includes/functions/FVariable.php';
 
 // Resources
@@ -85,6 +86,10 @@ $wgHooks['UnitTestsList'][] = function ( &$files ) {
 		return true;
 };
 
+include_once 'Settings.php';
+
+// @todo Reverse shift ???
+// Do not change the value of this variable in LocalSettings.php!!!
 $wgFoxwayPassByReference = array(
 	'settype' => 1,
 	'unset' => -1,
@@ -111,101 +116,8 @@ $wgFoxwayPassByReference = array(
 	'rsort' => 1,
 	'shuffle' => 1,
 	'sort' => 1,
-);
-
-$wgFoxwayFunctions = array(
-	'FVariable' => array( // Variable handling Functions @see http://www.php.net/manual/en/ref.var.php
-		'boolval',
-		//'debug_zval_dump',
-		'doubleval',
-		'empty',
-		'floatval',
-		'get_defined_vars', //implemented in Runtime.php
-		//'get_resource_type',
-		'gettype',
-		//'import_request_variables', @todo  need hide not foxway Cookie
-		'intval',
-		'is_array',
-		'is_bool',
-		//'is_callable',
-		'is_double',
-		'is_float',
-		'is_int',
-		'is_integer',
-		'is_long',
-		'is_null',
-		'is_numeric',
-		//'is_object',
-		'is_real',
-		//'is_resource',
-		'is_scalar',
-		'is_string',
-		'isset',
-		'print_r',
-		//'serialize',
-		'settype',
-		'strval',
-		//'unserialize',
-		'unset',
-		'var_dump',
-		'var_export',
-	),
-	'FArray' => array( // Array Functions @see http://www.php.net/manual/en/ref.array.php
-		'array_change_key_case',
-		'array_chunk',
-		//'array_column', @todo PHP 5 >= 5.5.0
-		'array_combine',
-		'array_count_values',
-		'array_diff_assoc',
-		'array_diff_key',
-		'array_diff',
-		'array_fill_keys',
-		'array_fill',
-		'array_flip',
-		'array_intersect_assoc',
-		'array_intersect_key',
-		'array_intersect',
-		'array_key_exists',
-		'array_keys',
-		'array_merge_recursive',
-		'array_merge',
-		'array_multisort',
-		'array_pad',
-		'array_pop',
-		'array_product',
-		'array_push',
-		'array_rand',
-		'array_replace_recursive',
-		'array_replace',
-		'array_reverse',
-		'array_search',
-		'array_shift',
-		'array_slice',
-		'array_splice',
-		'array_sum',
-		'array_unique',
-		'array_unshift',
-		'array_values',
-		'arsort',
-		'asort',
-		'count',
-		'current',
-		'each',
-		'end',
-		'in_array',
-		'key',
-		'krsort',
-		'ksort',
-		'natcasesort',
-		'natsort',
-		'next',
-		'pos',
-		'prev',
-		'range',
-		'reset',
-		'rsort',
-		'shuffle',
-		'sizeof',
-		'sort',
-	),
+	'similar_text' => 4, // 0b100
+	'sscanf' => 2147483644, // 0b1111111111111111111111111111100
+	'str_ireplace' => 8, // 0b1000
+	'str_replace' => 8, // 0b1000
 );

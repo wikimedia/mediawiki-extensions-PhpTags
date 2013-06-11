@@ -1,6 +1,6 @@
 <?php
 namespace Foxway;
-define('FOXWAY_MAX_PAST_PARAM', 16);
+define('FOXWAY_MAX_PAST_PARAM', 16); // Max 31 ?
 
 /**
  * BaseFunction base class for functions classes of Foxway extension.
