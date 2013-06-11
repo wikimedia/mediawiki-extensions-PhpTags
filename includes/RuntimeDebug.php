@@ -102,6 +102,7 @@ class RuntimeDebug extends Runtime {
 				case false:
 				case T_ARRAY:
 				case T_ECHO:
+				case T_PRINT:
 					break;
 				case T_IF:
 					$this->debug[] = self::getHTMLForCommand(T_IF) .
@@ -121,6 +122,7 @@ class RuntimeDebug extends Runtime {
 
 		switch ($lastCommand) {
 			case T_ECHO:
+			case T_PRINT:
 				$this->debug[] = self::getHTMLForCommand($lastCommand) . '&nbsp;' . implode(', ', $this->savedListParams) . ';';
 				$this->debug[] = implode('', $return[1]);
 				break;
@@ -198,6 +200,9 @@ class RuntimeDebug extends Runtime {
 		switch ($command) {
 			case T_ECHO:
 				$return = \Html::element('span', array('class'=>'foxway_construct'), 'echo');
+				break;
+			case T_PRINT:
+				$return = \Html::element('span', array('class'=>'foxway_construct'), 'print');
 				break;
 			case T_IF:
 				$return = \Html::element('span', array('class'=>'foxway_construct'), 'if');

@@ -11,38 +11,12 @@ class Foxway {
 
 	static $frames=array();
 
-	/**
-	 * Render function used in hook ParserFirstCallInit
-	 *
-	 * @param Parser $parser
-	 * @return string
-	 */
-	public static function renderParserFunction(Parser &$parser) {
-		$params = func_get_args();
-		array_shift( $params );
-
-		if( count($params) < 2 ) {
-			return '<span class="error">' . wfMessage( 'foxway-not-enough-parameters' )->escaped() . '</span>';
-		}
-
-		$action = strtolower( $params[0] );
-		switch ($action) {
-			case 'set':
-				$matches = array();
-				if( preg_match('/^\s*([^=]+)\s*=\s*(.+)\s*$/si', $params[1], $matches) ) {
-				$propertyName = $matches[1];
-				$propertyValue = $matches[2];
-				return \Foxway\ORM::SetProperty($propertyName, $propertyValue);
-				break;
-			}
-				break;
-			default:
-				return '<span class="error">' . wfMessage( 'foxway-unknown-action', $action )->escaped() . '</span>';
-				break;
-		}
-	}
-
 	public static function render($input, array $args, Parser $parser, PPFrame $frame) {
+		global $wgNamespacesWithFoxway;
+		if( $wgNamespacesWithFoxway !== true && empty($wgNamespacesWithFoxway[$frame->getTitle()->getNamespace()]) ) {
+			return Html::element( 'span', array('class'=>'error'), wfMessage('foxway-disabled-for-namespace', $frame->getTitle()->getNsText())->escaped() );
+		}
+
 		$is_debug = isset($args['debug']);
 		$return = '';
 
@@ -56,9 +30,7 @@ class Foxway {
 		foreach ($result as &$value) {
 			if( $value instanceof Foxway\iRawOutput ) {
 				$value = (string)$value;
-			}/*else{ // @todo ????
-				$value = strtr( $value, array('&'=>'&amp;', '<'=>'&lt;') );
-			}*/
+			}
 		}
 
 		if( $is_debug ) {
@@ -66,7 +38,7 @@ class Foxway {
 			$return .= self::insertNoWiki( $parser, array_shift($result) ) . "\n";
 		}
 
-		return $return . self::insertGeneral( $parser, $parser->recursiveTagParse(implode('', $result),$frame) );
+		return $return . self::insertGeneral( $parser, $parser->recursiveTagParse(implode($result),$frame) );
 	}
 
 	/**

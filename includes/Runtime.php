@@ -209,9 +209,6 @@ class Runtime {
 				}else{
 					$this->listParams[] = $this->lastParam->getValue();
 				}
-				if( $this->passByReference > 0 ) {
-					$this->passByReference <<= 1;
-				}
 			}
 			$this->lastParam = $this->listParams;
 		}
@@ -231,7 +228,7 @@ class Runtime {
 						$this->listParams[] = $this->lastParam->getValue();
 					}
 					if( $this->passByReference > 0 ) {
-						$this->passByReference <<= 1;
+						$this->passByReference >>= 1;
 					}
 				}
 				$this->lastParam = null;
@@ -259,6 +256,7 @@ class Runtime {
 				switch ($this->lastCommand) {
 					case false:
 					case T_ECHO:
+					case T_PRINT:
 						break 2;
 					case T_IF:
 						$this->lastCommand = false;
@@ -484,6 +482,7 @@ class Runtime {
 		// Remember the child class RuntimeDebug
 		switch ($this->lastCommand) {
 			case T_ECHO:
+			case T_PRINT:
 				$return = array( T_ECHO, $this->listParams );
 				break;
 			case false:

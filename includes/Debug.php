@@ -77,6 +77,7 @@ class Debug implements \ArrayAccess, iRawOutput {
 			case T_BOOL_CAST: // (bool)
 			case T_UNSET_CAST: // (unset)
 			case T_ECHO:
+			case T_PRINT:
 			case T_IF:
 			case T_ELSE:
 			case T_ELSEIF:

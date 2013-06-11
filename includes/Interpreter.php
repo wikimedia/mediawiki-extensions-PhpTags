@@ -116,6 +116,8 @@ class Interpreter {
 	);
 
 	public static function run($source, array $args=array(), $scope='', $is_debug=false) {
+		global $wgFoxwayAllowedPHPConstants;
+
 		$tokens = self::getTokens($source);
 
 		$return = array();
@@ -292,6 +294,10 @@ class Interpreter {
 					$runtime->addCommand($id);
 					$parenthesFlags = FOXWAY_ALLOW_LIST_PARAMS | FOXWAY_EXPECT_SEMICOLON;
 					break;
+				case T_PRINT:
+					$runtime->addCommand($id);
+					$parenthesFlags = FOXWAY_EXPECT_SEMICOLON;
+					break;
 				case T_CONSTANT_ENCAPSED_STRING:
 					$is_apostrophe = substr($text, 0, 1) == '\'' ? true : false;
 					$string = substr($text, 1, -1);
@@ -403,8 +409,8 @@ class Interpreter {
 							$debug[] = $token;
 						}
 						continue 2;
-					} elseif( isset(self::$PHPConstants[$text]) ) {
-						$runtime->addParamValue( self::$PHPConstants[$text] );
+					} elseif( in_array($text, $wgFoxwayAllowedPHPConstants) && defined($text) ) {
+						$runtime->addParamValue( constant($text) );
 					} else {
 						$return[] = new ErrorMessage(__LINE__, $tokenLine, E_PARSE, $id);
 						break 2;
@@ -443,6 +449,7 @@ class Interpreter {
 					}
 					switch ($command) {
 						case T_ECHO:
+						case T_PRINT:
 							$return = array_merge($return, $result);
 							break;
 						case T_IF:
@@ -554,6 +561,7 @@ class Interpreter {
 					}
 					// break is not necessary here
 				case T_ECHO:
+				case T_PRINT:
 				case ',':
 				case T_CONCAT_EQUAL:	// .=
 				case T_PLUS_EQUAL:		// +=
@@ -960,19 +968,5 @@ class Interpreter {
 		}
 		return (float)( substr($string, 0, $epos) * pow(10, substr($string, $epos+1)) );
 	}
-
-	private static $PHPConstants = array(
-		'CASE_UPPER' => CASE_UPPER,
-		'CASE_LOWER' => CASE_LOWER,
-		'SORT_ASC' => SORT_ASC,
-		'SORT_DESC' => SORT_DESC,
-		'SORT_REGULAR' => SORT_REGULAR,
-		'SORT_NUMERIC' => SORT_NUMERIC,
-		'SORT_STRING' => SORT_STRING,
-		'SORT_LOCALE_STRING' => SORT_LOCALE_STRING,
-		//'SORT_NATURAL' => SORT_NATURAL, // @todo PHP >= 5.4.0
-		//'SORT_FLAG_CASE' => SORT_FLAG_CASE, // @todo PHP >= 5.4.0
-		'COUNT_RECURSIVE' => COUNT_RECURSIVE,
-	);
 
 }
