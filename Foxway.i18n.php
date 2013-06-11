@@ -66,8 +66,14 @@ $messages['ast'] = array(
  * @author Purodha
  */
 $messages['de'] = array(
-	'foxway-desc' => 'Ermöglicht die Speicherung von objektorientierten Daten und implementiert eine eigene Laufzeitumgebung für PHP-Code auf Seiten',
+	'foxway-desc' => 'Erweitert den Wikitext-Parser um die Möglichkeit, die Syntax und Funktionen von PHP zu verwenden',
+	'foxway-disabled-for-namespace' => 'Die Erweiterung Foxway ist für den Namensraum „$1“ deaktiviert',
+	'foxway-php-fatal-error-undefined-function' => 'Fataler PHP-Fehler: Aufruf zur undefinierten Funktion $1() auf Seite $2, Zeile $3.',
+	'foxway-php-not-variable-passed-by-reference' => 'Fataler PHP-Fehler: Es können nur Variablen von der Referenz übergeben werden, Funktion $1() auf Seite $2, Zeile $3.',
 	'foxway-php-syntax-error-unexpected' => 'PHP-Parserfehler: Syntaxfehler, unerwartete $1 im Befehlszeilencode in Zeile $2.',
+	'foxway-php-warning-exception-in-function' => 'PHP-Warnung: Funktion $1() auf Seite $2, Zeile $3 gibt Ausnahme zurück ($4).',
+	'foxway-php-wrong-parameter-count' => 'PHP-Warnung: Falscher Parameterzähler für $1() auf Seite $2, Zeile $3.',
+	'foxway-unexpected-result-work-function' => 'Unerwartete Ergebnisarbeitsfunktion $1() der Erweiterung Foxway auf Seite $2, Zeile $3.',
 );
 
 /** Spanish (español)
@@ -82,8 +88,14 @@ $messages['es'] = array(
  * @author Gomoko
  */
 $messages['fr'] = array(
-	'foxway-desc' => 'Autorise le stockage de données orientées objet et implémente son propre moteur pour le code PHP sur les pages',
+	'foxway-desc' => 'Ajoute à l’analyseur de wikitext la possibilité d’utiliser la syntaxe et les fonctions de PHP',
+	'foxway-disabled-for-namespace' => 'Extension foxway désactivée pour cet espace de noms $1',
+	'foxway-php-fatal-error-undefined-function' => 'Erreur PHP fatale : Appel à la fonction non définie $1() en page $2 ligne $3.',
+	'foxway-php-not-variable-passed-by-reference' => 'Erreur PHP fatale : Seule les variables peuvent être passées par référence, fonction $1() en page $2 ligne $3.',
 	'foxway-php-syntax-error-unexpected' => 'Erreur d’analyse PHP : Erreur de syntaxe, $1 non attendu dans le code de la ligne de commande à la ligne $2.',
+	'foxway-php-warning-exception-in-function' => 'Avertissement PHP : La fonction $1() en page $2 ligne $3 a renvoyé une exception ($4).',
+	'foxway-php-wrong-parameter-count' => 'Avertissement PHP : Mauvais nombre de paramètres pour $1() en page $2 ligne $3.',
+	'foxway-unexpected-result-work-function' => 'Résultat de travail non attendu pour la fonction $1() de l’extension Foxway en page $2 ligne $3.',
 );
 
 /** Galician (galego)
@@ -98,7 +110,8 @@ $messages['gl'] = array(
  * @author Shirayuki
  */
 $messages['ja'] = array(
-	'foxway-desc' => 'オブジェクト指向データを格納できるようにし、ページで PHP コード専用の実行環境を実現する',
+	'foxway-desc' => 'ウィキテキストのパーサーに、PHP の構文や関数を処理できる機能を追加する',
+	'foxway-disabled-for-namespace' => 'Foxway 拡張機能はこの $1 名前空間では無効になっています',
 	'foxway-php-syntax-error-unexpected' => 'PHP 構文解析エラー: 構文エラーです。行 $2 のコードで予期しない $1 が見つかりました。',
 );
 
@@ -121,8 +134,13 @@ $messages['lb'] = array(
  * @author Bjankuloski06
  */
 $messages['mk'] = array(
-	'foxway-desc' => 'Овозможува складирање на објектно-ориентирани податоци и става свој извршител за PHP-код на страниците',
+	'foxway-desc' => 'Овозможува складирање на објектно-ориентирани податоци и става свој извршител за PHP-код на страниците', # Fuzzy
+	'foxway-php-fatal-error-undefined-function' => 'Кобна грешка со PHP: Повик на неодредена функција $1() на страницата $2, во редот $3.',
+	'foxway-php-not-variable-passed-by-reference' => 'Кобна грешка во PHP: Со наведување можат да се даваат само променливи, функција $1() на страницата $2, ред $3.',
 	'foxway-php-syntax-error-unexpected' => 'Грешка при парсирање на PHP: Синтаксна грешка - не се очекува $1 во кодот во ред бр. $2.',
+	'foxway-php-warning-exception-in-function' => 'Предупредување за PHP: Функцијата $1() на страницата $2, ред $3 давфа исклучок ($4).',
+	'foxway-php-wrong-parameter-count' => 'Предупредување за PHP: Погрешен број на параметри за $1() на страница $2, ред $3.',
+	'foxway-unexpected-result-work-function' => 'Неочекуван исход од работната функција $1() на додатокот Foxway на страница $2, ред $3.',
 );
 
 /** Malay (Bahasa Melayu)
@@ -145,7 +163,8 @@ $messages['nl'] = array(
  * @author Joetaras
  */
 $messages['roa-tara'] = array(
-	'foxway-desc' => "Permette de stipà 'nu date oriendate a l'oggette e 'mblemende 'u combortamede in esecuzione pu codece PHP sus a le pàggene",
+	'foxway-desc' => "Aggiunge jndr'à 'n'analizzatore de uicchiteste l'abbilità de ausà 'a sindasse e le funziune de PHP",
+	'foxway-disabled-for-namespace' => 'Estenzione foxway disabbiltiate pe stu namespace $1',
 	'foxway-php-syntax-error-unexpected' => "Errore de analisi de PHP: Errore de sindasse, inaspettate $1 jndr'à 'u linèe de codece $2.",
 );
 
@@ -153,6 +172,6 @@ $messages['roa-tara'] = array(
  * @author Justincheng12345
  */
 $messages['zh-hant'] = array(
-	'foxway-desc' => '容許於網頁上將物件導向的資料存儲並實現自己的PHP代碼運行',
+	'foxway-desc' => '容許於網頁上將物件導向的資料存儲並實現自己的PHP代碼運行', # Fuzzy
 	'foxway-php-syntax-error-unexpected' => 'PHP解析錯誤：語法錯誤，$2行出現意外代碼$1。',
 );
