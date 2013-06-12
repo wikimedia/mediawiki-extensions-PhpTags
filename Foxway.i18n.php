@@ -102,8 +102,14 @@ $messages['fr'] = array(
  * @author Toliño
  */
 $messages['gl'] = array(
-	'foxway-desc' => 'Permite o almacenamento de datos orientados a obxectos e introduce o seu propio tempo de execución para o código PHP nas páxinas',
+	'foxway-desc' => 'Engade ao analizador de texto wiki a posibilidade de utilizar a sintaxe e funcións do PHP',
+	'foxway-disabled-for-namespace' => 'A extensión Foxway está desactivada para o espazo de nomes $1',
+	'foxway-php-fatal-error-undefined-function' => 'Erro fatal de PHP: Chamada a unha función $1() non definida na páxina $2 na liña $3.',
+	'foxway-php-not-variable-passed-by-reference' => 'Erro fatal de PHP: Unicamente as variables poden pasarse por referencia, función $1() na páxina $2 na liña $3.',
 	'foxway-php-syntax-error-unexpected' => 'Erro de análise PHP: Erro de sintaxe; "$1" inesperado no código da liña de comandos na liña $2.',
+	'foxway-php-warning-exception-in-function' => 'Advertencia de PHP: A función $1() na páxina $2 na liña $3 devolve unha excepción ($4)',
+	'foxway-php-wrong-parameter-count' => 'Advertencia de PHP: Número de parámetros incorrecto para $1() na páxina $2 na liña $3.',
+	'foxway-unexpected-result-work-function' => 'Resultado de traballo inesperado para a función $1() da extensión Foxway na páxina $2 na liña $3.',
 );
 
 /** Japanese (日本語)
@@ -134,7 +140,8 @@ $messages['lb'] = array(
  * @author Bjankuloski06
  */
 $messages['mk'] = array(
-	'foxway-desc' => 'Овозможува складирање на објектно-ориентирани податоци и става свој извршител за PHP-код на страниците', # Fuzzy
+	'foxway-desc' => 'На парсерот за викитекст муѕ ја дава можноста да користи синтакса и функции на PHP',
+	'foxway-disabled-for-namespace' => 'Додатокот Foxway е оневозможен за именскиот простор „$1“',
 	'foxway-php-fatal-error-undefined-function' => 'Кобна грешка со PHP: Повик на неодредена функција $1() на страницата $2, во редот $3.',
 	'foxway-php-not-variable-passed-by-reference' => 'Кобна грешка во PHP: Со наведување можат да се даваат само променливи, функција $1() на страницата $2, ред $3.',
 	'foxway-php-syntax-error-unexpected' => 'Грешка при парсирање на PHP: Синтаксна грешка - не се очекува $1 во кодот во ред бр. $2.',
