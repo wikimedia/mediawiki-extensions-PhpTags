@@ -56,7 +56,7 @@ $messages['qqq'] = array(
  * @author Xuacu
  */
 $messages['ast'] = array(
-	'foxway-desc' => "Permite guardar un datu orientáu a oxetos y prepara'l so propiu tiempu d'execución pal códigu PHP de les páxines",
+	'foxway-desc' => "Añade al analizador de testu wiki la capacidá d'utilizar la sintaxis y funciones de PHP",
 	'foxway-php-syntax-error-unexpected' => 'Error d\'análisis PHP: Error de sintaxis, "$1" inesperáu nel códigu de la llinia de comandos na llinia $2.',
 );
 
