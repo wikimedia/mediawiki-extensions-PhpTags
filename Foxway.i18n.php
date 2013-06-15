@@ -57,7 +57,13 @@ $messages['qqq'] = array(
  */
 $messages['ast'] = array(
 	'foxway-desc' => "Añade al analizador de testu wiki la capacidá d'utilizar la sintaxis y funciones de PHP",
+	'foxway-disabled-for-namespace' => 'La estensión Foxway ta desactivada pal espaciu de nomes $1',
+	'foxway-php-fatal-error-undefined-function' => 'Error fatal de PHP: Llamada a una función indefinida $1() na páxina $2 llinia $3.',
+	'foxway-php-not-variable-passed-by-reference' => 'Error fatal de PHP: Sólo pueden pasase por referencia les variables, función $1() na páxina $2 llinia $3.',
 	'foxway-php-syntax-error-unexpected' => 'Error d\'análisis PHP: Error de sintaxis, "$1" inesperáu nel códigu de la llinia de comandos na llinia $2.',
+	'foxway-php-warning-exception-in-function' => 'Avisu de PHP: La función $1() na páxina $2 llinia $3 devuelve una esceición ($4)',
+	'foxway-php-wrong-parameter-count' => 'Avisu de PHP: Númberu de parámetros incorreutu pa $1() na páxina $2 llinia $3.',
+	'foxway-unexpected-result-work-function' => 'Resultáu inesperáu de trabayu pa la función $1() de la estensión Foxway na páxina $2 llinia $3.',
 );
 
 /** German (Deutsch)
@@ -133,6 +139,7 @@ $messages['ksh'] = array(
  * @author Robby
  */
 $messages['lb'] = array(
+	'foxway-disabled-for-namespace' => 'Foxway-Erweiderung ass fir den Nummraum $1 ausgeschalt',
 	'foxway-php-syntax-error-unexpected' => 'PHP-Parser-Feeler:Syntaxfeeler, onerwaarte(n) $1 am Code vun der Programmatiounszeil $2.',
 );
 
