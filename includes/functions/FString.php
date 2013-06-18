@@ -46,7 +46,7 @@ class FString extends BaseFunction {
 		'f_nl2br' => array('nl2br', 1, 2),
 		// 'number_format' @see self::number_format
 		'f_ord' => array('ord', 1, 1),
-		// @todo parse_str
+		// @todo parse_str (if there is a need in this)
 		// 'print' implemented in Runtime.php
 		//'f_printf', @see self::f_printf
 		//'f_quoted_printable_decode' => array('quoted_printable_decode', 1, 1),
@@ -107,7 +107,6 @@ class FString extends BaseFunction {
 		// 'f_vprintf', @see self::f_vprintf
 		'f_vsprintf' => array('vsprintf', 2, 2),
 		'f_wordwrap' => array('wordwrap', 1, 4),
-
 	);
 
 	public static function __callStatic($name, $arguments) {
@@ -125,7 +124,10 @@ class FString extends BaseFunction {
 			}
 			$c = count($refarg);
 			if( $c >= $funcData[1] && $c <= $funcData[2] ) {
-				return new RValue( call_user_func_array($funcData[0], $refarg) );
+				wfSuppressWarnings();
+				$return = call_user_func_array($funcData[0], $refarg);
+				wfRestoreWarnings();
+				return new RValue( $return );
 			}else{
 				return self::wrongParameterCount($name, __LINE__);
 			}
@@ -144,7 +146,9 @@ class FString extends BaseFunction {
 			return self::wrongParameterCount( __FUNCTION__, __LINE__ );
 		}
 		ob_start();
+		wfSuppressWarnings();
 		call_user_func_array('printf', $arguments);
+		wfRestoreWarnings();
 		return new ROutput( null, ob_get_clean(), 'pre' );
 	}
 
@@ -157,7 +161,10 @@ class FString extends BaseFunction {
 		switch ( count($arguments) ) {
 			case 2:
 			case 5:
-				return new RValue( call_user_func_array('levenshtein', $arguments) );
+				wfSuppressWarnings();
+				$return = call_user_func_array('levenshtein', $arguments);
+				wfRestoreWarnings();
+				return new RValue( $return );
 				break;
 		}
 		return self::wrongParameterCount( __FUNCTION__, __LINE__ );
@@ -173,7 +180,10 @@ class FString extends BaseFunction {
 			case 1:
 			case 2:
 			case 4:
-				return new RValue( call_user_func_array('number_format', $arguments) );
+				wfSuppressWarnings();
+				$return = call_user_func_array('number_format', $arguments);
+				wfRestoreWarnings();
+				return new RValue( $return );
 				break;
 		}
 		return self::wrongParameterCount( __FUNCTION__, __LINE__ );
@@ -189,7 +199,9 @@ class FString extends BaseFunction {
 			return self::wrongParameterCount( __FUNCTION__, __LINE__ );
 		}
 		ob_start();
+		wfSuppressWarnings();
 		call_user_func_array('vprintf', $arguments);
+		wfRestoreWarnings();
 		return new ROutput( null, ob_get_clean(), 'pre' );
 	}
 

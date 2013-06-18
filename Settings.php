@@ -213,6 +213,17 @@ $wgFoxwayFunctions = array(
 		'vsprintf',
 		'wordwrap',
 	),
+	'Fpcre' => array( // PCRE Functions @see http://php.net/manual/en/ref.pcre.php
+		'preg_filter',
+		'preg_grep',
+		'preg_last_error',
+		'preg_match_all',
+		'preg_match_all',
+		'preg_match',
+		'preg_quote',
+		//'preg_replace', not tested
+		'preg_split',
+	),
 );
 
 $wgFoxwayAllowedPHPConstants = array(
@@ -321,4 +332,19 @@ $wgFoxwayAllowedPHPConstants = array(
 	'YESSTR',
 	'NOSTR',
 	'CODESET',
+	// @see http://www.php.net/manual/en/pcre.constants.php
+	'PREG_PATTERN_ORDER',
+	'PREG_SET_ORDER',
+	'PREG_OFFSET_CAPTURE',
+	'PREG_SPLIT_NO_EMPTY',
+	'PREG_SPLIT_DELIM_CAPTURE',
+	'PREG_SPLIT_OFFSET_CAPTURE',
+	'PREG_NO_ERROR',
+	'PREG_INTERNAL_ERROR',
+	'PREG_BACKTRACK_LIMIT_ERROR',
+	'PREG_RECURSION_LIMIT_ERROR',
+	'PREG_BAD_UTF8_ERROR',
+	'PREG_BAD_UTF8_OFFSET_ERROR',
+	'PCRE_VERSION',
+	'PREG_GREP_INVERT',
 );
