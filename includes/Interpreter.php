@@ -299,9 +299,11 @@ class Interpreter {
 					$parenthesFlags = FOXWAY_EXPECT_SEMICOLON;
 					break;
 				case T_CONSTANT_ENCAPSED_STRING:
-					$is_apostrophe = substr($text, 0, 1) == '\'' ? true : false;
-					$string = substr($text, 1, -1);
-					$runtime->addParamValue( self::process_slashes($string, $is_apostrophe) );
+					if( substr($text, 0, 1) == '\'' ) {
+						$runtime->addParamValue( self::process_slashes_apostrophe(substr($text, 1, -1)) );
+					}else{
+						$runtime->addParamValue( self::process_slashes(substr($text, 1, -1)) );
+					}
 					break;
 				case T_NUM_STRING:
 				case T_LNUMBER:
@@ -316,7 +318,7 @@ class Interpreter {
 					}elseif( $parenthesFlags & FOXWAY_EXPECT_QUOTES_CLOSE ){
 						$parenthesFlags |= FOXWAY_NEED_CONCATENATION_OPERATOR;
 					}
-					$runtime->addParamValue( self::process_slashes($text, false) );
+					$runtime->addParamValue( self::process_slashes($text) );
 					$expected = array(T_ENCAPSED_AND_WHITESPACE, T_CURLY_OPEN, T_VARIABLE, '"');
 					break;
 				case T_VARIABLE:
@@ -706,18 +708,29 @@ class Interpreter {
 		return $return;
 	}
 
-	private static function process_slashes($string, $is_apostrophe) {
-		if( $is_apostrophe ) {
-			//					(\\)*+\'				\\
-			$pattern = array('/(\\\\\\\\)*+\\\\\'/', '/\\\\\\\\/');
-			$replacement = array('$1\'', '\\');
-		} else {
-			//						(\\)*+\"				(\\)*+\n				(\\)*+\r				(\\)*+\t			(\\)*+\v				(\\)*+\$			\\
-			$pattern = array('/(\\\\\\\\)*+\\\\"/',  '/(\\\\\\\\)*+\\\\n/', '/(\\\\\\\\)*+\\\\r/', '/(\\\\\\\\)*+\\\\t/', '/(\\\\\\\\)*+\\\\v/', '/(\\\\\\\\)*+\\\\\$/', '/\\\\\\\\/');
-			$replacement = array('$1"', "\n", "\r", "\t", "\v", '$', '\\');
-		}
+	private static function process_slashes_apostrophe($string) {
+		static $pattern = array(
+			'/(?<!\\\\)((?:\\\\\\\\)*+)\\\\\'/', # (\\)*\'
+			'/\\\\\\\\/', #							\\
+		);
+		static $replacement = array('$1\'', '\\');
 		return preg_replace($pattern, $replacement, $string);
 	}
+
+	private static function process_slashes($string) {
+		static $pattern = array(
+			'/(?<!\\\\)((?:\\\\\\\\)*+)\\\\"/', # (\\)*\"
+			'/(?<!\\\\)((?:\\\\\\\\)*+)\\\\n/', # (\\)*\n
+			'/(?<!\\\\)((?:\\\\\\\\)*+)\\\\r/', # (\\)*\r
+			'/(?<!\\\\)((?:\\\\\\\\)*+)\\\\t/', # (\\)*\t
+			'/(?<!\\\\)((?:\\\\\\\\)*+)\\\\v/', # (\\)*\v
+			'/(?<!\\\\)((?:\\\\\\\\)*+)\\\\\$/', # (\\)*\$
+			'/\\\\\\\\/', #						  \\
+		);
+		static $replacement = array('$1"', "$1\n", "$1\r", "$1\t", "$1\v", '$1$', '\\');
+		return preg_replace($pattern, $replacement, $string);
+	}
+
 
 	private static function findTernaryIndexes( &$tokens, &$blocks, $index ) {
 		$embedded = 0;

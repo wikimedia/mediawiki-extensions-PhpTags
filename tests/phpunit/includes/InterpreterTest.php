@@ -162,6 +162,18 @@ echo "foo is $foo"; // foo is foobar'),
 				array('s\\"e')							// s\"e
 				);
 	}
+	public function testRun_echo_escaping_3() {
+		$this->assertEquals(
+				Interpreter::run('echo "\\\\\\\\\\\\n";'),	// echo "\\\\\\n";
+				array('\\\\\\n')							// \\\n
+				);
+	}
+	public function testRun_echo_escaping_4() {
+		$this->assertEquals(
+				Interpreter::run('echo "\\\\\\\\\\\\\\n";'),	// echo "\\\\\\\n";
+				array("\\\\\\\n")							// \\\<new line>
+				);
+	}
 
 	public function testRun_echo_digit() {
 		$this->assertEquals(

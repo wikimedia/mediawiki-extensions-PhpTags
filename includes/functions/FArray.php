@@ -67,7 +67,7 @@ class FArray extends BaseFunction {
 		'f_current' => array('current', 1, 1),
 		'f_each' => array('each', 1, 1),
 		'f_end' => array('end', 1, 1),
-		// @todo extract
+		// @todo extract (if there is a need in this)
 		'f_in_array' => array('in_array', 2, 3),
 		'f_key' => array('key', 1, 1),
 		'f_krsort' => array('krsort', 1, 2),
@@ -104,7 +104,10 @@ class FArray extends BaseFunction {
 			}
 			$c = count($refarg);
 			if( $c >= $funcData[1] && $c <= $funcData[2] ) {
-				return new RValue( call_user_func_array($funcData[0], $refarg) );
+				wfSuppressWarnings();
+				$return = call_user_func_array($funcData[0], $refarg);
+				wfRestoreWarnings();
+				return new RValue( $return );
 			}else{
 				return self::wrongParameterCount($name, __LINE__);
 			}
