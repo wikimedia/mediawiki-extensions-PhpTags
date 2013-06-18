@@ -34,7 +34,7 @@ $messages['qqq'] = array(
 	'foxway-disabled-for-namespace' => 'Error message when trying use this extension on the pages of the namespace where it is not permitted, parameters:
 * $1 - the namespace name',
 	'foxway-error-bad-delimiter' => 'Error message. Delimiter for function preg_replace()',
-	'foxway-error-no-ending-matching-delimiter'=> 'Error message, parameter $1 is delimiter',
+	'foxway-error-no-ending-matching-delimiter' => 'Error message, parameter $1 is delimiter',
 	'foxway-error-unknown-modifier' => 'Error message, parameter $1 is modifier',
 	'foxway-php-fatal-error-undefined-function' => 'Error message, parameters:
 * $1 - user-specified function name
@@ -116,6 +116,9 @@ $messages['fr'] = array(
 $messages['gl'] = array(
 	'foxway-desc' => 'Engade ao analizador de texto wiki a posibilidade de utilizar a sintaxe e funcións do PHP',
 	'foxway-disabled-for-namespace' => 'A extensión Foxway está desactivada para o espazo de nomes $1',
+	'foxway-error-bad-delimiter' => 'O delimitador non pode ser un carácter alfanumérico nin unha barra invertida',
+	'foxway-error-no-ending-matching-delimiter' => 'Non se atopou ningún delimitador de fin que coincidise con "$1"',
+	'foxway-error-unknown-modifier' => 'Descoñécese o modificador "$1"',
 	'foxway-php-fatal-error-undefined-function' => 'Erro fatal de PHP: Chamada a unha función $1() non definida na páxina $2 na liña $3.',
 	'foxway-php-not-variable-passed-by-reference' => 'Erro fatal de PHP: Unicamente as variables poden pasarse por referencia, función $1() na páxina $2 na liña $3.',
 	'foxway-php-syntax-error-unexpected' => 'Erro de análise PHP: Erro de sintaxe; "$1" inesperado no código da liña de comandos na liña $2.',
