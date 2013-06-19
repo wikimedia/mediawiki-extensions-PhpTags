@@ -27,6 +27,7 @@ $messages['en'] = array(
 );
 
 /** Message documentation (Message documentation)
+ * @author Shirayuki
  * @author pastakhov
  */
 $messages['qqq'] = array(
@@ -34,7 +35,8 @@ $messages['qqq'] = array(
 	'foxway-disabled-for-namespace' => 'Error message when trying use this extension on the pages of the namespace where it is not permitted, parameters:
 * $1 - the namespace name',
 	'foxway-error-bad-delimiter' => 'Error message. Delimiter for function preg_replace()',
-	'foxway-error-no-ending-matching-delimiter' => 'Error message, parameter $1 is delimiter',
+	'foxway-error-no-ending-matching-delimiter' => 'Error message. Parameters:
+* $1 - delimiter',
 	'foxway-error-unknown-modifier' => 'Error message, parameter $1 is modifier',
 	'foxway-php-fatal-error-undefined-function' => 'Error message, parameters:
 * $1 - user-specified function name
@@ -64,6 +66,9 @@ $messages['qqq'] = array(
 $messages['ast'] = array(
 	'foxway-desc' => "Añade al analizador de testu wiki la capacidá d'utilizar la sintaxis y funciones de PHP",
 	'foxway-disabled-for-namespace' => 'La estensión Foxway ta desactivada pal espaciu de nomes $1',
+	'foxway-error-bad-delimiter' => 'El delimitador nun pue ser un caráuter alfanumbéricu nin una barra invertida',
+	'foxway-error-no-ending-matching-delimiter' => 'Non s\'alcontró nengún delimitador final que coincidiera con "$1"',
+	'foxway-error-unknown-modifier' => 'Modificador desconocíu "$1"',
 	'foxway-php-fatal-error-undefined-function' => 'Error fatal de PHP: Llamada a una función indefinida $1() na páxina $2 llinia $3.',
 	'foxway-php-not-variable-passed-by-reference' => 'Error fatal de PHP: Sólo pueden pasase por referencia les variables, función $1() na páxina $2 llinia $3.',
 	'foxway-php-syntax-error-unexpected' => 'Error d\'análisis PHP: Error de sintaxis, "$1" inesperáu nel códigu de la llinia de comandos na llinia $2.',
@@ -80,6 +85,9 @@ $messages['ast'] = array(
 $messages['de'] = array(
 	'foxway-desc' => 'Erweitert den Wikitext-Parser um die Möglichkeit, die Syntax und Funktionen von PHP zu verwenden',
 	'foxway-disabled-for-namespace' => 'Die Erweiterung Foxway ist für den Namensraum „$1“ deaktiviert',
+	'foxway-error-bad-delimiter' => 'Trennzeichen darf nicht alphanumerisch oder ein Backslash sein',
+	'foxway-error-no-ending-matching-delimiter' => 'Es wurde kein Ende mit dem Trennzeichen „$1“ gefunden',
+	'foxway-error-unknown-modifier' => 'Unbekannter Modifikator „$1“',
 	'foxway-php-fatal-error-undefined-function' => 'Fataler PHP-Fehler: Aufruf zur undefinierten Funktion $1() auf Seite $2, Zeile $3.',
 	'foxway-php-not-variable-passed-by-reference' => 'Fataler PHP-Fehler: Es können nur Variablen von der Referenz übergeben werden, Funktion $1() auf Seite $2, Zeile $3.',
 	'foxway-php-syntax-error-unexpected' => 'PHP-Parserfehler: Syntaxfehler, unerwartete $1 im Befehlszeilencode in Zeile $2.',
@@ -102,6 +110,9 @@ $messages['es'] = array(
 $messages['fr'] = array(
 	'foxway-desc' => 'Ajoute à l’analyseur de wikitext la possibilité d’utiliser la syntaxe et les fonctions de PHP',
 	'foxway-disabled-for-namespace' => 'Extension foxway désactivée pour cet espace de noms $1',
+	'foxway-error-bad-delimiter' => 'Le délimiteur ne doit pas être alphanumérique ou la barre oblique inversée',
+	'foxway-error-no-ending-matching-delimiter' => 'Aucun délimiteur de fin correspondant à « $1 » trouvé',
+	'foxway-error-unknown-modifier' => 'Modificateur « $1 » inconnu',
 	'foxway-php-fatal-error-undefined-function' => 'Erreur PHP fatale : Appel à la fonction non définie $1() en page $2 ligne $3.',
 	'foxway-php-not-variable-passed-by-reference' => 'Erreur PHP fatale : Seule les variables peuvent être passées par référence, fonction $1() en page $2 ligne $3.',
 	'foxway-php-syntax-error-unexpected' => 'Erreur d’analyse PHP : Erreur de syntaxe, $1 non attendu dans le code de la ligne de commande à la ligne $2.',
@@ -133,6 +144,8 @@ $messages['gl'] = array(
 $messages['ja'] = array(
 	'foxway-desc' => 'ウィキテキストのパーサーに、PHP の構文や関数を処理できる機能を追加する',
 	'foxway-disabled-for-namespace' => 'Foxway 拡張機能はこの $1 名前空間では無効になっています',
+	'foxway-error-no-ending-matching-delimiter' => '対応する終了の区切り文字「$1」が見つかりません',
+	'foxway-error-unknown-modifier' => '不明な修飾子「$1」です',
 	'foxway-php-syntax-error-unexpected' => 'PHP 構文解析エラー: 構文エラーです。行 $2 のコードで予期しない $1 が見つかりました。',
 );
 
@@ -158,6 +171,9 @@ $messages['lb'] = array(
 $messages['mk'] = array(
 	'foxway-desc' => 'На парсерот за викитекст муѕ ја дава можноста да користи синтакса и функции на PHP',
 	'foxway-disabled-for-namespace' => 'Додатокот Foxway е оневозможен за именскиот простор „$1“',
+	'foxway-error-bad-delimiter' => 'Разграничувачот не може да биде азбучен, бројчен или надесна коса црта',
+	'foxway-error-no-ending-matching-delimiter' => 'Не пронајдов завршеток што одговара на разграничувачот „$1“',
+	'foxway-error-unknown-modifier' => 'Непознат изменител „$1“',
 	'foxway-php-fatal-error-undefined-function' => 'Кобна грешка со PHP: Повик на неодредена функција $1() на страницата $2, во редот $3.',
 	'foxway-php-not-variable-passed-by-reference' => 'Кобна грешка во PHP: Со наведување можат да се даваат само променливи, функција $1() на страницата $2, ред $3.',
 	'foxway-php-syntax-error-unexpected' => 'Грешка при парсирање на PHP: Синтаксна грешка - не се очекува $1 во кодот во ред бр. $2.',
