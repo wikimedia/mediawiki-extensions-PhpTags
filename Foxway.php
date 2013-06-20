@@ -15,7 +15,7 @@ if ( !defined( 'MEDIAWIKI' ) ) {
 	die( 'This file is an extension to MediaWiki and thus not a valid entry point.' );
 }
 
-define( 'Foxway_VERSION' , '0.4.3' );
+define( 'Foxway_VERSION' , '0.4.4' );
 
 // Register this extension on Special:Version
 $wgExtensionCredits['parserhook'][] = array(
@@ -64,6 +64,7 @@ $wgAutoloadClasses['Foxway\\RuntimeDebug']		= $dir . '/includes/RuntimeDebug.php
 
 $wgAutoloadClasses['Foxway\\BaseFunction']		= $dir . '/includes/functions/BaseFunction.php';
 $wgAutoloadClasses['Foxway\\FArray']			= $dir . '/includes/functions/FArray.php';
+$wgAutoloadClasses['Foxway\\FMath']				= $dir . '/includes/functions/FMath.php';
 $wgAutoloadClasses['Foxway\\Fpcre']				= $dir . '/includes/functions/Fpcre.php';
 $wgAutoloadClasses['Foxway\\FString']			= $dir . '/includes/functions/FString.php';
 $wgAutoloadClasses['Foxway\\FVariable']			= $dir . '/includes/functions/FVariable.php';
