@@ -186,7 +186,7 @@ $messages['mk'] = array(
  * @author Anakmalaysia
  */
 $messages['ms'] = array(
-	'foxway-desc' => 'Membolehkan penyimpanan data berorientasikan objek serta melaksanakan masa jalan sendiri untuk kod PHP pada halaman',
+	'foxway-desc' => 'Menambahkan keupayaan untuk menggunakan sintaks dan fungsi PHP dalam penghurai wikiteks',
 	'foxway-php-syntax-error-unexpected' => 'Ralat huraian PHP: Ralat sintaks, $1 tak dijangka dalam kod baris perintah pada baris $2.',
 );
 
