@@ -44,11 +44,6 @@ class Foxway {
 				self::getScope($frame)
 				);
 
-		foreach ($result as &$value) {
-			if( $value instanceof Foxway\iRawOutput ) {
-				$value = '(object)';
-			}
-		}
 		$return = implode($result);
 
 		self::$time += microtime(true) - self::$startTime;
