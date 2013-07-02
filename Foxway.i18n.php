@@ -18,6 +18,9 @@ $messages['en'] = array(
 	'foxway-error-bad-delimiter' => 'Delimiter must not be alphanumeric or backslash',
 	'foxway-error-no-ending-matching-delimiter' => 'No ending matching delimiter "$1" found',
 	'foxway-error-unknown-modifier' => 'Unknown modifier "$1"',
+	'foxway-php-fatal-error-cannot-break-continue' => 'PHP fatal error: Cannot break/continue $1 levels on page $2 line $3.',
+	'foxway-php-fatal-error-max-execution-time' => 'PHP fatal error: Maximum execution time of $1 second exceeded on page $2.',
+	'foxway-php-fatal-error-max-execution-time-scope' => 'PHP fatal error: Maximum execution time of $1 second exceeded on page $2 line $3.',
 	'foxway-php-fatal-error-undefined-function' => 'PHP fatal error: Call to undefined function $1() on page $2 line $3.',
 	'foxway-php-not-variable-passed-by-reference' => 'PHP fatal error: Only variables can be passed by reference, function $1() on page $2 line $3.',
 	'foxway-php-syntax-error-unexpected' => 'PHP parse error: Syntax error, unexpected $1 in command line code on line $2.',
@@ -38,6 +41,17 @@ $messages['qqq'] = array(
 	'foxway-error-no-ending-matching-delimiter' => 'Error message. Parameters:
 * $1 - delimiter',
 	'foxway-error-unknown-modifier' => 'Error message, parameter $1 is modifier',
+	'foxway-php-fatal-error-max-execution-time' => 'Error message, parameters:
+* $1 - the number of seconds
+* $2 - the name of the page on which the error occurred',
+	'foxway-php-fatal-error-cannot-break-continue' => 'Error message, parameters:
+* $1 - the number of user defined level
+* $2 - the name of the page on which the error occurred
+* $3 - the line number where the error occurred',
+	'foxway-php-fatal-error-max-execution-time-scope' => 'Error message, parameters:
+* $1 - the number of seconds
+* $2 - the name of the page on which the error occurred
+* $3 - the line number where the error occurred',
 	'foxway-php-fatal-error-undefined-function' => 'Error message, parameters:
 * $1 - user-specified function name
 * $2 - the name of the page on which the error occurred

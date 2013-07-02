@@ -10,6 +10,23 @@
 	background-color: #f9f9f9;
 }
 
+.foxway_debug_loop {
+	width: auto;
+	border: 1px solid gray;
+	border-spacing: 0;
+}
+
+.foxway_debug_loop td {
+	padding: 0px;
+	border: 0px;
+	background-color: transparent;
+}
+
+.foxway_debug_loophead {
+	background-color: antiquewhite;
+	cursor: pointer;
+}
+
 .foxway_comment,
 .foxway_skipped {
 	color:#969696;

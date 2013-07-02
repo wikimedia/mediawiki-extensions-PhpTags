@@ -18,7 +18,8 @@ if ( !defined( 'MEDIAWIKI' ) ) {
 }
 
 // Default settings
-
+$wgFoxway_max_execution_time = 2;
+$wgFoxway_max_execution_time_for_scope = 0.5;
 
 /**
  * You can specify the namespaces in which is allowed to use the extension Foxway.
@@ -117,6 +118,7 @@ $wgFoxwayFunctions = array(
 		'each',
 		'end',
 		'in_array',
+		'key_exists',
 		'key',
 		'krsort',
 		'ksort',
@@ -189,6 +191,7 @@ $wgFoxwayFunctions = array(
 		'strlen',
 		'strnatcasecmp',
 		'strnatcmp',
+		'strncasecmp',
 		'strncmp',
 		'strpbrk',
 		'strpos',
@@ -218,10 +221,9 @@ $wgFoxwayFunctions = array(
 		'preg_grep',
 		'preg_last_error',
 		'preg_match_all',
-		'preg_match_all',
 		'preg_match',
 		'preg_quote',
-		//'preg_replace', not tested
+		//'preg_replace', not fully tested
 		'preg_split',
 	),
 	'FMath' => array( // Math Functions @see http://www.php.net/manual/en/ref.math.php
