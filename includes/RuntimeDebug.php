@@ -103,9 +103,12 @@ class RuntimeDebug extends Runtime {
 				case T_ARRAY:
 				case T_ECHO:
 				case T_PRINT:
+				case T_CONTINUE:
+				case T_BREAK:
 					break;
+				case T_WHILE:
 				case T_IF:
-					$this->debug[] = self::getHTMLForCommand(T_IF) .
+					$this->debug[] = self::getHTMLForCommand( $this->lastCommandDebug ) .
 							"(&nbsp;" . self::getHTMLForValue( $this->lastParam ) .
 							"&nbsp;)&nbsp;<b>=></b>&nbsp;" .
 							self::getHTMLForValue( new RValue($this->lastParam->getValue() ? true : false) );
@@ -119,12 +122,19 @@ class RuntimeDebug extends Runtime {
 		$lastCommand = $this->lastCommand;
 
 		$return = parent::getCommandResult();
+		if( $return instanceof ErrorMessage ){
+			$lastCommand = false;
+		}
 
 		switch ($lastCommand) {
 			case T_ECHO:
 			case T_PRINT:
 				$this->debug[] = self::getHTMLForCommand($lastCommand) . '&nbsp;' . implode(', ', $this->savedListParams) . ';';
 				$this->debug[] = implode('', $return[1]);
+				break;
+			case T_CONTINUE:
+			case T_BREAK:
+				$this->debug[] = self::getHTMLForCommand($lastCommand) . '&nbsp;' . implode(', ', $this->savedListParams) . ';';
 				break;
 			default :
 				$this->debug[] = is_array($return) ? $return[1] : $return ;
@@ -203,6 +213,15 @@ class RuntimeDebug extends Runtime {
 				break;
 			case T_PRINT:
 				$return = \Html::element('span', array('class'=>'foxway_construct'), 'print');
+				break;
+			case T_CONTINUE:
+				$return = \Html::element('span', array('class'=>'foxway_construct'), 'continue');
+				break;
+			case T_BREAK:
+				$return = \Html::element('span', array('class'=>'foxway_construct'), 'break');
+				break;
+			case T_WHILE:
+				$return = \Html::element('span', array('class'=>'foxway_construct'), 'while');
 				break;
 			case T_IF:
 				$return = \Html::element('span', array('class'=>'foxway_construct'), 'if');
@@ -284,6 +303,27 @@ class RuntimeDebug extends Runtime {
 			case T_IS_NOT_IDENTICAL: // !==
 				$operator = '!==';
 				break;
+			case T_SL: // <<
+				$operator = '<<';
+				break;
+			case T_SR: // >>
+				$operator= '>>';
+				break;
+			case T_BOOLEAN_AND: // &&
+				$operator = '&&';
+				break;
+			case T_BOOLEAN_OR: // ||
+				$operator = '||';
+				break;
+			case T_LOGICAL_AND:
+				$operator = 'and';
+				break;
+			case T_LOGICAL_XOR:
+				$operator = 'xor';
+				break;
+			case T_LOGICAL_OR:
+				$operator = 'or';
+				break;
 			case T_INT_CAST:
 				$operator = \Html::element('span', array('class'=>'foxway_construct'), '(integer)');
 				break;
@@ -312,7 +352,7 @@ class RuntimeDebug extends Runtime {
 				"(" . implode( ', ', $listParams ) .	")&nbsp;<b>=></b>&nbsp;" .
 				self::getHTMLForValue( $this->lastParam );
 
-		return  $return;
+		return $return;
 	}
 
 }

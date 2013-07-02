@@ -32,6 +32,8 @@ class Runtime {
 	protected static $variables = array();
 	protected static $staticVariables = array();
 	protected static $globalVariables = array();
+	protected static $time = array();
+	protected static $startTime = array();
 	protected $thisVariables;
 	protected $args;
 	protected $scope;
@@ -53,8 +55,8 @@ class Runtime {
 		array('&'),
 		array('^'),
 		array('|'),
-		array('&&'),
-		array('||'),
+		array(T_BOOLEAN_AND), // &&
+		array(T_BOOLEAN_OR), // ||
 		array('?', ':'),
 		//				+=			-=				*=			/=			.=				%=				&=			|=			^=			<<=			>>=				=>
 		array('=', T_PLUS_EQUAL, T_MINUS_EQUAL, T_MUL_EQUAL, T_DIV_EQUAL, T_CONCAT_EQUAL, T_MOD_EQUAL, T_AND_EQUAL, T_OR_EQUAL, T_XOR_EQUAL, T_SL_EQUAL, T_SR_EQUAL, T_DOUBLE_ARROW),
@@ -70,6 +72,7 @@ class Runtime {
 		if( !isset(self::$variables[$scope]) ) {
 			self::$variables[$scope] = array();
 		}
+		$this->scope = $scope;
 		$this->thisVariables = &self::$variables[$scope];
 		$this->thisVariables['argv'] = $args;
 		$this->thisVariables['argc'] = count($args);
@@ -251,16 +254,23 @@ class Runtime {
 				}
 				// break is not necessary here
 			case ')':
+				$return = $this->checkExceedsTime();
+				if( $return !== null ) {
+					$this->lastCommand = false;
+				}
 				$this->parenthesesClose();
-				$return = null;
 				switch ($this->lastCommand) {
 					case false:
 					case T_ECHO:
 					case T_PRINT:
+					case T_CONTINUE:
+					case T_BREAK:
 						break 2;
+					case T_WHILE:
 					case T_IF:
-						$this->lastCommand = false;
-						return array( T_IF, $this->lastParam->getValue() );
+						$return = array( $this->lastCommand, $this->lastParam->getValue() );
+						//$this->lastCommand = false;
+						//return $return;
 						break;
 					case T_ARRAY:
 						$this->lastParam = new RValue( (array)$this->lastParam );
@@ -415,6 +425,12 @@ class Runtime {
 			case '^':
 				$this->lastParam = new RValue( $param->getValue() ^ $lastParam );
 				break;
+			case T_BOOLEAN_AND: // &&
+				$this->lastParam = new RValue( $param->getValue() && $lastParam );
+				break;
+			case T_BOOLEAN_OR: // ||
+				$this->lastParam = new RValue( $param->getValue() || $lastParam );
+				break;
 			case T_SL: // <<
 				$this->lastParam = new RValue( $param->getValue() << $lastParam );
 				break;
@@ -474,16 +490,21 @@ class Runtime {
 
 	// Remember the child class RuntimeDebug
 	public function getCommandResult( ) {
+		$return = $this->checkExceedsTime();
+		if( $return !== null ) {
+			return $return;
+		}
 		if( $this->lastParam !== null ) {
 			$this->addOperator(',');
 		}
-		$return = null;
 
 		// Remember the child class RuntimeDebug
 		switch ($this->lastCommand) {
 			case T_ECHO:
 			case T_PRINT:
-				$return = array( T_ECHO, $this->listParams );
+			case T_CONTINUE:
+			case T_BREAK:
+				$return = array( $this->lastCommand, $this->listParams );
 				break;
 			case false:
 				break; // exsample: $foo = 'foobar';
@@ -540,6 +561,31 @@ class Runtime {
 		}
 
 		return $return;
+	}
+
+	public function startTime($scope) {
+		self::$startTime[$scope] = microtime(true);
+		if( isset(self::$time[$scope]) ) {
+			return $this->checkExceedsTime();
+		}else{
+			self::$time[$scope] = 0;
+		}
+	}
+
+	public function stopTime($scope) {
+		self::$time[$scope] += microtime(true) - self::$startTime[$scope];
+	}
+
+	public static function getTime() {
+		return self::$time;
+	}
+
+	public function checkExceedsTime() {
+		global $wgFoxway_max_execution_time_for_scope;
+		if( microtime(true) - self::$startTime[$this->scope] + self::$time[$this->scope] > $wgFoxway_max_execution_time_for_scope ) {
+			return new ErrorMessage( __LINE__, null, E_ERROR, array( 'foxway-php-fatal-error-max-execution-time-scope', $wgFoxway_max_execution_time_for_scope, isset($this->args[0])?$this->args[0]:'n\a' ) );
+		}
+		return null;
 	}
 
 }

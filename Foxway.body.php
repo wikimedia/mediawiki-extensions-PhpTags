@@ -9,16 +9,62 @@
  */
 class Foxway {
 
+	static $DebugLoops = false;
+	static $time = false;
+	static $startTime = false;
+
 	static $frames=array();
 
+	/**
+	 *
+	 * @param Parser $parser
+	 * @param PPFrame $frame
+	 * @param array $args
+	 */
+	public static function renderFunction( $parser, $frame, $args ) {
+		self::$startTime = microtime(true);
+
+		$is_banned = self::isBanned($frame);
+		if( $is_banned ) {
+			return $is_banned;
+		}
+
+		$command = array_shift($args);
+		if( count($args) > 0 ) {
+			foreach ($args as &$value) {
+				$value = $frame->expand( $value );
+			}
+			$command = "echo $command (" . implode(',', $args) . ');';
+		}
+		//MWDebug::log($command);
+
+		$result = Foxway\Interpreter::run(
+				$command,
+				array($frame->getTitle()->getPrefixedText()),
+				self::getScope($frame)
+				);
+
+		foreach ($result as &$value) {
+			if( $value instanceof Foxway\iRawOutput ) {
+				$value = '(object)';
+			}
+		}
+		$return = implode($result);
+
+		self::$time += microtime(true) - self::$startTime;
+		return \UtfNormal::cleanUp($return);
+	}
+
 	public static function render($input, array $args, Parser $parser, PPFrame $frame) {
-		global $wgNamespacesWithFoxway;
-		if( $wgNamespacesWithFoxway !== true && empty($wgNamespacesWithFoxway[$frame->getTitle()->getNamespace()]) ) {
-			return Html::element( 'span', array('class'=>'error'), wfMessage('foxway-disabled-for-namespace', $frame->getTitle()->getNsText())->escaped() );
+		self::$startTime = microtime(true);
+
+		$is_banned = self::isBanned($frame);
+		if( $is_banned ) {
+			return $is_banned;
 		}
 
 		$is_debug = isset($args['debug']);
-		$return = '';
+		$return = false;
 
 		$result = Foxway\Interpreter::run(
 				$input,
@@ -27,18 +73,32 @@ class Foxway {
 				$is_debug
 			);
 
-		foreach ($result as &$value) {
-			if( $value instanceof Foxway\iRawOutput ) {
-				$value = (string)$value;
-			}
-		}
-
 		if( $is_debug ) {
 			$parser->getOutput()->addModules('ext.Foxway.Debug');
+			if( self::$DebugLoops ) {
+				$parser->getOutput()->addModules('ext.Foxway.DebugLoops');
+			}
 			$return .= self::insertNoWiki( $parser, array_shift($result) ) . "\n";
 		}
 
-		return $return . self::insertGeneral( $parser, $parser->recursiveTagParse(implode($result),$frame) );
+		if( count($result) > 0 ) {
+			//$return .= Sanitizer::removeHTMLtags(implode($result));
+			$return .= self::insertGeneral( $parser, $parser->recursiveTagParse(implode($result),$frame) );
+		}
+
+		self::$time += microtime(true) - self::$startTime;
+		return \UtfNormal::cleanUp($return);
+	}
+
+	public static function isBanned(PPFrame $frame) {
+		global $wgNamespacesWithFoxway, $wgFoxway_max_execution_time;
+		if( $wgNamespacesWithFoxway !== true && empty($wgNamespacesWithFoxway[$frame->getTitle()->getNamespace()]) ) {
+			return Html::element( 'span', array('class'=>'error'), wfMessage('foxway-disabled-for-namespace', $frame->getTitle()->getNsText())->escaped() );
+		}
+		if( $wgFoxway_max_execution_time !== false && self::$time >= $wgFoxway_max_execution_time) {
+			return Html::element( 'span', array('class'=>'error'), wfMessage('foxway-php-fatal-error-max-execution-time', $wgFoxway_max_execution_time, $frame->getTitle()->getPrefixedText())->escaped() );
+		}
+		return false;
 	}
 
 	/**
@@ -75,4 +135,5 @@ class Foxway {
 		self::$frames[] = array($frame, $scope);
 		return $scope;
 	}
+
 }

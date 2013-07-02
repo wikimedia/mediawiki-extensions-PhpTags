@@ -11,6 +11,8 @@ namespace Foxway;
 class Debug implements \ArrayAccess, iRawOutput {
 
 	protected $_container = array();
+	private $loops = array();
+	private $closeTags = array();
 
 	public function offsetExists($offset)
     {
@@ -78,6 +80,9 @@ class Debug implements \ArrayAccess, iRawOutput {
 			case T_UNSET_CAST: // (unset)
 			case T_ECHO:
 			case T_PRINT:
+			case T_CONTINUE:
+			case T_BREAK:
+			case T_WHILE:
 			case T_IF:
 			case T_ELSE:
 			case T_ELSEIF:
@@ -131,8 +136,35 @@ class Debug implements \ArrayAccess, iRawOutput {
 	public function __toString() {
 		return \Html::rawElement( 'table', array('class'=>'foxway_debug'),
 				\Html::rawElement( 'tr', array(), \Html::element( 'th', array(), 'Debug view' ) ) .
-				\Html::rawElement( 'tr', array(), \Html::rawElement( 'td', array(), implode('', $this->_container) ) )
+				\Html::rawElement( 'tr', array(), \Html::rawElement( 'td', array(), implode('', $this->_container).implode('', $this->closeTags) ) )
 				);
 	}
-}
 
+	public function setLoopState($state, $index = 0) {
+		switch ($state) {
+			case FOXWAY_STATE_HEAD:
+				if( !isset($this->loops[$index]) ) {
+					\Foxway::$DebugLoops = true;
+					$this->_container[] = \Html::openElement( 'table', array('class'=>'foxway_debug_loop') );
+					$this->closeTags[] = \Html::closeElement('table');
+					$this->loops[$index] = 0;
+				}
+				$this->loops[$index]++;
+				$this->_container[] = \Html::openElement('tr', array('class'=>'foxway_debug_loophead')) . \Html::element('td', array(), $this->loops[$index]) . \Html::openElement('td');
+				$this->closeTags[] = \Html::closeElement('td') . \Html::closeElement('tr');
+				break;
+			case FOXWAY_STATE_BODY:
+				$this->_container[] = array_pop( $this->closeTags ) . \Html::openElement('tr', array('class'=>'foxway_debug_loopbody')) . \Html::element('td') . \Html::openElement('td');
+				$this->closeTags[] = \Html::closeElement('td') . \Html::closeElement('tr');
+				break;
+			case FOXWAY_STATE_ENDBODY:
+				$this->_container[] = array_pop( $this->closeTags );
+				break;
+			case FOXWAY_STATE_ENDLOOP:
+				$this->_container[] = array_pop( $this->closeTags );
+				array_pop($this->loops);
+				break;
+		}
+	}
+
+}

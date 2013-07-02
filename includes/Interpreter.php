@@ -5,6 +5,8 @@ define( 'FOXWAY_ENDBLOCK', 0 );
 define( 'FOXWAY_ENDIF', 1 );
 define( 'FOXWAY_ELSE' , 2 );
 define( 'FOXWAY_VALUE', 3 );
+define( 'FOXWAY_START_LOOP', 4 );
+define( 'FOXWAY_PARENT_LOOP', 5);
 
 define( 'FOXWAY_ALLOW_PARENTHES_WITH_VOID_PARAMS', 1 << 0 );
 define( 'FOXWAY_EXPECT_CURLY_CLOSE', 1 << 1 );
@@ -25,6 +27,11 @@ define( 'FOXWAY_EXPECT_STATIC_VARIABLE', 1 << 15 );
 define( 'FOXWAY_EXPECT_GLOBAL_VARIABLE', 1 << 16 );
 define( 'FOXWAY_EXPECT_PARENTHES_WITH_VARIABLE_ONLY', 1 << 17 );
 define( 'FOXWAY_ALLOW_PARENTHES_WITH_VARIABLE_ONLY', 1 << 18 );
+
+define( 'FOXWAY_STATE_HEAD', 1 );
+define( 'FOXWAY_STATE_BODY', 2 );
+define( 'FOXWAY_STATE_ENDBODY', 3 );
+define( 'FOXWAY_STATE_ENDLOOP', 4 );
 
 /**
  * Interpreter class of Foxway extension.
@@ -52,6 +59,8 @@ class Interpreter {
 		'%',
 		'&',
 		'|',
+		T_BOOLEAN_AND, // &&
+		T_BOOLEAN_OR, // ||
 		'^',
 		T_SL,						// <<
 		T_SR,						// >>
@@ -118,25 +127,30 @@ class Interpreter {
 	public static function run($source, array $args=array(), $scope='', $is_debug=false) {
 		global $wgFoxwayAllowedPHPConstants;
 
-		$tokens = self::getTokens($source);
-
-		$return = array();
 		$debug = $is_debug ? new Debug() : false;
-		$blocks = array();
-		$expected = false;
-		$parentheses = array();
-		$parenthesFlags = FOXWAY_EXPECT_SEMICOLON;
-		$curlyLever = 0;
-		$IfIndex = false;
-		$incrementVariable = false;
-		$commandResult = null;
-		$tokenLine = 1;
-
 		if( $debug ) {
 			$runtime = new RuntimeDebug( $args, $scope );
 		} else {
 			$runtime = new Runtime( $args, $scope );
 		}
+		$r = $runtime->startTime($scope);
+		if( $r !== null ) {
+			return array($r);
+		}
+
+		$return = array();
+		$tokens = self::getTokens($source); // @todo cache
+		$blocks = array(); // @todo cache
+		$expected = false;
+		$parentheses = array();
+		$parenthesFlags = FOXWAY_EXPECT_SEMICOLON;
+		$curlyLever = 0;
+		$ifIndex = false;
+		$incrementVariable = false;
+		$commandResult = null;
+		$tokenLine = 1;
+		$breakNumber = 0;
+		$loopContinue = false;
 
 		$operators = $runtime->getOperators();
 
@@ -157,7 +171,6 @@ class Interpreter {
 
 			switch ($id) {
 				case ';':
-					$parenthesFlags = FOXWAY_EXPECT_SEMICOLON;
 					if ( !($parenthesFlags & FOXWAY_EXPECT_SEMICOLON) ) {
 						$return[] = new ErrorMessage(__LINE__, $tokenLine, E_PARSE, $id);
 						break 2;
@@ -283,10 +296,13 @@ class Interpreter {
 							FOXWAY_EXPECT_FUNCTION_PARENTHESES |
 							FOXWAY_EXPECT_PARENTHES_WITH_DOUBLE_ARROW;
 					break;
+				case T_WHILE:
+					if( $debug ) { $debug->setLoopState(FOXWAY_STATE_HEAD, $index); }
+					// break is not necessary here
 				case T_IF:
 					$parentheses[] = $parenthesFlags; //TODO check &= ~FOXWAY_EXPECT_SEMICOLON;
 					$parenthesFlags = FOXWAY_EXPECT_FUNCTION_PARENTHESES;
-					$IfIndex = $index;
+					$ifIndex = $index;
 					$expected = array('(');
 					$runtime->addCommand($id);
 					break;
@@ -294,6 +310,10 @@ class Interpreter {
 					$runtime->addCommand($id);
 					$parenthesFlags = FOXWAY_ALLOW_LIST_PARAMS | FOXWAY_EXPECT_SEMICOLON;
 					break;
+				case T_CONTINUE:
+				case T_BREAK:
+					$ifIndex = $index;
+					// break is not necessary here
 				case T_PRINT:
 					$runtime->addCommand($id);
 					$parenthesFlags = FOXWAY_EXPECT_SEMICOLON;
@@ -454,14 +474,53 @@ class Interpreter {
 						case T_PRINT:
 							$return = array_merge($return, $result);
 							break;
-						case T_IF:
-							if( !isset($blocks[$IfIndex]) ) {
-								if( self::findIfElseIndexes($tokens, $blocks, $IfIndex, $index) !== true ) {
+						case T_CONTINUE:
+						case T_BREAK:
+							$result = isset($result[0]) ? intval($result[0]) : 0 ;
+							if( $result > 1 ) {
+								$result--;
+							}
+							if( $command == T_BREAK ) { // For 'break N' command
+								$breakNumber = $result+1; // $breakNumber = N;
+								$loopContinue = false;
+							} elseif( $result > 0 ) { // For 'continue N > 1' command
+								$breakNumber = $result; // $breakNumber = N-1;
+								$loopContinue = true;  // and mark loop continue
+							} // nothing for command 'continue 1'
+							if( !isset($blocks[$ifIndex][FOXWAY_ENDBLOCK]) ) {
+								$return[] = new ErrorMessage( __LINE__, $tokenLine, E_ERROR, array('foxway-php-fatal-error-cannot-break-continue', $text, isset($args[0])?$args[0]:'n\a') );
+								break 2;
+							}
+							$index = $blocks[$ifIndex][FOXWAY_ENDBLOCK]-1;
+							break;
+						case T_WHILE:
+							if( !isset($blocks[$ifIndex]) ) {
+								if( self::findLoopIndexes($tokens, $blocks, $ifIndex, $index) !== true ) {
 									$return[] = new ErrorMessage(__LINE__, $tokenLine, E_PARSE, '$end');
 									break 2;
 								}
 							}
-							$curBlock = $blocks[$IfIndex];
+							$expected = false;
+							if( $result == false ) { // if true - just go next
+								$curBlock = $blocks[$ifIndex];
+								$index = $curBlock[FOXWAY_ENDBLOCK];
+								$commandResult = null;
+								if( $debug ) {
+									$debug[] = 'skip';
+									$debug->setLoopState(FOXWAY_STATE_ENDLOOP, $ifIndex);
+								}
+								continue 2;
+							}
+							if( $debug ) { $debug->setLoopState(FOXWAY_STATE_BODY, $ifIndex); }
+							break;
+						case T_IF:
+							if( !isset($blocks[$ifIndex]) ) {
+								if( self::findIfElseIndexes($tokens, $blocks, $ifIndex, $index) !== true ) {
+									$return[] = new ErrorMessage(__LINE__, $tokenLine, E_PARSE, '$end');
+									break 2;
+								}
+							}
+							$curBlock = $blocks[$ifIndex];
 							$elseIndex = $curBlock[FOXWAY_ELSE];
 							if( $result ) {
 								if( $elseIndex ) {
@@ -490,7 +549,7 @@ class Interpreter {
 						case T_ELSEIF:
 							if( $result ) { // chek for IF
 								// this code from previus swith( $id ) case T_IF: & case T_ECHO:
-								$IfIndex = $index;
+								$ifIndex = $index;
 								$expected = array('(');
 								$runtime->addCommand(T_IF);
 								break;
@@ -514,6 +573,9 @@ class Interpreter {
 								}
 								continue 2;
 							}
+							break;
+						default :
+							// @todo error message ?
 							break;
 					}
 				}elseif( $commandResult instanceof ErrorMessage ) {
@@ -564,6 +626,8 @@ class Interpreter {
 					// break is not necessary here
 				case T_ECHO:
 				case T_PRINT:
+//				case T_CONTINUE:
+//				case T_BREAK:
 				case ',':
 				case T_CONCAT_EQUAL:	// .=
 				case T_PLUS_EQUAL:		// +=
@@ -585,6 +649,8 @@ class Interpreter {
 				case '%':
 				case '&':
 				case '|':
+				case T_BOOLEAN_AND:
+				case T_BOOLEAN_OR:
 				case '^':
 				case T_SL: // <<
 				case T_SR: // >>
@@ -623,7 +689,7 @@ class Interpreter {
 					}
 					break;
 				case '}':
-					if( $parenthesFlags & FOXWAY_EXPECT_CURLY_CLOSE ) {
+					if( $parenthesFlags & FOXWAY_EXPECT_CURLY_CLOSE ) { // This is '}' (CURLY CLOSE) for T_CURLY_OPEN
 						$parenthesFlags = array_pop($parentheses);
 						$expected = array(
 							T_CONSTANT_ENCAPSED_STRING,
@@ -634,9 +700,29 @@ class Interpreter {
 							T_CURLY_OPEN,
 							'"',
 							);
-					} elseif( $curlyLever ) {
+					} elseif( $curlyLever ) { // This is mark of end block
 						$curlyLever--;
-					}else {
+						if( isset($blocks[$index]) && isset($blocks[$index][FOXWAY_START_LOOP]) ) { // This is end of loop
+							if( $debug ) { $debug->setLoopState(FOXWAY_STATE_ENDBODY); }
+							if( $breakNumber > 1 || ($breakNumber==1 && $loopContinue) ) { // This is 'break > 1' or 'continue > 1' - go to end of parent loop
+								$breakNumber--;
+								if( !isset($blocks[$index][FOXWAY_PARENT_LOOP][FOXWAY_ENDBLOCK]) ) {
+									$return[] = new ErrorMessage( __LINE__, $tokenLine, E_ERROR, array('foxway-php-fatal-error-cannot-break-continue', $text, isset($args[0])?$args[0]:'n\a') );
+									break 2;
+								}
+								$index = $blocks[$index][FOXWAY_PARENT_LOOP][FOXWAY_ENDBLOCK]-1;
+								if( $debug ) { $debug->setLoopState(FOXWAY_STATE_ENDLOOP); }
+								continue 2;
+							}
+							if( $breakNumber != 1 ) { // This is not 'break 1' (possibly 'continue 1') - go to start loop
+								$index = $blocks[$index][FOXWAY_START_LOOP]-1;
+								continue 2;
+							}
+							//This is 'break 1' - just go next, out of this loop
+							$breakNumber--;
+							if( $debug ) { $debug->setLoopState(FOXWAY_STATE_ENDLOOP); }
+						}
+					} else { // This is mark of end block without mark of start block
 						$return[] = new ErrorMessage(__LINE__, $tokenLine, E_PARSE, $id);
 						break 2;
 					}
@@ -663,6 +749,11 @@ class Interpreter {
 
 			/*****************   EXPECT  PHASE  TWO  **************************/
 			switch ($id) {
+				case ';':
+					if( isset($blocks[$index][FOXWAY_START_LOOP]) ) {
+						$index = $blocks[$index][FOXWAY_START_LOOP]-1;
+					}
+					break;
 				case T_ARRAY:
 					$parenthesFlags |= FOXWAY_ALLOW_PARENTHES_WITH_VOID_PARAMS;
 					break;
@@ -705,6 +796,7 @@ class Interpreter {
 		if( $debug ) {
 			array_unshift($return, $debug);
 		}
+		$runtime->stopTime($scope);
 		return $return;
 	}
 
@@ -730,7 +822,6 @@ class Interpreter {
 		static $replacement = array('$1"', "$1\n", "$1\r", "$1\t", "$1\v", '$1$', '\\');
 		return preg_replace($pattern, $replacement, $string);
 	}
-
 
 	private static function findTernaryIndexes( &$tokens, &$blocks, $index ) {
 		$embedded = 0;
@@ -786,7 +877,61 @@ class Interpreter {
 		}
 	}
 
-	private static function findIfElseIndexes(&$tokens, &$blocks, $ifIndex, $index) {
+	public static function findLoopIndexes( &$tokens, &$blocks, $ifIndex, $index, &$parentLoop = false ) {
+		$count = count($tokens);
+		$nestedBlocks = 0;
+		for( $i = $index; $i < $count; $i++ ) { // find end of block
+			$token = $tokens[$i];
+			if ( is_string($token) ) {
+				$id = $token;
+			} else {
+				list($id, , $tokenLine) = $token;
+			}
+			switch ($id) {
+				case '{':
+				case T_CURLY_OPEN:
+					$nestedBlocks++;
+					break;
+				case '}':
+					$nestedBlocks--;
+					// break is not necessary here
+				case ';':
+					if($nestedBlocks == 0 ) {
+						break 2;
+					}
+					break;
+				case T_WHILE:
+					if( /*!isset($blocks[$i][FOXWAY_ENDBLOCK]) &&*/ self::findLoopIndexes($tokens, $blocks, $i, self::findLastParenthesis($tokens, $i), $blocks[$ifIndex]) !== true ) {
+						return false;
+					}
+					$i = $blocks[$i][FOXWAY_ENDBLOCK];
+					if( $nestedBlocks == 0 ) { break 2;	}
+					break;
+				case T_IF:
+					if( /*!isset($blocks[$i][FOXWAY_ENDIF]) &&*/ self::findIfElseIndexes($tokens, $blocks, $i, self::findLastParenthesis($tokens, $i), $blocks[$ifIndex]) !== true ) {
+						return false;
+					}
+					$i = $blocks[$i][FOXWAY_ENDIF];
+					if( $nestedBlocks == 0 ) { break 2;	}
+					break;
+				case T_CONTINUE:
+				case T_BREAK:
+					$blocks[$i] = &$blocks[$ifIndex];
+					break;
+			}
+		}
+		if( $i >= $count ) {
+			return false;
+		}
+		$blocks[$ifIndex][FOXWAY_ENDBLOCK] = $i;
+		$blocks[$i][FOXWAY_START_LOOP] = $ifIndex;
+		if( $parentLoop !== false ) {
+			$blocks[$i][FOXWAY_PARENT_LOOP] = &$parentLoop;
+		}
+		return true;
+	}
+
+	private static function findIfElseIndexes( &$tokens, &$blocks, $ifIndex, $index, &$parentLoop = false) {
 		$count = count($tokens);
 
 		$nestedBlocks = 0;
@@ -805,22 +950,29 @@ class Interpreter {
 					$nestedBlocks--;
 					// break is not necessary here
 				case ';':
-					if($nestedBlocks == 0 ) {
-						break 2;
-					}
+					if($nestedBlocks == 0 ) { break 2; }
 					break;
 				case T_IF:
-					if( $nestedBlocks == 0 ) {
-						if( !isset($blocks[$i][FOXWAY_ENDIF]) && self::findIfElseIndexes($tokens, $blocks, $i, self::findLastParenthesis($tokens, $i)) !== true ) {
-							return false;
-						}
-						$i = $blocks[$i][FOXWAY_ENDIF];
-						break 2;
+					if( /*!isset($blocks[$i][FOXWAY_ENDIF]) &&*/ self::findIfElseIndexes($tokens, $blocks, $i, self::findLastParenthesis($tokens, $i), $parentLoop) !== true ) {
+						return false;
 					}
+					$i = $blocks[$i][FOXWAY_ENDIF];
+					if( $nestedBlocks == 0 ) { break 2;	}
+					break;
+				case T_WHILE:
+					if( /*!isset($blocks[$i][FOXWAY_ENDBLOCK]) &&*/ self::findLoopIndexes($tokens, $blocks, $i, self::findLastParenthesis($tokens, $i), $parentLoop) !== true ) {
+						return false;
+					}
+					$i = $blocks[$i][FOXWAY_ENDBLOCK];
+					if( $nestedBlocks == 0 ) { break 2;	}
+					break;
+				case T_CONTINUE:
+				case T_BREAK:
+					$blocks[$i] = &$parentLoop;
 					break;
 			}
 		}
-		if( $i == $count ) {
+		if( $i >= $count ) {
 			return false; // end of block not find
 		}
 		$blocks[$ifIndex][FOXWAY_ENDBLOCK] = $i;
@@ -839,7 +991,7 @@ class Interpreter {
 				case T_WHITESPACE:
 					break; // ignore it
 				case T_ELSEIF:
-					if( !isset($blocks[$i]) && self::findIfElseIndexes($tokens, $blocks, $i, self::findLastParenthesis($tokens, $i)) !== true ) {
+					if( !isset($blocks[$i]) && self::findIfElseIndexes($tokens, $blocks, $i, self::findLastParenthesis($tokens, $i), $parentLoop) !== true ) {
 						return false;
 					}
 					$blocks[$ifIndex][FOXWAY_ELSE] = $i; // We fount T_ELSE or T_ELSEIF
@@ -850,7 +1002,7 @@ class Interpreter {
 					$i = $blocks[$i][FOXWAY_ENDBLOCK];
 					break;
 				case T_ELSE:
-					if( !isset($blocks[$i]) && self::findIfElseIndexes($tokens, $blocks, $i, $i+1) !== true ) {
+					if( !isset($blocks[$i]) && self::findIfElseIndexes($tokens, $blocks, $i, $i+1, $parentLoop) !== true ) {
 						return false;
 					}
 					$blocks[$ifIndex][FOXWAY_ELSE] = $i; // We fount T_ELSE or T_ELSEIF

@@ -69,6 +69,7 @@ class FArray extends BaseFunction {
 		'f_end' => array('end', 1, 1),
 		// @todo extract (if there is a need in this)
 		'f_in_array' => array('in_array', 2, 3),
+		'f_key_exists' => array('array_key_exists', 2, 2), // Alias of array_key_exists()
 		'f_key' => array('key', 1, 1),
 		'f_krsort' => array('krsort', 1, 2),
 		'f_ksort' => array('ksort', 1, 2),

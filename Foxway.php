@@ -15,7 +15,7 @@ if ( !defined( 'MEDIAWIKI' ) ) {
 	die( 'This file is an extension to MediaWiki and thus not a valid entry point.' );
 }
 
-define( 'Foxway_VERSION' , '0.4.4' );
+define( 'Foxway_VERSION' , '0.5.0' );
 
 // Register this extension on Special:Version
 $wgExtensionCredits['parserhook'][] = array(
@@ -23,7 +23,7 @@ $wgExtensionCredits['parserhook'][] = array(
 	'name'				=> 'Foxway',
 	'version'			=> Foxway_VERSION,
 	'url'				=> 'https://www.mediawiki.org/wiki/Extension:Foxway',
-	'author'			=> array( '[[mw:User:Pastakhov|Pavel Astakhov]]' ),
+	'author'			=> '[https://www.mediawiki.org/wiki/User:Pastakhov Pavel Astakhov]',
 	'descriptionmsg'	=> 'foxway-desc'
 );
 
@@ -42,9 +42,20 @@ $wgExtensionMessagesFiles['FoxwayMagic'] =	$dir . '/Foxway.i18n.magic.php';
  * @codeCoverageIgnore
  */
 $wgHooks['ParserFirstCallInit'][] = function( Parser &$parser ) {
-   //$parser->setFunctionHook( 'foxway', 'Foxway::renderParserFunction' );
+   $parser->setFunctionHook( 'foxway', 'Foxway::renderFunction', SFH_OBJECT_ARGS );
    $parser->setHook( 'foxway', 'Foxway::render' );
    return true;
+};
+
+/**
+ * @codeCoverageIgnore
+ */
+$wgHooks['ParserLimitReport'][] = function( $parser, &$limitReport ) {
+	if( Foxway::$time !== false ) {
+		$limitReport .= sprintf( "Foxway time usage: %.3f secs\n", Foxway::$time );
+		# print_r(Foxway\Runtime::getTime(),true);
+	}
+	return true;
 };
 
 // Preparing classes for autoloading
@@ -74,6 +85,13 @@ $wgResourceModules['ext.Foxway.Debug'] = array(
 	'styles' => 'resources/ext.foxway.debug.css',
 	'scripts' => 'resources/ext.foxway.debug.js',
 	'dependencies' => 'jquery.tipsy',
+	'localBasePath' => __DIR__,
+	'remoteExtPath' => 'Foxway'
+);
+
+$wgResourceModules['ext.Foxway.DebugLoops'] = array(
+	'scripts' => 'resources/ext.foxway.debugloops.js',
+	'dependencies' => 'jquery',
 	'localBasePath' => __DIR__,
 	'remoteExtPath' => 'Foxway'
 );
