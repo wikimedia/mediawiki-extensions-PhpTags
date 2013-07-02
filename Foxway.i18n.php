@@ -41,13 +41,13 @@ $messages['qqq'] = array(
 	'foxway-error-no-ending-matching-delimiter' => 'Error message. Parameters:
 * $1 - delimiter',
 	'foxway-error-unknown-modifier' => 'Error message, parameter $1 is modifier',
-	'foxway-php-fatal-error-max-execution-time' => 'Error message, parameters:
-* $1 - the number of seconds
-* $2 - the name of the page on which the error occurred',
 	'foxway-php-fatal-error-cannot-break-continue' => 'Error message, parameters:
 * $1 - the number of user defined level
 * $2 - the name of the page on which the error occurred
 * $3 - the line number where the error occurred',
+	'foxway-php-fatal-error-max-execution-time' => 'Error message, parameters:
+* $1 - the number of seconds
+* $2 - the name of the page on which the error occurred',
 	'foxway-php-fatal-error-max-execution-time-scope' => 'Error message, parameters:
 * $1 - the number of seconds
 * $2 - the name of the page on which the error occurred
@@ -102,6 +102,9 @@ $messages['de'] = array(
 	'foxway-error-bad-delimiter' => 'Trennzeichen darf nicht alphanumerisch oder ein Backslash sein',
 	'foxway-error-no-ending-matching-delimiter' => 'Es wurde kein Ende mit dem Trennzeichen „$1“ gefunden',
 	'foxway-error-unknown-modifier' => 'Unbekannter Modifikator „$1“',
+	'foxway-php-fatal-error-cannot-break-continue' => 'Fataler PHP-Fehler: $1 Ebenen auf der Seite $2, Zeile $3 konnten nicht unterbrochen/fortgeführt werden.',
+	'foxway-php-fatal-error-max-execution-time' => 'Fataler PHP-Fehler: Maximale Ausführungszeit von $1 Sekunden auf Seite $2 überschritten.',
+	'foxway-php-fatal-error-max-execution-time-scope' => 'Fataler PHP-Fehler: Maximale Ausführungszeit von $1 Sekunden auf Seite $2, Zeile $3 überschritten.',
 	'foxway-php-fatal-error-undefined-function' => 'Fataler PHP-Fehler: Aufruf zur undefinierten Funktion $1() auf Seite $2, Zeile $3.',
 	'foxway-php-not-variable-passed-by-reference' => 'Fataler PHP-Fehler: Es können nur Variablen von der Referenz übergeben werden, Funktion $1() auf Seite $2, Zeile $3.',
 	'foxway-php-syntax-error-unexpected' => 'PHP-Parserfehler: Syntaxfehler, unerwartete $1 im Befehlszeilencode in Zeile $2.',
@@ -127,6 +130,9 @@ $messages['fr'] = array(
 	'foxway-error-bad-delimiter' => 'Le délimiteur ne doit pas être alphanumérique ou la barre oblique inversée',
 	'foxway-error-no-ending-matching-delimiter' => 'Aucun délimiteur de fin correspondant à « $1 » trouvé',
 	'foxway-error-unknown-modifier' => 'Modificateur « $1 » inconnu',
+	'foxway-php-fatal-error-cannot-break-continue' => 'Erreur PHP fatale : Impossible d’interrompre/continuer $1 niveaux sur la page $2 en ligne $3.',
+	'foxway-php-fatal-error-max-execution-time' => 'Erreur PHP fatale : Temps d’exécution maximal de $1 secondes dépassé sur la page $2.',
+	'foxway-php-fatal-error-max-execution-time-scope' => 'Erreur PHP fatale : Temps d’exécution maximal de $1 secondes dépassé sur la page $2 en ligne $3.',
 	'foxway-php-fatal-error-undefined-function' => 'Erreur PHP fatale : Appel à la fonction non définie $1() en page $2 ligne $3.',
 	'foxway-php-not-variable-passed-by-reference' => 'Erreur PHP fatale : Seule les variables peuvent être passées par référence, fonction $1() en page $2 ligne $3.',
 	'foxway-php-syntax-error-unexpected' => 'Erreur d’analyse PHP : Erreur de syntaxe, $1 non attendu dans le code de la ligne de commande à la ligne $2.',
@@ -144,6 +150,9 @@ $messages['gl'] = array(
 	'foxway-error-bad-delimiter' => 'O delimitador non pode ser un carácter alfanumérico nin unha barra invertida',
 	'foxway-error-no-ending-matching-delimiter' => 'Non se atopou ningún delimitador de fin que coincidise con "$1"',
 	'foxway-error-unknown-modifier' => 'Descoñécese o modificador "$1"',
+	'foxway-php-fatal-error-cannot-break-continue' => 'Erro fatal de PHP: Non se poden interromper/continuar $1 niveis na páxina $2 na liña $3.',
+	'foxway-php-fatal-error-max-execution-time' => 'Erro fatal de PHP: Superouse o número máximo de $1 segundos de execución na páxina $2.',
+	'foxway-php-fatal-error-max-execution-time-scope' => 'Erro fatal de PHP: Superouse o número máximo de $1 segundos de execución na páxina $2 na liña $3.',
 	'foxway-php-fatal-error-undefined-function' => 'Erro fatal de PHP: Chamada a unha función $1() non definida na páxina $2 na liña $3.',
 	'foxway-php-not-variable-passed-by-reference' => 'Erro fatal de PHP: Unicamente as variables poden pasarse por referencia, función $1() na páxina $2 na liña $3.',
 	'foxway-php-syntax-error-unexpected' => 'Erro de análise PHP: Erro de sintaxe; "$1" inesperado no código da liña de comandos na liña $2.',
@@ -160,6 +169,8 @@ $messages['ja'] = array(
 	'foxway-disabled-for-namespace' => 'Foxway 拡張機能はこの $1 名前空間では無効になっています',
 	'foxway-error-no-ending-matching-delimiter' => '対応する終了の区切り文字「$1」が見つかりません',
 	'foxway-error-unknown-modifier' => '不明な修飾子「$1」です',
+	'foxway-php-fatal-error-max-execution-time' => 'PHP 致命的エラー: ページ $2 の実行時間が最大値の $1 秒を超えました。',
+	'foxway-php-fatal-error-max-execution-time-scope' => 'PHP 致命的エラー: ページ $2 の $3 行目の実行時間が最大値の $1 秒を超えました。',
 	'foxway-php-syntax-error-unexpected' => 'PHP 構文解析エラー: 構文エラーです。行 $2 のコードで予期しない $1 が見つかりました。',
 );
 
@@ -188,6 +199,9 @@ $messages['mk'] = array(
 	'foxway-error-bad-delimiter' => 'Разграничувачот не може да биде азбучен, бројчен или надесна коса црта',
 	'foxway-error-no-ending-matching-delimiter' => 'Не пронајдов завршеток што одговара на разграничувачот „$1“',
 	'foxway-error-unknown-modifier' => 'Непознат изменител „$1“',
+	'foxway-php-fatal-error-cannot-break-continue' => 'Кобна грешка во PHP: Не можам да прекинам/продолжам $1 нивоа на страницата $2, ред $3.',
+	'foxway-php-fatal-error-max-execution-time' => 'Кобна грешка во PHP: Надминат е рокот од $1 секунди за извршување на наредбата на страницата $2.',
+	'foxway-php-fatal-error-max-execution-time-scope' => 'Кобна грешка во PHP: Надминат е рокот од $1 секунди за извршување на наредбата на страницата $2, ред $3.',
 	'foxway-php-fatal-error-undefined-function' => 'Кобна грешка со PHP: Повик на неодредена функција $1() на страницата $2, во редот $3.',
 	'foxway-php-not-variable-passed-by-reference' => 'Кобна грешка во PHP: Со наведување можат да се даваат само променливи, функција $1() на страницата $2, ред $3.',
 	'foxway-php-syntax-error-unexpected' => 'Грешка при парсирање на PHP: Синтаксна грешка - не се очекува $1 во кодот во ред бр. $2.',
