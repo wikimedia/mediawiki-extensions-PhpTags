@@ -65,7 +65,8 @@ class Runtime {
 		array(T_LOGICAL_OR), // or
 		array(','),
 	);
-	private $countPrecedences;
+	private static $precedencesCount;
+	private static $precedencesMatrix=array();
 
 	public function __construct( array $args, $scope ) {
 		$this->args = $args;
@@ -77,7 +78,12 @@ class Runtime {
 		$this->thisVariables['argv'] = $args;
 		$this->thisVariables['argc'] = count($args);
 		$this->thisVariables['GLOBALS'] = &self::$globalVariables;
-		$this->countPrecedences = count(self::$operatorsPrecedence)-1;
+		if( empty(self::$precedencesCount) ) {
+			foreach (self::$operatorsPrecedence as $key => &$value) {
+				self::$precedencesMatrix += array_fill_keys($value, $key);
+			}
+			self::$precedencesCount = $key;
+		}
 	}
 
 	public function getOperators() {
@@ -88,17 +94,6 @@ class Runtime {
 			}
 		}
 		return $operators;
-	}
-
-	protected function getOperatorPrecedence( $operator ) {
-		$precendence = 0;
-		foreach (self::$operatorsPrecedence as &$operators) {
-			if( in_array($operator, $operators) ) {
-				break;
-			}
-			$precendence ++;
-		}
-		return $precendence;
 	}
 
 	protected function pushStack() {
@@ -126,7 +121,7 @@ class Runtime {
 
 	public function addCommand( $name ) {
 		if( $this->lastOperator ) {
-			$precedence = $this->getOperatorPrecedence( $this->lastOperator );
+			$precedence = self::$precedencesMatrix[$this->lastOperator];
 			$this->mathMemory[$precedence] = array($this->lastOperator, $this->lastParam);
 			$this->lastOperator = false;
 		}
@@ -179,7 +174,7 @@ class Runtime {
 
 	protected function addParam(RValue $param) {
 		if( $this->lastOperator ) {
-			$precedence = $this->getOperatorPrecedence( $this->lastOperator );
+			$precedence = self::$precedencesMatrix[$this->lastOperator];
 			$this->mathMemory[$precedence] = array($this->lastOperator, $this->lastParam);
 			$this->lastOperator = false;
 		}
@@ -190,7 +185,7 @@ class Runtime {
 		global $wgFoxwayPassByReference;
 
 		if( $this->lastOperator ) {
-			$precedence = $this->getOperatorPrecedence( $this->lastOperator );
+			$precedence = self::$precedencesMatrix[$this->lastOperator];
 			$this->mathMemory[$precedence] = array($this->lastOperator, $this->lastParam);
 			$this->lastOperator = false;
 		}
@@ -221,7 +216,7 @@ class Runtime {
 	public function addOperator( $operator ) {
 		switch ($operator) {
 			case ',':
-				$this->doMath( $this->getOperatorPrecedence($operator) );
+				$this->doMath( self::$precedencesMatrix[$operator] );
 				if( $this->lastOperator == T_DOUBLE_ARROW ) {
 					$this->lastOperator = false;
 				}else{
@@ -237,7 +232,7 @@ class Runtime {
 				$this->lastParam = null;
 				break;
 			case '?':
-				$this->doMath( $this->getOperatorPrecedence($operator) );
+				$this->doMath( self::$precedencesMatrix[$operator] );
 				return $this->lastParam->getValue();
 				break;
 			case '"(':
@@ -300,7 +295,7 @@ class Runtime {
 				$this->popStack();
 				break;
 			default:
-				$precedence = $this->getOperatorPrecedence( $operator );
+				$precedence = self::$precedencesMatrix[$operator];
 				//						For negative operator
 				if( $precedence == 0 || $this->lastOperator || is_null($this->lastParam) ) {
 					switch ($operator) {
@@ -347,7 +342,7 @@ class Runtime {
 			unset($this->mathMemory[0]);
 		}
 		if($precedence === false){
-			$precedence = $this->countPrecedences;
+			$precedence = self::$precedencesCount;
 		}
 		for($n = 1; $n <= $precedence; $n++) {
 			if( isset($this->mathMemory[$n]) ) {
