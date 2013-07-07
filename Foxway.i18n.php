@@ -190,6 +190,8 @@ $messages['ksh'] = array(
  */
 $messages['lb'] = array(
 	'foxway-disabled-for-namespace' => 'Foxway-Erweiderung ass fir den Nummraum $1 ausgeschalt',
+	'foxway-error-unknown-modifier' => 'Onbekannte Modificateur "$1"',
+	'foxway-php-fatal-error-max-execution-time' => 'Fatale PHP-Feeler: Maximal Ausféirungszäit vu(n) $1 Sekonnen op der Säit $2 depasséiert.',
 	'foxway-php-syntax-error-unexpected' => 'PHP-Parser-Feeler:Syntaxfeeler, onerwaarte(n) $1 am Code vun der Programmatiounszeil $2.',
 );
 
