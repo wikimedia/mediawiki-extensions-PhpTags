@@ -230,8 +230,19 @@ $messages['ms'] = array(
  * @author Siebrand
  */
 $messages['nl'] = array(
-	'foxway-desc' => "Maakt het mogelijk om objectgeoriënteerde gegevens op te slaan en implementeert een eigen runtime voor PHP-code op pagina's",
+	'foxway-desc' => 'Voor aan de wikitekstparser de mogelijkheid toe om syntaxis en functies van PHP op te nemen',
+	'foxway-disabled-for-namespace' => 'De uitbreiding foxway is uitgeschakeld voor de naamruimte "$1"',
+	'foxway-error-bad-delimiter' => 'Het scheidingsteken mag niet alfanumeriek of een backslash zijn',
+	'foxway-error-no-ending-matching-delimiter' => 'Er is geen laatste scheidingsteken "$1" aangetroffen',
+	'foxway-error-unknown-modifier' => 'Onbekende modifier "$1"',
+	'foxway-php-fatal-error-cannot-break-continue' => 'Onherstelbare PHP-fout: kan niet afbreken of doorgaan uit $1 niveaus op pagina $2 regel $3.',
+	'foxway-php-fatal-error-max-execution-time' => 'Onherstelbare PHP-fout: maximale uitvoertijd van $1 seconden overschreden op pagina $2.',
+	'foxway-php-fatal-error-max-execution-time-scope' => 'Onherstelbare PHP-fout: maximale uitvoertijd van $1 seconden overschreden op pagina $2 regel $3.',
+	'foxway-php-fatal-error-undefined-function' => 'Onherstelbare PHP-fout: aanroep van ongedefinieerde functie $1() op pagina $2, regel $3.',
+	'foxway-php-not-variable-passed-by-reference' => 'Onherstelbare PHP-fout: alleen variabelen kunnen doorgegeven worden als referentie, functie $1() op pagina $2, regel $3.',
 	'foxway-php-syntax-error-unexpected' => 'Verwerkingsfout in PHP: syntaxisfout, "$1" is onverwacht in regel $2.',
+	'foxway-php-warning-exception-in-function' => 'PHP-waarschuwing: functie $1() op pagina $2, regel $3 geeft een uitzondering terug ($4).',
+	'foxway-php-wrong-parameter-count' => 'PHP-waarschuwing: onjuist parameteraantal voor $1() op pagina $2, regel $3.',
 );
 
 /** tarandíne (tarandíne)
