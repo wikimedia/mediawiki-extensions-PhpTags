@@ -34,7 +34,7 @@ $messages['en'] = array(
  * @author pastakhov
  */
 $messages['qqq'] = array(
-	'foxway-desc' => '{{desc|name=Foxway|url=https://www.mediawiki.org/wiki/Extension:Foxway}}',
+	'foxway-desc' => '{{desc|name=Foxway|url=http://www.mediawiki.org/wiki/Extension:Foxway}}',
 	'foxway-disabled-for-namespace' => 'Error message when trying use this extension on the pages of the namespace where it is not permitted, parameters:
 * $1 - the namespace name',
 	'foxway-error-bad-delimiter' => 'Error message. Delimiter for function preg_replace()',
