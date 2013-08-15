@@ -255,6 +255,26 @@ $messages['roa-tara'] = array(
 	'foxway-php-syntax-error-unexpected' => "Errore de analisi de PHP: Errore de sindasse, inaspettate $1 jndr'à 'u linèe de codece $2.",
 );
 
+/** Ukrainian (українська)
+ * @author Andriykopanytsia
+ */
+$messages['uk'] = array(
+	'foxway-desc' => 'Додає в аналізатор вікі можливість використовувати синтаксис і функції PHP',
+	'foxway-disabled-for-namespace' => 'Розширення foxway вимкнено для цього простору імен $1',
+	'foxway-error-bad-delimiter' => 'Роздільник не має бути буквенно-цифровим або зворотною косою рискою',
+	'foxway-error-no-ending-matching-delimiter' => 'Не знайдено збігів з кінцевим роздільником "$1"',
+	'foxway-error-unknown-modifier' => 'Невідомий модифікатор "$1"',
+	'foxway-php-fatal-error-cannot-break-continue' => 'PHP фатальна помилка: не вдається перервати/продовжити  $1  рівнів на сторінці  $2,  рядок $3 .',
+	'foxway-php-fatal-error-max-execution-time' => 'PHP фатальна помилка: максимальний час виконання з  $1  секунд перевищений на сторінці  $2 .',
+	'foxway-php-fatal-error-max-execution-time-scope' => 'PHP фатальна помилка: максимальний час виконання з  $1  секунд перевищений на сторінці  $2, рядок  $3 .',
+	'foxway-php-fatal-error-undefined-function' => 'PHP фатальна помилка: виклик невизначеної функції  $1() на сторінці  $2, рядок  $3.',
+	'foxway-php-not-variable-passed-by-reference' => 'PHP фатальна помилка: лише змінні можуть пройти по посиланню, функція  $1() на сторінці $2, рядок  $3.',
+	'foxway-php-syntax-error-unexpected' => 'PHP Помилка аналізу: синтаксична помилка, неочікуваний  $1 в командному рядку коду у рядку $2 .',
+	'foxway-php-warning-exception-in-function' => 'PHP попередження: функція  $1() на сторінці $2 рядка $3  повертає виняток ($4).',
+	'foxway-php-wrong-parameter-count' => 'PHP попередження: неправильне число параметрів для $1() на сторінці  $2, рядку $3.',
+	'foxway-unexpected-result-work-function' => 'Неочікуваний результат роботи функції  $1() — розширення Foxway на сторінці  $2, рядок $3.',
+);
+
 /** Traditional Chinese (中文（繁體）‎)
  * @author Justincheng12345
  */
