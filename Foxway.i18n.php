@@ -52,10 +52,12 @@ $messages['qqq'] = array(
 * $1 - the number of seconds
 * $2 - the name of the page on which the error occurred
 * $3 - the line number where the error occurred',
-	'foxway-php-fatal-error-undefined-function' => 'Error message, parameters:
+	'foxway-php-fatal-error-undefined-function' => 'Used as error message. Parameters:
 * $1 - user-specified function name
 * $2 - the name of the page on which the error occurred
-* $3 - the line number where the error occurred',
+* $3 - the line number where the error occurred
+See also:
+* {{msg-mw|Foxway-unexpected-result-work-function}}',
 	'foxway-php-not-variable-passed-by-reference' => 'Error message, parameters:
 * $1 - user-specified function name
 * $2 - the name of the page on which the error occurred
@@ -72,6 +74,12 @@ $messages['qqq'] = array(
 * $1 - function name
 * $2 - the name of the page on which the error occurred
 * $3 - the line number where the error occurred',
+	'foxway-unexpected-result-work-function' => 'Used as error message. Parameters:
+* $1 - function name
+* $2 - the name of the page on which the error occurred
+* $3 - the line number where the error occurred
+See also:
+* {{msg-mw|Foxway-php-fatal-error-undefined-function}}',
 );
 
 /** Asturian (asturianu)
