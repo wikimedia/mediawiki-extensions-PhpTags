@@ -40,7 +40,8 @@ $messages['qqq'] = array(
 	'foxway-error-bad-delimiter' => 'Error message. Delimiter for function preg_replace()',
 	'foxway-error-no-ending-matching-delimiter' => 'Error message. Parameters:
 * $1 - delimiter',
-	'foxway-error-unknown-modifier' => 'Error message, parameter $1 is modifier',
+	'foxway-error-unknown-modifier' => 'Error message. Parameters:
+* $1 - modifier',
 	'foxway-php-fatal-error-cannot-break-continue' => 'Error message, parameters:
 * $1 - the number of user defined level
 * $2 - the name of the page on which the error occurred
