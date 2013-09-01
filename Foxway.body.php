@@ -91,7 +91,12 @@ class Foxway {
 			return Html::element( 'span', array('class'=>'error'), wfMessage('foxway-disabled-for-namespace', $frame->getTitle()->getNsText())->escaped() );
 		}
 		if( $wgFoxway_max_execution_time !== false && self::$time >= $wgFoxway_max_execution_time) {
-			return Html::element( 'span', array('class'=>'error'), wfMessage('foxway-php-fatal-error-max-execution-time', $wgFoxway_max_execution_time, $frame->getTitle()->getPrefixedText())->escaped() );
+			return Html::element( 'span', array('class'=>'error'),
+				wfMessage( 'foxway-php-fatal-error-max-execution-time' )
+					->numParams( $wgFoxway_max_execution_time )
+					->params( $frame->getTitle()->getPrefixedText() )
+					->text()
+			);
 		}
 		return false;
 	}
