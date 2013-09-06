@@ -1059,4 +1059,53 @@ if ( ((74+4)*(4+6)+88)*4 ) echo "!!!";'),
 				array()
 				);
 	}
+	public function testRun_echo_if_else_simple_1() {
+		$this->assertEquals(
+				Runtime::runSource('if ( true ) echo "true"; else echo "false";'),
+				array('true')
+				);
+	}
+	public function testRun_echo_if_else_simple_2() {
+		$this->assertEquals(
+				Runtime::runSource('if ( false ) echo "true"; else echo "false";'),
+				array('false')
+				);
+	}
+	public function testRun_echo_if_else_simple_3() {
+		$this->assertEquals(
+				Runtime::runSource('if ( true ) echo "true"; else echo "false"; echo " always!";'),
+				array('true', ' always!')
+				);
+	}
+	public function testRun_echo_if_else_simple_4() {
+		$this->assertEquals(
+				Runtime::runSource('if ( false ) echo "true"; else echo "false"; echo " always!";'),
+				array('false', ' always!')
+				);
+	}
+	public function testRun_echo_if_else_block_1() {
+		$this->assertEquals(
+				Runtime::runSource('if ( true ) { echo "true1"; echo "true2";} else { echo "false1"; echo "false2"; }'),
+				array('true1', 'true2')
+				);
+	}
+	public function testRun_echo_if_else_block_2() {
+		$this->assertEquals(
+				Runtime::runSource('if ( false ) { echo "true1"; echo "true2";} else { echo "false1"; echo "false2"; }'),
+				array('false1', 'false2')
+				);
+	}
+	public function testRun_echo_if_else_block_3() {
+		$this->assertEquals(
+				Runtime::runSource('if ( true ) { echo "true1"; echo "true2";} else { echo "false1"; echo "false2"; } echo " always!";'),
+				array('true1', 'true2', ' always!')
+				);
+	}
+	public function testRun_echo_if_else_block_4() {
+		$this->assertEquals(
+				Runtime::runSource('if ( false ) { echo "true1"; echo "true2";} else { echo "false1"; echo "false2"; } echo " always!";'),
+				array('false1', 'false2', ' always!')
+				);
+	}
+
 }

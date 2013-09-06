@@ -787,10 +787,17 @@ class Runtime {
 						}
 						break;
 					case T_IF:
-						if( $value[FOXWAY_STACK_PARAM] ) { // if( true )
+						if( $value[FOXWAY_STACK_PARAM] ) { // Example: if( true )
 							if( $value[FOXWAY_STACK_DO_TRUE] ) { // Stack not empty: if(true);
 								$memory[] = array( null, $code, $i, $c );
 								$code = $value[FOXWAY_STACK_DO_TRUE];
+								$i = -1;
+								$c = count($code);
+							}
+						}else{ // Example: if( false )
+							if( isset($value[FOXWAY_STACK_DO_FALSE]) ) { // Stack not empty: if(false) ; else ;
+								$memory[] = array( null, $code, $i, $c );
+								$code = $value[FOXWAY_STACK_DO_FALSE];
 								$i = -1;
 								$c = count($code);
 							}
