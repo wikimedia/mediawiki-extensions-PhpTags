@@ -334,7 +334,6 @@ class Runtime {
 	}
 
 	protected function doMath( $precedence = false ) {
-
 		if( isset($this->mathMemory[0]) ) {
 			while( $mathZerroMemory = array_pop($this->mathMemory[0]) ) {
 				$this->doOperation($mathZerroMemory);
@@ -581,6 +580,227 @@ class Runtime {
 			return new ErrorMessage( __LINE__, null, E_ERROR, array( 'foxway-php-fatal-error-max-execution-time-scope', $wgFoxway_max_execution_time_for_scope, isset($this->args[0])?$this->args[0]:'n\a' ) );
 		}
 		return null;
+	}
+
+	public static function runSource($code, array $args = array(), $scope = '') {
+		return self::run( Compiler::compile($code), $args, $scope );
+	}
+
+	public static function run($code, array $args, $scope = '') {
+		if( !isset(self::$variables[$scope]) ) {
+			self::$variables[$scope] = array();
+		}
+		$thisVariables = &self::$variables[$scope];
+		$thisVariables['argv'] = $args;
+		$thisVariables['argc'] = count($args);
+		$thisVariables['GLOBALS'] = &self::$globalVariables;
+		$memory=array();
+		$return = array();
+
+		$c=count($code);
+		$i=-1;
+		do {
+			$i++;
+			for(; $i<$c; $i++ ) {
+				$value = &$code[$i];
+				switch ($value[FOXWAY_STACK_COMMAND]) {
+					case T_CONST:
+						break; // ignore it, @todo need remove it from $code in class Compiler
+					case T_ENCAPSED_AND_WHITESPACE:
+						$value[FOXWAY_STACK_RESULT] = implode($value[FOXWAY_STACK_PARAM]);
+						break;
+					case T_INC:
+						if( !isset($thisVariables[$value[FOXWAY_STACK_PARAM][FOXWAY_STACK_PARAM]]) ) {
+							$thisVariables[$value[FOXWAY_STACK_PARAM][FOXWAY_STACK_PARAM]] = null;
+						}
+						if( $value[FOXWAY_STACK_INC_AFTER] ) { // $foo++
+							$value[FOXWAY_STACK_RESULT] = $thisVariables[$value[FOXWAY_STACK_PARAM][FOXWAY_STACK_PARAM]]++;
+						} else { // ++$foo
+							$value[FOXWAY_STACK_RESULT] = ++$thisVariables[$value[FOXWAY_STACK_PARAM][FOXWAY_STACK_PARAM]];
+						}
+						break;
+					case T_DEC:
+						if( !isset($thisVariables[$value[FOXWAY_STACK_PARAM][FOXWAY_STACK_PARAM]]) ) {
+							$thisVariables[$value[FOXWAY_STACK_PARAM][FOXWAY_STACK_PARAM]] = null;
+						}
+						if( $value[FOXWAY_STACK_INC_AFTER] ) { // $foo--
+							$value[FOXWAY_STACK_RESULT] = $thisVariables[$value[FOXWAY_STACK_PARAM][FOXWAY_STACK_PARAM]]--;
+						} else { // --$foo
+							$value[FOXWAY_STACK_RESULT] = --$thisVariables[$value[FOXWAY_STACK_PARAM][FOXWAY_STACK_PARAM]];
+						}
+						break;
+					case '.':
+						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] . $value[FOXWAY_STACK_PARAM_2];
+						break;
+					case '+':
+						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] + $value[FOXWAY_STACK_PARAM_2];
+						break;
+					case '-':
+						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] - $value[FOXWAY_STACK_PARAM_2];
+						break;
+					case '*':
+						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] * $value[FOXWAY_STACK_PARAM_2];
+						break;
+					case '/':
+						if( (int)$value[FOXWAY_STACK_PARAM_2] == 0 ) {
+							throw new ExceptionFoxway(null, FOXWAY_PHP_FATAL_ERROR_UNSUPPORTED_OPERAND_TYPES, $value[FOXWAY_STACK_TOKEN_LINE]);
+						}
+						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] / $value[FOXWAY_STACK_PARAM_2];
+						break;
+					case '%':
+						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] % $value[FOXWAY_STACK_PARAM_2];
+						break;
+					case '&':
+						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] & $value[FOXWAY_STACK_PARAM_2];
+						break;
+					case '|':
+						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] | $value[FOXWAY_STACK_PARAM_2];
+						break;
+					case '^':
+						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] ^ $value[FOXWAY_STACK_PARAM_2];
+						break;
+					case T_SL:			// <<
+						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] << $value[FOXWAY_STACK_PARAM_2];
+						break;
+					case T_SR:			// >>
+						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] >> $value[FOXWAY_STACK_PARAM_2];
+						break;
+					case T_LOGICAL_AND:	// and
+						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] and $value[FOXWAY_STACK_PARAM_2];
+						break;
+					case T_LOGICAL_XOR:	// xor
+						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] xor $value[FOXWAY_STACK_PARAM_2];
+						break;
+					case T_LOGICAL_OR:	// or
+						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] or $value[FOXWAY_STACK_PARAM_2];
+						break;
+					case '<':
+						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] < $value[FOXWAY_STACK_PARAM_2];
+						break;
+					case '>':
+						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] > $value[FOXWAY_STACK_PARAM_2];
+						break;
+					case T_IS_SMALLER_OR_EQUAL:	// <=
+						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] <= $value[FOXWAY_STACK_PARAM_2];
+						break;
+					case T_IS_GREATER_OR_EQUAL:	// >=
+						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] >= $value[FOXWAY_STACK_PARAM_2];
+						break;
+					case T_IS_EQUAL:			// ==
+						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] == $value[FOXWAY_STACK_PARAM_2];
+						break;
+					case T_IS_NOT_EQUAL:		// !=
+						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] != $value[FOXWAY_STACK_PARAM_2];
+						break;
+					case T_IS_IDENTICAL:		// ===
+						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] === $value[FOXWAY_STACK_PARAM_2];
+						break;
+					case T_IS_NOT_IDENTICAL:	// !==
+						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] !== $value[FOXWAY_STACK_PARAM_2];
+						break;
+					case T_VARIABLE:
+						$value[FOXWAY_STACK_RESULT] = isset($thisVariables[$value[FOXWAY_STACK_PARAM]]) ? $thisVariables[$value[FOXWAY_STACK_PARAM]] : null;
+						break;
+					case T_ECHO:
+						$return = array_merge($return, $value[FOXWAY_STACK_PARAM]); //$return += $value[FOXWAY_STACK_PARAM];
+						break;
+					case '=':
+						// Save result in T_VARIABLE FOXWAY_STACK_RESULT,    Save result in $thisVariables[variable name]
+						$value[FOXWAY_STACK_PARAM][FOXWAY_STACK_RESULT] = $thisVariables[$value[FOXWAY_STACK_PARAM][FOXWAY_STACK_PARAM]] = $value[FOXWAY_STACK_PARAM_2];
+						break;
+					case T_PLUS_EQUAL:		// +=
+						$value[FOXWAY_STACK_PARAM][FOXWAY_STACK_RESULT] = $thisVariables[$value[FOXWAY_STACK_PARAM][FOXWAY_STACK_PARAM]] += $value[FOXWAY_STACK_PARAM_2];
+						break;
+					case T_MINUS_EQUAL:		// -=
+						$value[FOXWAY_STACK_PARAM][FOXWAY_STACK_RESULT] = $thisVariables[$value[FOXWAY_STACK_PARAM][FOXWAY_STACK_PARAM]] -= $value[FOXWAY_STACK_PARAM_2];
+						break;
+					case T_MUL_EQUAL:		// *=
+						$value[FOXWAY_STACK_PARAM][FOXWAY_STACK_RESULT] = $thisVariables[$value[FOXWAY_STACK_PARAM][FOXWAY_STACK_PARAM]] *= $value[FOXWAY_STACK_PARAM_2];
+						break;
+					case T_DIV_EQUAL:		// /=
+						$value[FOXWAY_STACK_PARAM][FOXWAY_STACK_RESULT] = $thisVariables[$value[FOXWAY_STACK_PARAM][FOXWAY_STACK_PARAM]] /= $value[FOXWAY_STACK_PARAM_2];
+						break;
+					case T_CONCAT_EQUAL:	// .=
+						$value[FOXWAY_STACK_PARAM][FOXWAY_STACK_RESULT] = $thisVariables[$value[FOXWAY_STACK_PARAM][FOXWAY_STACK_PARAM]] .= $value[FOXWAY_STACK_PARAM_2];
+						break;
+					case T_MOD_EQUAL:		// %=
+						$value[FOXWAY_STACK_PARAM][FOXWAY_STACK_RESULT] = $thisVariables[$value[FOXWAY_STACK_PARAM][FOXWAY_STACK_PARAM]] %= $value[FOXWAY_STACK_PARAM_2];
+						break;
+					case T_AND_EQUAL:		// &=
+						$value[FOXWAY_STACK_PARAM][FOXWAY_STACK_RESULT] = $thisVariables[$value[FOXWAY_STACK_PARAM][FOXWAY_STACK_PARAM]] &= $value[FOXWAY_STACK_PARAM_2];
+						break;
+					case T_OR_EQUAL:		// |=
+						$value[FOXWAY_STACK_PARAM][FOXWAY_STACK_RESULT] = $thisVariables[$value[FOXWAY_STACK_PARAM][FOXWAY_STACK_PARAM]] |= $value[FOXWAY_STACK_PARAM_2];
+						break;
+					case T_XOR_EQUAL:		// ^=
+						$value[FOXWAY_STACK_PARAM][FOXWAY_STACK_RESULT] = $thisVariables[$value[FOXWAY_STACK_PARAM][FOXWAY_STACK_PARAM]] ^= $value[FOXWAY_STACK_PARAM_2];
+						break;
+					case T_SL_EQUAL:		// <<=
+						$value[FOXWAY_STACK_PARAM][FOXWAY_STACK_RESULT] = $thisVariables[$value[FOXWAY_STACK_PARAM][FOXWAY_STACK_PARAM]] <<= $value[FOXWAY_STACK_PARAM_2];
+						break;
+					case T_SR_EQUAL:		// >>=
+						$value[FOXWAY_STACK_PARAM][FOXWAY_STACK_RESULT] = $thisVariables[$value[FOXWAY_STACK_PARAM][FOXWAY_STACK_PARAM]] >>= $value[FOXWAY_STACK_PARAM_2];
+						break;
+					case '~':
+						$value[FOXWAY_STACK_RESULT] = ~$value[FOXWAY_STACK_PARAM_2];
+						break;
+					case '!':
+						$value[FOXWAY_STACK_RESULT] = !$value[FOXWAY_STACK_PARAM_2];
+						break;
+					case T_INT_CAST:		// (int)
+						$value[FOXWAY_STACK_RESULT] = (int)$value[FOXWAY_STACK_PARAM_2];
+						break;
+					case T_DOUBLE_CAST:		// (double)
+						$value[FOXWAY_STACK_RESULT] = (double)$value[FOXWAY_STACK_PARAM_2];
+						break;
+					case T_STRING_CAST:		// (string)
+						$value[FOXWAY_STACK_RESULT] = (string)$value[FOXWAY_STACK_PARAM_2];
+						break;
+					case T_ARRAY_CAST:		// (array)
+						$value[FOXWAY_STACK_RESULT] = (array)$value[FOXWAY_STACK_PARAM_2];
+						break;
+					case T_BOOL_CAST:		// (bool)
+						$value[FOXWAY_STACK_RESULT] = (bool)$value[FOXWAY_STACK_PARAM_2];
+						break;
+					case T_UNSET_CAST:		// (unset)
+						$value[FOXWAY_STACK_RESULT] = (unset)$value[FOXWAY_STACK_PARAM_2];
+						break;
+					case '?':
+						if( $value[FOXWAY_STACK_PARAM] ) { // true ?
+							if( $value[FOXWAY_STACK_PARAM_2][FOXWAY_STACK_DO_TRUE] ) { // true ? 1+2 :
+								$memory[] = array( &$value[FOXWAY_STACK_PARAM_2][FOXWAY_STACK_PARAM], $code, $i, $c );
+								$code = $value[FOXWAY_STACK_PARAM_2][FOXWAY_STACK_DO_TRUE];
+								$i = -1;
+								$c = count($code);
+							}else{ // true ? 1 :
+								$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM_2][FOXWAY_STACK_PARAM];
+							}
+						}else{ // false ?
+							if( $value[FOXWAY_STACK_PARAM_2][FOXWAY_STACK_DO_FALSE] ) { // false ? ... : 1+2
+								$memory[] = array( &$value[FOXWAY_STACK_PARAM_2][FOXWAY_STACK_PARAM_2], $code, $i, $c );
+								$code = $value[FOXWAY_STACK_PARAM_2][FOXWAY_STACK_DO_FALSE];
+								$i = -1;
+								$c = count($code);
+							}else{ // false ? ... : 1
+								$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM_2][FOXWAY_STACK_PARAM_2];
+							}
+						}
+						break;
+					case T_IF:
+						if( $value[FOXWAY_STACK_PARAM] ) { // if( true )
+							if( $value[FOXWAY_STACK_DO_TRUE] ) { // Stack not empty: if(true);
+								$memory[] = array( null, $code, $i, $c );
+								$code = $value[FOXWAY_STACK_DO_TRUE];
+								$i = -1;
+								$c = count($code);
+							}
+						}
+						break;
+				}
+			}
+		} while( list($code[$i][FOXWAY_STACK_RESULT], $code, $i, $c) = array_pop($memory) );
+
+		return $return;
 	}
 
 }

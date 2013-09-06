@@ -36,15 +36,21 @@ class Foxway {
 			}
 			$command = "echo $command (" . implode(',', $args) . ');';
 		}
-		//MWDebug::log($command);
-
-		$result = Foxway\Interpreter::run(
+		/*$result = Foxway\Interpreter::run(
 				$command,
 				array($frame->getTitle()->getPrefixedText()),
 				self::getScope($frame)
-				);
-
-		$return = implode($result);
+				);*/
+		try {
+			$result = Foxway\Runtime::runSource(
+			   $command,
+			   array($frame->getTitle()->getPrefixedText()),
+			   self::getScope($frame)
+			   );
+			$return = implode($result);
+		} catch (Exception $exc) {
+			$return = $exc->getTraceAsString();
+		}
 
 		self::$time += microtime(true) - self::$startTime;
 		return \UtfNormal::cleanUp($return);
@@ -61,12 +67,24 @@ class Foxway {
 		$is_debug = isset($args['debug']);
 		$return = false;
 
+		/*
 		$result = Foxway\Interpreter::run(
 				$input,
 				array_merge((array)$frame->getTitle()->getPrefixedText(),$frame->getArguments()),
 				self::getScope($frame),
 				$is_debug
-			);
+			);*/
+
+		try {
+			$result = Foxway\Runtime::runSource(
+					$input,
+					array_merge((array)$frame->getTitle()->getPrefixedText(),$frame->getArguments()),
+					self::getScope($frame)
+					);
+		} catch (Exception $exc) {
+			self::$time += microtime(true) - self::$startTime;
+			return $exc->getTraceAsString();
+		}
 
 		if( $is_debug ) {
 			$parser->getOutput()->addModules('ext.Foxway.Debug');
