@@ -31,10 +31,11 @@ define( 'FOXWAY_EXPECT_DO_TRUE_STACK', 1 << 11 );
 define( 'FOXWAY_EXPECT_DO_FALSE_STACK', 1 << 12 );
 define( 'FOXWAY_EXPECT_CURLY_CLOSE', 1 << 13 );
 define( 'FOXWAY_EXPECT_ELSE', 1 << 14 );
+define( 'FOXWAY_KEEP_EXPECT_ELSE', 1 << 15 );
 
 define( 'FOXWAY_CLEAR_FLAG_FOR_SHIFT_BEFORE_PARENTHESES', FOXWAY_EXPECT_PARENTHESES_WITH_LIST_PARAMS );
 //define( 'FOXWAY_CLEAR_FLAG_FOR_SHIFT_AFTER_PARENTHESES', FOXWAY_EXPECT_PARENTHESES_WITH_LIST_PARAMS );
-define( 'FOXWAY_CLEAR_FLAG_FOR_VALUE', ~FOXWAY_EXPECT_START_COMMAND );
+define( 'FOXWAY_CLEAR_FLAG_FOR_VALUE', ~(FOXWAY_EXPECT_START_COMMAND|FOXWAY_EXPECT_ELSE) );
 
 define( 'FOXWAY_INDEX_FOR_PARAMS', '0' );
 
@@ -567,14 +568,19 @@ closeoperator:
 									$parentFlags = array_pop($parentheses);
 								}
 							} elseif ( $parentFlags & FOXWAY_EXPECT_DO_FALSE_STACK ) { // Exsample: if(1) echo 2; else echo 3;
-								$lastValue = &$needParams[0];
-								if( $parentFlags & FOXWAY_EXPECT_CURLY_CLOSE ) { // if(1) { echo 2; } else { echo 3; }
-									$lastValue[FOXWAY_STACK_DO_FALSE] = array_merge( $lastValue[FOXWAY_STACK_DO_FALSE], $s );
+								if( $parentFlags & FOXWAY_EXPECT_CURLY_CLOSE ) { // if(1) { echo 2; } else { echo 3;
+									$needParams[0][FOXWAY_STACK_DO_FALSE] = array_merge( $needParams[0][FOXWAY_STACK_DO_FALSE], $s );
 									break; /********** EXIT **********/
 								}else{ // if(1) echo 2; else echo 3;
-									$lastValue[FOXWAY_STACK_DO_FALSE] = $s;
+									$needParams[0][FOXWAY_STACK_DO_FALSE] = $s;
 									array_shift($needParams);
 									$parentFlags = array_pop($parentheses);
+									if( $parentFlags & FOXWAY_KEEP_EXPECT_ELSE ) { // Exsample: if(1) if(2) echo 3; else echo 4;
+										$lastValue = &$needParams[0]; // Save link for operator 'else' of 'if(1)'
+									}else{ // Exsample: if(1) echo 2; else echo 3;
+										$parentFlags &= ~FOXWAY_EXPECT_ELSE;
+									}
+									break; /********** EXIT **********/
 								}
 							} else { // Example: echo 1;
 								$bytecode[] = $s;
@@ -624,6 +630,10 @@ closeoperator:
 					if( $parentFlags & FOXWAY_EXPECT_START_COMMAND == 0 || $stack || $operator || $values ) { throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine); }
 
 					array_unshift( $needParams, array( FOXWAY_STACK_COMMAND=>$id, FOXWAY_STACK_RESULT=>null, FOXWAY_STACK_PARAM=>null, FOXWAY_STACK_TOKEN_LINE=>$tokenLine ) );
+					//$parentheses[] = $parentFlags;
+					if( $parentFlags & FOXWAY_EXPECT_DO_TRUE_STACK ) { // Example: if(1) if
+						$parentFlags |= FOXWAY_KEEP_EXPECT_ELSE;
+					}
 					$parentheses[] = $parentFlags | FOXWAY_EXPECT_ELSE;
 					$parentheses[] = FOXWAY_EXPECT_START_COMMAND | FOXWAY_EXPECT_SEMICOLON | FOXWAY_EXPECT_DO_TRUE_STACK;
 					$parentFlags = FOXWAY_EXPECT_RESULT_FROM_PARENTHESES;
@@ -632,7 +642,10 @@ closeoperator:
 					if( $parentFlags & FOXWAY_EXPECT_ELSE == 0 || $stack || $operator || $values ) { throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine); }
 
 					array_unshift( $needParams, &$lastValue ); // $lastValue is link to operator 'if'
-					$parentheses[] = $parentFlags & ~FOXWAY_EXPECT_ELSE;
+					if( $parentFlags & FOXWAY_KEEP_EXPECT_ELSE == 0 ) { // Example: if (1) echo 2; else
+						$parentFlags &= ~FOXWAY_EXPECT_ELSE; // Skip for: if(1) if (2) echo 3; else
+					}
+					$parentheses[] = $parentFlags;
 					$parentFlags = FOXWAY_EXPECT_START_COMMAND | FOXWAY_EXPECT_SEMICOLON | FOXWAY_EXPECT_DO_FALSE_STACK;
 					break;
 				case '~':
@@ -680,18 +693,45 @@ closeoperator:
 					// Example: if(1) { echo "hello"; }
 					if( $parentFlags & FOXWAY_EXPECT_START_COMMAND == 0 || $stack || $operator || $values ) { throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine); }
 
+					$lastValue = &$needParams[0];
 					array_shift($needParams);
 					array_pop($parentheses);
 					$parentFlags = array_pop($parentheses);
 					if( !isset($lastValue[FOXWAY_STACK_DO_FALSE]) ) { // operator 'else' not used
-						$s = array_merge( array(array(array(&$lastValue))), array_shift($memory) ); // Restore stack and add operator
-						krsort( $s );
-						foreach ($s as &$value) {
-							ksort( $value );
-							$value = call_user_func_array( 'array_merge', $value );
+						$tmp = array_merge( array(array(array(&$lastValue))), array_shift($memory) ); // Restore stack and add operator
+						while(true) {
+							krsort( $tmp );
+							foreach ($tmp as &$value) {
+								ksort( $value );
+								$value = call_user_func_array( 'array_merge', $value );
+							}
+							$s = call_user_func_array( 'array_merge', $tmp );
+							if( $parentFlags & FOXWAY_EXPECT_DO_TRUE_STACK ) { // Exsample: if(1) if(2) echo 3;
+								if( $parentFlags & FOXWAY_EXPECT_CURLY_CLOSE ) { // Exsample: if(1) { if(2) echo 3; }
+									$needParams[0][FOXWAY_STACK_DO_TRUE] = array_merge( $needParams[0][FOXWAY_STACK_DO_TRUE], $s );
+									break; /********** EXIT **********/
+								}else{ // Exsample: if(1) if(2) { echo 3; }
+									$needParams[0][FOXWAY_STACK_DO_TRUE] = $s;
+									$tmp = array_merge( array(array(array(&$needParams[0]))), array_shift($memory) ); // Restore stack and add operator
+									$parentFlags = array_pop($parentheses) | $parentFlags & FOXWAY_KEEP_EXPECT_ELSE;
+								}
+							} elseif ( $parentFlags & FOXWAY_EXPECT_DO_FALSE_STACK ) { // Exsample: if(1) echo 2; else if(3) echo 4;
+								if( $parentFlags & FOXWAY_EXPECT_CURLY_CLOSE ) { // Exsample: if(1) echo 2; else { if(3) echo 3; }
+									$needParams[0][FOXWAY_STACK_DO_FALSE] = array_merge( $needParams[0][FOXWAY_STACK_DO_FALSE], $s );
+									break; /********** EXIT **********/
+								}else{ // Exsample: if(1) echo 2; else if(3) echo 4;
+									$needParams[0][FOXWAY_STACK_DO_FALSE] = $s;
+									$parentFlags = array_pop($parentheses);
+								}
+							} else { // Example: if(1) { echo 2; }
+								$bytecode[] = $s;
+								break; /********** EXIT **********/
+							}
 						}
-						$bytecode[] = call_user_func_array( 'array_merge', $s );
+						// $stack = array();
 						$parentLevel = 0;
+					}else{
+						$lastValue = &$needParams[0]; // Save link for operator 'else'
 					}
 					break;
 				default :
