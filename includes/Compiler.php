@@ -523,9 +523,6 @@ closeoperator:
 							}
 							$needOperator = false;
 						}
-//						if( $parentFlags & FOXWAY_EXPECT_PARENTHESES_WITH_LIST_PARAMS ) {
-//							$parentFlags = FOXWAY_EXPECT_SEMICOLON | $parentFlags & ~FOXWAY_EXPECT_PARENTHESES_WITH_LIST_PARAMS;
-//						}
 						$parentFlags &= ~FOXWAY_EXPECT_VALUE_FOR_RIGHT_OPERATOR;
 						break;
 					}
@@ -638,7 +635,7 @@ closeoperator:
 					$parentheses[] = FOXWAY_EXPECT_START_COMMAND | FOXWAY_EXPECT_SEMICOLON | FOXWAY_EXPECT_DO_TRUE_STACK;
 					$parentFlags = FOXWAY_EXPECT_RESULT_FROM_PARENTHESES;
 					break;
-				case T_ELSE:
+				case T_ELSE:		// else
 					if( $parentFlags & FOXWAY_EXPECT_ELSE == 0 || $stack || $operator || $values ) { throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine); }
 
 					array_unshift( $needParams, &$lastValue ); // $lastValue is link to operator 'if'
@@ -647,6 +644,15 @@ closeoperator:
 					}
 					$parentheses[] = $parentFlags;
 					$parentFlags = FOXWAY_EXPECT_START_COMMAND | FOXWAY_EXPECT_SEMICOLON | FOXWAY_EXPECT_DO_FALSE_STACK;
+					break;
+				case T_ELSEIF:		// elseif
+					if( $parentFlags & FOXWAY_EXPECT_ELSE == 0 || $stack || $operator || $values ) { throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine); }
+
+					array_unshift( $needParams, &$lastValue ); // $lastValue is link to operator 'if'
+					array_unshift( $needParams, array( FOXWAY_STACK_COMMAND=>T_IF, FOXWAY_STACK_RESULT=>null, FOXWAY_STACK_PARAM=>null, FOXWAY_STACK_TOKEN_LINE=>$tokenLine ) );
+					$parentheses[] = $parentFlags|FOXWAY_EXPECT_DO_FALSE_STACK;
+					$parentheses[] = FOXWAY_EXPECT_START_COMMAND | FOXWAY_EXPECT_SEMICOLON | FOXWAY_EXPECT_DO_TRUE_STACK;
+					$parentFlags = FOXWAY_EXPECT_RESULT_FROM_PARENTHESES;
 					break;
 				case '~':
 				case '!':

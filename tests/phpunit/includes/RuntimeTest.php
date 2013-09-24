@@ -1308,4 +1308,76 @@ if ( $foo + $bar ) echo "\$foo + \$bar";'),
 				array('false second FALSE')
 				);
 	}
+	public function testRun_echo_elseif_1() {
+		$this->assertEquals(
+				Runtime::runSource('if( true ) echo "one"; elseif( true ) echo "two"; else echo "three";'),
+				array('one')
+				);
+	}
+	public function testRun_echo_elseif_2() {
+		$this->assertEquals(
+				Runtime::runSource('if( false ) echo "one"; elseif( true ) echo "two"; else echo "three";'),
+				array('two')
+				);
+	}
+	public function testRun_echo_elseif_3() {
+		$this->assertEquals(
+				Runtime::runSource('if( false ) echo "one"; elseif( false ) echo "two"; else echo "three";'),
+				array('three')
+				);
+	}
+	public function testRun_echo_elseif_4() {
+		$this->assertEquals(
+				Runtime::runSource('if( true ) { echo "*"; echo "one"; } elseif( true ) { echo "*"; echo "two"; } else { echo "*"; echo "three"; }'),
+				array('*', 'one')
+				);
+	}
+	public function testRun_echo_elseif_5() {
+		$this->assertEquals(
+				Runtime::runSource('if( false ) { echo "*"; echo "one"; } elseif( true ) { echo "*"; echo "two"; } else { echo "*"; echo "three"; }'),
+				array('*', 'two')
+				);
+	}
+	public function testRun_echo_elseif_6() {
+		$this->assertEquals(
+				Runtime::runSource('if( false ) { echo "*"; echo "one"; } elseif( false ) { echo "*"; echo "two"; } else { echo "*"; echo "three"; }'),
+				array('*', 'three')
+				);
+	}
+	public function testRun_echo_elseif_variable_1() {
+		$this->assertEquals(
+				Runtime::runSource('$foo=1; if($foo++) echo "one $foo"; elseif($foo++) echo "two $foo"; else echo "three $foo";'),
+				array('one 2')
+				);
+	}
+	public function testRun_echo_elseif_variable_2() {
+		$this->assertEquals(
+				Runtime::runSource('$foo=0; if($foo++) echo "one $foo"; elseif($foo++) echo "two $foo"; else echo "three $foo";'),
+				array('two 2')
+				);
+	}
+	public function testRun_echo_elseif_variable_3() {
+		$this->assertEquals(
+				Runtime::runSource('$foo=0; if($foo) echo "one $foo"; elseif($foo++) echo "two $foo"; else echo "three $foo";'),
+				array('three 1')
+				);
+	}
+	public function testRun_echo_elseif_variable_4() {
+		$this->assertEquals(
+				Runtime::runSource('$foo=1; if($foo++) {echo "one $foo";} elseif($foo++) {echo "two $foo";} else {echo "three $foo";}'),
+				array('one 2')
+				);
+	}
+	public function testRun_echo_elseif_variable_5() {
+		$this->assertEquals(
+				Runtime::runSource('$foo=0; if($foo++) {echo "one $foo";} elseif($foo++) {echo "two $foo";} else {echo "three $foo";}'),
+				array('two 2')
+				);
+	}
+	public function testRun_echo_elseif_variable_6() {
+		$this->assertEquals(
+				Runtime::runSource('$foo=0; if($foo) {echo "one $foo";} elseif($foo++) {echo "two $foo";} else {echo "three $foo";}'),
+				array('three 1')
+				);
+	}
 }
