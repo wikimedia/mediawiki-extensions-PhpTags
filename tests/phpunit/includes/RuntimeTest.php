@@ -1380,4 +1380,114 @@ if ( $foo + $bar ) echo "\$foo + \$bar";'),
 				array('three 1')
 				);
 	}
+
+	public function testRun_echo_array_1() {
+		$this->assertEquals(
+				Runtime::runSource('$foo=array(5); echo $foo[0];'),
+				array('5')
+				);
+	}
+	public function testRun_echo_array_2() {
+		$this->assertEquals(
+				Runtime::runSource('$foo=array(5,); echo $foo[0];'),
+				array('5')
+				);
+	}
+	public function testRun_echo_array_3() {
+		$this->assertEquals(
+				Runtime::runSource('$foo=array( 5, 6, 7 ); echo $foo[0],$foo[1],$foo[2];'),
+				array('5', '6', '7')
+				);
+	}
+	public function testRun_echo_array_math_1() {
+		$this->assertEquals(
+				Runtime::runSource('$foo=array(3+2); echo $foo[0];'),
+				array('5')
+				);
+	}
+	public function testRun_echo_array_math_2() {
+		$this->assertEquals(
+				Runtime::runSource('$foo=array(3+2,6,7); echo $foo[0],$foo[1],$foo[2];'),
+				array('5', '6', '7')
+				);
+	}
+	public function testRun_echo_array_variable_1() {
+		$this->assertEquals(
+				Runtime::runSource('$bar="BAR"; $foo=array( 5, 6, $bar ); echo $foo[0],$foo[1],$foo[2];'),
+				array('5', '6', 'BAR')
+				);
+	}
+	public function testRun_echo_array_variable_2() {
+		$this->assertEquals(
+				Runtime::runSource('$foo="FOO"; $foo=array( 5, 6, $foo ); echo $foo[0],$foo[1],$foo[2];'),
+				array('5', '6', 'FOO')
+				);
+	}
+	public function testRun_echo_array_variable_math_1() {
+		$this->assertEquals(
+				Runtime::runSource('$foo=1; $foo=array($foo++,$foo,++$foo); echo $foo[0],$foo[1],$foo[2];'),
+				array('1', '2', '3')
+				);
+	}
+	public function testRun_echo_array_variable_math_2() {
+		$this->assertEquals(
+				Runtime::runSource('$foo=1; $foo=array($foo+1,$foo+2,$foo+3); echo $foo[0],$foo[1],$foo[2];'),
+				array('2', '3', '4')
+				);
+	}
+	public function testRun_echo_array_variable_increment_1() {
+		$this->assertEquals(
+				Runtime::runSource('$foo[5]=10; $foo[5]++; echo $foo[5];'),
+				array('11')
+				);
+	}
+	public function testRun_echo_array_variable_increment_2() {
+		$this->assertEquals(
+				Runtime::runSource('$foo[5]=10; echo ++$foo[5];'),
+				array('11')
+				);
+	}
+	public function testRun_echo_array_variable_increment_3() {
+		$this->assertEquals(
+				Runtime::runSource('$foo[5]=10; echo $foo[5]++,$foo[5],++$foo[5];'),
+				array('10', '11', '12')
+				);
+	}
+	public function testRun_echo_array_variable_assignment_1() {
+		$this->assertEquals(
+				Runtime::runSource('$foo[5]=10; $foo[5]+=20; echo $foo[5];'),
+				array('30')
+				);
+	}
+	public function testRun_echo_array_set_by_index_1() {
+		$this->assertEquals(
+				Runtime::runSource('$foo=array(); $foo[5]=5; $foo[6]=6; $foo[7]=7; echo $foo[5],$foo[6],$foo[7];'),
+				array('5', '6', '7')
+				);
+	}
+	public function testRun_echo_array_set_by_index_2() {
+		$this->assertEquals(
+				Runtime::runSource('$foo=array(); $foo[]=5; echo $foo[0];'),
+				array('5')
+				);
+	}
+	public function testRun_echo_array_set_by_index_3() {
+		$this->assertEquals(
+				Runtime::runSource('$foo=array(); $foo[]=5; $foo[]=6; $foo[]=7; echo $foo[0],$foo[1],$foo[2];'),
+				array('5', '6', '7')
+				);
+	}
+	public function testRun_echo_array_set_by_index_4() {
+		$this->assertEquals(
+				Runtime::runSource('$foo=array(); $foo[50]=5; $foo[]=6; $foo[]=7; echo $foo[50],$foo[51],$foo[52];'),
+				array('5', '6', '7')
+				);
+	}
+	public function testRun_echo_array_10() {
+		$this->assertEquals(
+				Runtime::runSource('$foo=(array)"this is string"; echo $foo[0];'),
+				array('this is string')
+				);
+	}
+
 }
