@@ -616,6 +616,7 @@ class Runtime {
 				$value = &$code[$i];
 				switch ($value[FOXWAY_STACK_COMMAND]) {
 					case T_CONST:
+					case T_DOUBLE_ARROW:
 						break; // ignore it, @todo need remove it from $code in class Compiler
 					case T_ENCAPSED_AND_WHITESPACE:
 						$value[FOXWAY_STACK_RESULT] = implode($value[FOXWAY_STACK_PARAM]);
@@ -634,11 +635,14 @@ class Runtime {
 						break;
 					case '/':
 						if( (int)$value[FOXWAY_STACK_PARAM_2] == 0 ) {
-							throw new ExceptionFoxway(null, FOXWAY_PHP_FATAL_ERROR_UNSUPPORTED_OPERAND_TYPES, $value[FOXWAY_STACK_TOKEN_LINE]);
+							throw new ExceptionFoxway(null, FOXWAY_PHP_WARNING_DIVISION_BY_ZERO, $value[FOXWAY_STACK_TOKEN_LINE]);
 						}
 						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] / $value[FOXWAY_STACK_PARAM_2];
 						break;
 					case '%':
+						if( (int)$value[FOXWAY_STACK_PARAM_2] == 0 ) {
+							throw new ExceptionFoxway(null, FOXWAY_PHP_WARNING_DIVISION_BY_ZERO, $value[FOXWAY_STACK_TOKEN_LINE]);
+						}
 						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] % $value[FOXWAY_STACK_PARAM_2];
 						break;
 					case '&':
@@ -758,7 +762,7 @@ class Runtime {
 						$value[FOXWAY_STACK_RESULT] = array(); // init array
 						foreach ($value[FOXWAY_STACK_PARAM] as $v) {
 							if( $v[FOXWAY_STACK_COMMAND] == T_DOUBLE_ARROW ) {
-								$value[FOXWAY_STACK_RESULT][ $v[FOXWAY_STACK_PARAM] ] = $v[FOXWAY_STACK_RESULT];
+								$value[FOXWAY_STACK_RESULT][ $v[FOXWAY_STACK_RESULT] ] = $v[FOXWAY_STACK_PARAM_2];
 							}else{
 								$value[FOXWAY_STACK_RESULT][] = $v[FOXWAY_STACK_RESULT];
 							}
@@ -810,18 +814,10 @@ class Runtime {
 						}
 						switch ($value[FOXWAY_STACK_COMMAND]) {
 							case T_INC:
-								if( $value[FOXWAY_STACK_INC_AFTER] ) { // $foo++
-									$value[FOXWAY_STACK_RESULT] = $ref++;
-								} else { // ++$foo
-									$value[FOXWAY_STACK_RESULT] = ++$ref;
-								}
+								$ref++;
 								break;
 							case T_DEC:
-								if( $value[FOXWAY_STACK_INC_AFTER] ) { // $foo--
-									$value[FOXWAY_STACK_RESULT] = $ref--;
-								} else { // --$foo
-									$value[FOXWAY_STACK_RESULT] = --$ref;
-								}
+								$ref--;
 								break;
 							case '=':
 								// Save result in T_VARIABLE FOXWAY_STACK_RESULT, Save result in $thisVariables[variable name]
@@ -838,17 +834,17 @@ class Runtime {
 								break;
 							case T_DIV_EQUAL:		// /=
 								if( (int)$value[FOXWAY_STACK_PARAM_2] == 0 ) {
-									throw new ExceptionFoxway(null, FOXWAY_PHP_FATAL_ERROR_UNSUPPORTED_OPERAND_TYPES, $value[FOXWAY_STACK_TOKEN_LINE]);
+									throw new ExceptionFoxway(null, FOXWAY_PHP_WARNING_DIVISION_BY_ZERO, $value[FOXWAY_STACK_TOKEN_LINE]);
 								}
 								$value[FOXWAY_STACK_PARAM][FOXWAY_STACK_RESULT] = $ref /= $value[FOXWAY_STACK_PARAM_2];
 								break;
 							case T_CONCAT_EQUAL:	// .=
 								$value[FOXWAY_STACK_PARAM][FOXWAY_STACK_RESULT] = $ref .= $value[FOXWAY_STACK_PARAM_2];
 								break;
-							case T_CONCAT_EQUAL:	// .=
-								$value[FOXWAY_STACK_PARAM][FOXWAY_STACK_RESULT] = $ref .= $value[FOXWAY_STACK_PARAM_2];
-								break;
 							case T_MOD_EQUAL:		// %=
+								if( (int)$value[FOXWAY_STACK_PARAM_2] == 0 ) {
+									throw new ExceptionFoxway(null, FOXWAY_PHP_WARNING_DIVISION_BY_ZERO, $value[FOXWAY_STACK_TOKEN_LINE]);
+								}
 								$value[FOXWAY_STACK_PARAM][FOXWAY_STACK_RESULT] = $ref %= $value[FOXWAY_STACK_PARAM_2];
 								break;
 							case T_AND_EQUAL:		// &=

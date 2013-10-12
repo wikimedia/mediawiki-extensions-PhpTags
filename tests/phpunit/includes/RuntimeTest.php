@@ -83,9 +83,21 @@ output as well";'),
 				);
 	}
 
-	public function testRun_echo_negative() {
+	public function testRun_echo_negative_1() {
 		$this->assertEquals(
 				Runtime::runSource('echo -7;'),
+				array(-7)
+				);
+	}
+	public function testRun_echo_negative_2() {
+		$this->assertEquals(
+				Runtime::runSource('echo (int)-7;'),
+				array(-7)
+				);
+	}
+	public function testRun_echo_negative_3() {
+		$this->assertEquals(
+				Runtime::runSource('echo (int)-(int)7;'),
 				array(-7)
 				);
 	}
@@ -168,6 +180,18 @@ echo "foo is $foo"; // foo is foobar'),
 	public function testRun_echo_variables_12() {
 		$this->assertEquals(
 				Runtime::runSource('$foo=-7; echo -$foo;'),
+				array(7)
+				);
+	}
+	public function testRun_echo_variables_13() {
+		$this->assertEquals(
+				Runtime::runSource('$foo=(int)-7; echo -$foo;'),
+				array(7)
+				);
+	}
+	public function testRun_echo_variables_14() {
+		$this->assertEquals(
+				Runtime::runSource('$foo=-7; echo (int)-(int)$foo;'),
 				array(7)
 				);
 	}
@@ -482,31 +506,37 @@ echo "$a, ", $a++ + -5, ", " . ++$a, ", $a.";'),
 				Runtime::runSource('$a=2; $b=10; $c=30; echo $a + $b * ++$a;'),
 				array('33')
 				);
-	}/*
+	}
 	public function testRun_echo_math_Increment_6() {
 		$this->assertEquals(
-				Runtime::runSource('$a=2; $b=10; $c=30; echo ++$a + $b * $a;'),
+				Runtime::runSource('$a=2; $b=10; $c=30; echo $a + $b * ++$a;'),
 				array('33')
 				);
 	}
 	public function testRun_echo_math_Increment_7() {
 		$this->assertEquals(
+				Runtime::runSource('$a=2; $b=10; $c=30; echo ++$a + $b * $a;'),
+				array('33')
+				);
+	}
+	public function testRun_echo_math_Increment_8() {
+		$this->assertEquals(
 				Runtime::runSource('$a=2; $b=10; $c=30; echo $a++ + $b * ++$a;'),
 				array('42')
 				);
 	}
-	public function testRun_echo_math_Increment_8() {
+	public function testRun_echo_math_Increment_9() {
 		$this->assertEquals(
 				Runtime::runSource('$a=2; $b=10; $c=30; echo ++$a + $b * ++$a + $b;'),
 				array('53')
 				);
 	}
-	public function testRun_echo_math_Increment_9() {
+	public function testRun_echo_math_Increment_10() {
 		$this->assertEquals(
 				Runtime::runSource('$a=2; $b=10; echo $a + ++$a + $b * ++$a + $b;'),
 				array('56')
 				);
-	}*/
+	}
 	public function testRun_echo_math_Decrement_1() {
 		$this->assertEquals(
 				Runtime::runSource('$a = 10; echo $a--, $a, --$a;'),
@@ -1423,6 +1453,12 @@ if ( $foo + $bar ) echo "\$foo + \$bar";'),
 				array('5', '6', 'FOO')
 				);
 	}
+	public function testRun_echo_array_variable_3() {
+		$this->assertEquals(
+				Runtime::runSource('$foo[$bar="BAR"]="FOO"; echo $foo[$bar], $bar;'),
+				array('FOO', 'BAR')
+				);
+	}
 	public function testRun_echo_array_variable_math_1() {
 		$this->assertEquals(
 				Runtime::runSource('$foo=1; $foo=array($foo++,$foo,++$foo); echo $foo[0],$foo[1],$foo[2];'),
@@ -1487,6 +1523,98 @@ if ( $foo + $bar ) echo "\$foo + \$bar";'),
 		$this->assertEquals(
 				Runtime::runSource('$foo=(array)"this is string"; echo $foo[0];'),
 				array('this is string')
+				);
+	}
+
+	public function testRun_echo_array_double_arrow_1() {
+		$this->assertEquals(
+				Runtime::runSource('$foo=array(4=>50); echo $foo[4];'),
+				array('50')
+				);
+	}
+	public function testRun_echo_array_double_arrow_2() {
+		$this->assertEquals(
+				Runtime::runSource('$bar="BAR"; $foo=array( $bar => $bar ); echo $foo[$bar];'),
+				array('BAR')
+				);
+	}
+	public function testRun_echo_array_double_arrow_3() {
+		$this->assertEquals(
+				Runtime::runSource('$bar="BAR"; $foo=array( 5 => 50, $bar => $bar, "string" => "STRING" ); echo $foo[$bar], $foo[5], $foo["string"];'),
+				array('BAR', 50, 'STRING')
+				);
+	}
+
+	public function testRun_echo_empty_array_push_1() {
+		$this->assertEquals(
+				Runtime::runSource('$foo=array(); $foo[]+=5; $foo[]-=6; $foo[].=7; echo $foo[0],$foo[1],$foo[2];'),
+				array('5', '-6', '7')
+				);
+	}
+	public function testRun_echo_empty_array_push_2() {
+		$this->assertEquals(
+				Runtime::runSource('$foo=array(); $foo[]+="5"; $foo[]-="6"; $foo[].="7"; echo $foo[0],$foo[1],$foo[2];'),
+				array('5', '-6', '7')
+				);
+	}
+	public function testRun_echo_empty_array_push_3() {
+		$this->assertEquals(
+				Runtime::runSource('$foo=array(); $foo[]+="v"; $foo[]-="b"; $foo[].="n"; echo $foo[0],$foo[1],$foo[2];'),
+				array('0', '0', 'n')
+				);
+	}
+	public function testRun_echo_empty_array_push_4() {
+		$this->assertEquals(
+				Runtime::runSource('$foo=array(); $foo[]*=5; $foo[]/=6; $foo[]%=7; $foo[]&=8; echo $foo[0],$foo[1],$foo[2],$foo[3];'),
+				array('0', '0', '0', '0')
+				);
+	}
+	public function testRun_echo_empty_array_push_5() {
+		$this->assertEquals(
+				Runtime::runSource('$foo=array(); $foo[]*="v"; $foo[]+="b"; $foo[]-="n"; $foo[]&="m"; echo $foo[0],$foo[1],$foo[2],$foo[3];'),
+				array(0, 0, 0, 0)
+				);
+	}
+	public function testRun_echo_empty_array_push_6() {
+		$this->assertEquals(
+				Runtime::runSource('$foo=array(); $foo[]|=5; $foo[]^=6; $foo[]<<=7; $foo[]>>=8; echo $foo[0],$foo[1],$foo[2],$foo[3];'),
+				array('5', '6', '0', '0')
+				);
+	}
+	public function testRun_echo_array_encapsed_1() {
+		$this->assertEquals(
+				Runtime::runSource('$foo=(array)5; echo "*$foo[0]*";'),
+				array('*5*')
+				);
+	}
+	public function testRun_echo_array_encapsed_2() {
+		$this->assertEquals(
+				Runtime::runSource('$foo=(array)5; echo "*{$foo[0]}*";'),
+				array('*5*')
+				);
+	}
+	public function testRun_echo_array_encapsed_3() {
+		$this->assertEquals(
+				Runtime::runSource('$foo=(array)5; echo $foo[0], "*".$foo[0]."*", "*$foo[0]*", "*{$foo[0]}*";'),
+				array('5', '*5*', '*5*', '*5*')
+				);
+	}
+	public function testRun_echo_array_encapsed_4() {
+		$this->assertEquals(
+				Runtime::runSource('$bar = "BAR"; $foo=array( 5 => 5, $bar => $bar, "string" => "string" ); echo "*$foo[5]*"; echo "*$foo[$bar]*"; echo "*{$foo["string"]}*";'),
+				array('*5*', '*BAR*', '*string*')
+				);
+	}
+	public function testRun_echo_array_encapsed_5() {
+		$this->assertEquals(
+				Runtime::runSource('$foo["DDD"]="ddd"; echo "-={$foo["DDD"]}=-";'),
+				array('-=ddd=-')
+				);
+	}
+	public function testRun_echo_array_encapsed_6() {
+		$this->assertEquals(
+				Runtime::runSource('$foo[$bar="BAR"]="FOO"; echo "-={$foo[$bar]}=-", $bar;'),
+				array('-=FOO=-', 'BAR')
 				);
 	}
 

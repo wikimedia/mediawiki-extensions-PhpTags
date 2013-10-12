@@ -3,6 +3,7 @@ namespace Foxway;
 
 define( 'FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED', 100 );
 define( 'FOXWAY_PHP_FATAL_ERROR_UNSUPPORTED_OPERAND_TYPES', 101 );
+define( 'FOXWAY_PHP_WARNING_DIVISION_BY_ZERO', 102 );
 
 /**
  * Error Exception class of Foxway extension.
