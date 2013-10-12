@@ -332,25 +332,25 @@ echo "\$foo * \$bar = $foo * $bar = ", $foo * $bar, "\n\n";'),
 				Runtime::runSource('$foo=1; echo $foo++ + $foo = 40 + $foo = 400 + $foo, $foo;'), // $foo = 400 + 2; $foo = 40 + 402; echo 1 + 442, 442
 				array('443', '442')
 				);
-	}
+	}*/
 	public function testRun_echo_math_variables_short_circuit_1() {
 		$this->assertEquals(
 				Runtime::runSource('$foo=10; echo $foo = 400 + $foo or $foo = 10000, $foo;'), // $foo = 400 + 10; echo 441 or ... , 410
 				array(true, '410')
 				);
-	}
+	}/*
 	public function testRun_echo_math_variables_short_circuit_2() {
 		$this->assertEquals(
 				Runtime::runSource('$foo=10; echo $foo = 10 - $foo or $foo = 10000, $foo;'), // $foo = 10 - 10; echo 0 or $foo=10000 , 10000
 				array(true, '10000')
 				);
-	}
+	}*/
 	public function testRun_echo_math_variables_5() {
 		$this->assertEquals(
 				Runtime::runSource('$foo=10; echo $foo = 400 + $foo | $foo = 10000, $foo;'), // $foo = 400 + 10 | 10000; echo 10138, 10138
 				array('10138', '10138')
 				);
-	}*/
+	}
 
 	public function testRun_echo_math_union_1() {
 		$this->assertEquals(

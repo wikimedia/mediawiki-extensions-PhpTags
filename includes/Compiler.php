@@ -329,13 +329,6 @@ class Compiler {
 							ksort($incompleteOperators[$parentLevel]);
 							unset($operator);
 							$operator = array( FOXWAY_STACK_COMMAND=>$id, FOXWAY_STACK_RESULT=>null, FOXWAY_STACK_PARAM=>&$lastValue[FOXWAY_STACK_RESULT], FOXWAY_STACK_TOKEN_LINE=>$tokenLine );
-							/*if( $values ) {
-								$math[$parentLevel][$precedence][] = $values[0];
-								if( isset($values[1]) ) {
-									$math[$parentLevel][$precedence][] = $values[1];
-								}
-								$values = array();
-							}*/
 						}
 					}else{ // This is first operator
 						$operator = array( FOXWAY_STACK_COMMAND=>$id, FOXWAY_STACK_RESULT=>null, FOXWAY_STACK_PARAM=>&$lastValue[FOXWAY_STACK_RESULT], FOXWAY_STACK_TOKEN_LINE=>$tokenLine );
@@ -430,7 +423,8 @@ class Compiler {
 						$parentFlags |= FOXWAY_EQUAL_HAVE_OPERATOR;
 						$operPrec = self::$precedencesMatrix[$operator[FOXWAY_STACK_COMMAND]];
 						if( $values ) {
-							$math[$parentLevel][$operPrec] = isset($math[$parentLevel][$operPrec]) ? array_merge( $math[$parentLevel][$operPrec], $values ) : $values;
+							$stack = array_merge($stack, $values);
+							$values = array();
 						}
 						$stack[] = &$operator;
 						if( isset($incompleteOperators[$parentLevel]) ) {
@@ -529,16 +523,8 @@ closeoperator:
 							unset($lastValue);
 							$lastValue = &$needParams[0];
 							array_shift($needParams);
-							switch ( $lastValue[FOXWAY_STACK_COMMAND] ) {
-								case T_VARIABLE: // @todo there is variable only
-									$lastValue[FOXWAY_STACK_ARRAY_INDEX][] = &$operator[FOXWAY_STACK_RESULT];
-									$stack[] = &$lastValue;
-									break;
-//								case T_INC:
-//								case T_DEC:
-//									$lastValue[FOXWAY_STACK_PARAM][FOXWAY_STACK_ARRAY_INDEX][] = &$operator[FOXWAY_STACK_RESULT];
-//									break;
-							}
+							$lastValue[FOXWAY_STACK_ARRAY_INDEX][] = &$operator[FOXWAY_STACK_RESULT]; // $lastValue must be T_VARIABLE only
+							$stack[] = &$lastValue;
 							unset($operator);
 							if( $parentFlags & FOXWAY_NEED_RESTORE_OPERATOR ) {
 								$operator = array_pop( $memOperators );
@@ -868,19 +854,12 @@ closeoperator:
 					$stack = array();
 
 					if( isset($lastValue) ) {
-						switch ( $lastValue[FOXWAY_STACK_COMMAND] ) {
-							case T_VARIABLE: // @todo there is variable only
-//							case T_INC:
-//							case T_DEC:
-								array_unshift( $needParams, &$lastValue );
-								$values = array();
-								unset($lastValue);
-//								$values = array();
-								break;
-							default:
-								throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine);
-								break;
+						if( $lastValue[FOXWAY_STACK_COMMAND] != T_VARIABLE ) {
+							throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine);
 						}
+						array_unshift( $needParams, &$lastValue );
+						$values = array();
+						unset($lastValue);
 					}else{ // $foo = [
 						// @todo
 						throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine);
