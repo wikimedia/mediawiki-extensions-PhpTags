@@ -607,6 +607,8 @@ class Runtime {
 		$thisVariables['GLOBALS'] = &self::$globalVariables;
 		$memory=array();
 		$return = array();
+		$break = 0; // used for T_BREAK
+		$continue = false; // used for T_CONTINUE
 
 		$c=count($code);
 		$i=-1;
@@ -694,7 +696,9 @@ class Runtime {
 						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] !== $value[FOXWAY_STACK_PARAM_2];
 						break;
 					case T_ECHO:
-						$return = array_merge($return, $value[FOXWAY_STACK_PARAM]); //$return += $value[FOXWAY_STACK_PARAM];
+						foreach( $value[FOXWAY_STACK_PARAM] as $v ) {
+							$return[] = $v;
+						}
 						break;
 					case '~':
 						$value[FOXWAY_STACK_RESULT] = ~$value[FOXWAY_STACK_PARAM_2];
@@ -757,6 +761,32 @@ class Runtime {
 								$c = count($code);
 							}
 						}
+						break;
+					case T_WHILE: // PHP code "while($foo) { ... }" doing as T_WHILE { T_DO($foo) ... }. If $foo == false, T_DO doing as T_BREAK
+						if( $break ) { // was used T_BREAK
+							if( --$break ) { // T_BREAK is 2 or more
+								break 2; // go to one level down
+							}
+							break; // T_BREAK is 1, just go to next operator (T_WHILE will be skiped)
+						} // T_BREAK is not used
+						$memory[] = array( null, $code, $i, $c );
+						$code = $value[FOXWAY_STACK_DO_TRUE];
+						$i = -1;
+						$c = count($code);
+						break;
+					case T_DO:
+						if( $value[FOXWAY_STACK_PARAM] ) {
+							continue; // this is "while(true)", just go next
+						}// while(false) doing as T_BREAK;
+						$break = 1;
+						break 2; // go to one level down
+					case T_BREAK:
+						// @todo T_BREAK is 2 or more
+						$break = 1;
+						break 2; // go to one level down
+					case T_CONTINUE:
+						// @todo T_CONTINUE is 2 or more
+						$i = -1;
 						break;
 					case T_ARRAY:			// array
 						$value[FOXWAY_STACK_RESULT] = array(); // init array

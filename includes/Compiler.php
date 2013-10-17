@@ -583,15 +583,18 @@ closeoperator:
 							// Restore flags
 							$parentFlags = array_pop($parentheses);
 							if( $parentFlags & FOXWAY_EXPECT_RESULT_FROM_PARENTHESES ) {
-								$needParams[0][FOXWAY_STACK_PARAM] = &$lastValue[FOXWAY_STACK_RESULT]; // Save result of parentheses, exsample: if(true)
 								$parentFlags = array_pop($parentheses);
-								if( $parentFlags & FOXWAY_EXPECT_DO_TRUE_STACK ) {
+								if( $needParams[0][FOXWAY_STACK_COMMAND] == T_WHILE ) {
+									$stack[] = array( FOXWAY_STACK_COMMAND=>T_DO, FOXWAY_STACK_PARAM=>&$lastValue[FOXWAY_STACK_RESULT], FOXWAY_STACK_TOKEN_LINE=>$tokenLine ); // Save result of parentheses, Example: while(true)
+									$needParams[0][FOXWAY_STACK_DO_TRUE] = $stack;
+									$stack = array();
+								}elseif( $parentFlags & FOXWAY_EXPECT_DO_TRUE_STACK ) {
 									$memory[] = $stack;
 									$stack = array();
+									$needParams[0][FOXWAY_STACK_PARAM] = &$lastValue[FOXWAY_STACK_RESULT]; // Save result of parentheses, exsample: if(true)
 								}
 								$needOperator = false;
 							}
-							//$parentFlags &= ~FOXWAY_EXPECT_VALUE_FOR_RIGHT_OPERATOR;
 							break 2;
 						case ',':
 							if( $parentFlags & FOXWAY_ALLOW_DOUBLE_ARROW ) {
@@ -631,7 +634,12 @@ closeoperator:
 										$lastValue[FOXWAY_STACK_DO_TRUE] = array_merge( $lastValue[FOXWAY_STACK_DO_TRUE], $stack );
 										break; /********** EXIT **********/
 									}else{ // if(1) echo 2;
-										$lastValue[FOXWAY_STACK_DO_TRUE] = $stack;
+										if( $lastValue[FOXWAY_STACK_COMMAND] == T_WHILE ) {
+											$stack[] = array( FOXWAY_STACK_COMMAND=>T_CONTINUE, FOXWAY_STACK_PARAM=>1 ); // Add operator T_CONTINUE to the end of the cycle
+											$lastValue[FOXWAY_STACK_DO_TRUE] = array_merge( $lastValue[FOXWAY_STACK_DO_TRUE], $stack );
+										}else{
+											$lastValue[FOXWAY_STACK_DO_TRUE] = $stack;
+										}
 										$stack = array_shift($memory); // Restore stack and ...
 										$stack[] = &$lastValue; // ... add operator
 										array_shift($needParams);
@@ -699,14 +707,16 @@ closeoperator:
 					$parentFlags = FOXWAY_EXPECT_SEMICOLON | FOXWAY_EXPECT_LIST_PARAMS;
 					break;
 				case T_IF:			// if
-					if( $parentFlags & FOXWAY_EXPECT_START_COMMAND == 0 || $stack || isset($operator) || $values ) { throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine); }
-
-					array_unshift( $needParams, array( FOXWAY_STACK_COMMAND=>$id, FOXWAY_STACK_RESULT=>null, FOXWAY_STACK_PARAM=>null, FOXWAY_STACK_TOKEN_LINE=>$tokenLine ) );
-					//$parentheses[] = $parentFlags;
 					if( $parentFlags & FOXWAY_EXPECT_DO_TRUE_STACK ) { // Example: if(1) if
 						$parentFlags |= FOXWAY_KEEP_EXPECT_ELSE;
 					}
-					$parentheses[] = $parentFlags | FOXWAY_EXPECT_ELSE;
+					$parentFlags |= FOXWAY_EXPECT_ELSE;
+					// break is not necessary here
+				case T_WHILE:		// while
+					if( $parentFlags & FOXWAY_EXPECT_START_COMMAND == 0 || $stack || isset($operator) || $values ) { throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine); }
+
+					array_unshift( $needParams, array( FOXWAY_STACK_COMMAND=>$id, FOXWAY_STACK_RESULT=>null, FOXWAY_STACK_PARAM=>null, FOXWAY_STACK_TOKEN_LINE=>$tokenLine ) );
+					$parentheses[] = $parentFlags;
 					$parentheses[] = FOXWAY_EXPECT_START_COMMAND | FOXWAY_EXPECT_SEMICOLON | FOXWAY_EXPECT_DO_TRUE_STACK;
 					$parentheses[] = FOXWAY_EXPECT_RESULT_FROM_PARENTHESES;
 					$parentFlags = FOXWAY_EXPECT_PARENTHES_CLOSE;
@@ -867,12 +877,14 @@ closeoperator:
 					break;
 				case '{':
 					if( $parentFlags & FOXWAY_EXPECT_START_COMMAND == 0 || $stack || isset($operator) || $values ) { throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine); }
-					if( $parentFlags & FOXWAY_EXPECT_DO_TRUE_STACK ) {
-						$needParams[0][FOXWAY_STACK_DO_TRUE] = array();
-					}elseif( $parentFlags & FOXWAY_EXPECT_DO_FALSE_STACK ) {
-						$needParams[0][FOXWAY_STACK_DO_FALSE] = array();
-					}else{
-						throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine);
+						if( $needParams[0][FOXWAY_STACK_COMMAND] == T_IF ) {
+						if( $parentFlags & FOXWAY_EXPECT_DO_TRUE_STACK ) {
+							$needParams[0][FOXWAY_STACK_DO_TRUE] = array();
+						}elseif( $parentFlags & FOXWAY_EXPECT_DO_FALSE_STACK ) {
+							$needParams[0][FOXWAY_STACK_DO_FALSE] = array();
+						}else{
+							throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine);
+						}
 					}
 					// break is not necessary here
 				case T_CURLY_OPEN: // Example: echo "hello {
@@ -891,6 +903,9 @@ closeoperator:
 					if( $parentFlags & FOXWAY_EXPECT_START_COMMAND == 0 || $stack || isset($operator) || $values ) { throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine); }
 
 					$lastValue = &$needParams[0];
+					if( $lastValue[FOXWAY_STACK_COMMAND] == T_WHILE ) { // Add operator T_CONTINUE to the end of the cycle
+						$lastValue[FOXWAY_STACK_DO_TRUE][] = array( FOXWAY_STACK_COMMAND=>T_CONTINUE, FOXWAY_STACK_PARAM=>1 );
+					}
 					array_shift($needParams);
 					array_pop($parentheses);
 					$parentFlags = array_pop($parentheses);

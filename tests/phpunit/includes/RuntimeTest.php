@@ -1618,4 +1618,17 @@ if ( $foo + $bar ) echo "\$foo + \$bar";'),
 				);
 	}
 
+	public function testRun_while_1() {
+		$this->assertEquals(
+				Runtime::runSource('$i=1; while( $i <= 3 ) { echo $i++; }'),
+				array('1', '2', '3')
+				);
+	}
+	public function testRun_while_2() {
+		$this->assertEquals(
+				Runtime::runSource('$i=1; while( $i <= 3 ) echo $i++;'),
+				array('1', '2', '3')
+				);
+	}
+
 }
