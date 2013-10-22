@@ -1745,4 +1745,84 @@ if ( $foo + $bar ) echo "\$foo + \$bar";'),
 				);
 	}
 
+	/**
+	 * Test static variable $stat in testTemplate
+	 */
+	public function testRun_echo_scope_static_1() {
+		// start testScope
+		$this->assertEquals(
+				Runtime::runSource('$foo = "local foo variable from testScope";', array('testScope'), 0),
+				array()
+				);
+	}
+	public function testRun_echo_scope_static_2() {
+		// {{testTemplate|HELLO!}}
+		$this->assertEquals(
+				Runtime::runSource('
+$foo = $argv[1];
+static $stat = 0;
+$bar++; $stat++;
+echo $foo, $argv[0], $argc, $bar, $stat, $argv["test"];', array('testTemplate', 'HELLO!'), 1),
+				array('HELLO!', 'testTemplate', 2, 1, 1, null)
+				);
+	}
+	public function testRun_echo_scope_static_3() {
+		// {{testTemplate|HELLO!|test="TEST!!!"}}
+		$this->assertEquals(
+				Runtime::runSource('
+$foo = $argv[1];
+static $stat = 0;
+$bar++; $stat++;
+echo $foo, $argv[0], $argc, $bar, $stat, $argv["test"];', array('testTemplate', 'HELLO!', 'test'=>'TEST!!!'), 2),
+				array('HELLO!', 'testTemplate', 3, 1, 2, 'TEST!!!')
+				);
+	}
+	public function testRun_echo_scope_static_4() {
+		// {{testTemplate|HELLO!}}
+		$this->assertEquals(
+				Runtime::runSource('
+$foo = $argv[1];
+static $stat = 0;
+$bar++; $stat++;
+echo $foo, $argv[0], $argc, $bar, $stat, $argv["test"];', array('testTemplate', 'HELLO!'), 3),
+				array('HELLO!', 'testTemplate', 2, 1, 3, null)
+				);
+	}
+	public function testRun_echo_scope_static_5() {
+		// end testScope
+		$this->assertEquals(
+				Runtime::runSource('echo $foo;', array('testScope'), 0),
+				array('local foo variable from testScope')
+				);
+	}
+	public function testRun_echo_static_math_1() {
+		$this->assertEquals(
+				Runtime::runSource('$foo=40; static $foo=1+2*3; echo $foo++;', array('static_math'), 1),
+				array(7)
+				);
+	}
+	public function testRun_echo_static_math_2() {
+		$this->assertEquals(
+				Runtime::runSource('$foo=40; static $foo=1+2*3; echo $foo++;', array('static_math'), 2),
+				array(8)
+				);
+	}
+	public function testRun_echo_static_math_3() {
+		$this->assertEquals(
+				Runtime::runSource('$foo=40; static $foo=1+2*3; echo $foo++;', array('static_math'), 3),
+				array(9)
+				);
+	}
+	public function testRun_echo_static_null_1() {
+		$this->assertEquals(
+				Runtime::runSource('$foo=40; static $foo; echo $foo===null?"true":"false";', array('static_null'), 0),
+				array("true")
+				);
+	}
+	public function testRun_echo_static_null_2() {
+		$this->assertEquals(
+				Runtime::runSource('$foo=40; static $foo; echo $foo===null?"true":"false$foo";', array('static_null'), 0),
+				array("false40")
+				);
+	}
 }

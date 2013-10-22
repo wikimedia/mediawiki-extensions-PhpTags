@@ -843,6 +843,22 @@ class Runtime {
 							// @todo E_NOTICE
 						}
 						break;
+					case T_STATIC:
+						$p = isset($args[0]) ? $args[0] : ''; // Page name
+						$vn = $value[FOXWAY_STACK_PARAM_2]; // variable name
+						if( !isset(self::$staticVariables[$p][$vn]) ) {
+							self::$staticVariables[$p][$vn] = &$value[FOXWAY_STACK_PARAM];
+							if( $value[FOXWAY_STACK_DO_FALSE] ) {
+								//self::$staticVariables[$p][$vn] = null;
+								$memory[] = array( null, $code, $i, $c, $loopsOwner );
+								$code = $value[FOXWAY_STACK_DO_FALSE];
+								$i = -1;
+								$c = count($code);
+								$loopsOwner = T_STATIC;
+							}
+						}
+						$thisVariables[$vn] = &self::$staticVariables[$p][$vn];
+						break;
 					default:
 						if( !isset($thisVariables[ $value[FOXWAY_STACK_PARAM][FOXWAY_STACK_PARAM] ]) ) { // Use undefined variable
 							if( isset($value[FOXWAY_STACK_ARRAY_INDEX]) ) { // Example: $foo[1]++
