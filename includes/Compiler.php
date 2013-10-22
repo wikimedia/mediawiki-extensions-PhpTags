@@ -980,6 +980,16 @@ closeoperator:
 					} // Example: static $foo;
 					unset( $tmp );
 					break;
+				case T_GLOBAL:
+					if( $parentFlags & FOXWAY_EXPECT_START_COMMAND == 0 ) { throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine); }
+
+					$tmp = array( FOXWAY_STACK_COMMAND=>$id, FOXWAY_STACK_PARAM=>array(), FOXWAY_STACK_TOKEN_LINE=>$tokenLine );
+					do {
+						$text = self::getNextToken( $tokens, $index, $countTokens, $tokenLine, array(T_VARIABLE) ); // Get variable name;
+						$tmp[FOXWAY_STACK_PARAM][] = substr($text, 1);
+					}while( ',' == self::getNextToken( $tokens, $index, $countTokens, $tokenLine, array(',', ';') ) );
+					$bytecode[][] = $tmp;
+					break;
 				default :
 					//throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine);
 					break;

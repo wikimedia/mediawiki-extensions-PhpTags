@@ -859,6 +859,14 @@ class Runtime {
 						}
 						$thisVariables[$vn] = &self::$staticVariables[$p][$vn];
 						break;
+					case T_GLOBAL:
+						foreach( $value[FOXWAY_STACK_PARAM] as $vn ) { // variable names
+							if( !isset(self::$globalVariables[$vn]) ) {
+								self::$globalVariables[$vn] = null;
+							}
+							$thisVariables[$vn] = &self::$globalVariables[$vn];
+						}
+						break;
 					default:
 						if( !isset($thisVariables[ $value[FOXWAY_STACK_PARAM][FOXWAY_STACK_PARAM] ]) ) { // Use undefined variable
 							if( isset($value[FOXWAY_STACK_ARRAY_INDEX]) ) { // Example: $foo[1]++

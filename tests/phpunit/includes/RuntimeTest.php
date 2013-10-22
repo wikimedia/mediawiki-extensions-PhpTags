@@ -1825,4 +1825,58 @@ echo $foo, $argv[0], $argc, $bar, $stat, $argv["test"];', array('testTemplate', 
 				array("false40")
 				);
 	}
+
+	/**
+	 * Test global variable $glob
+	 */
+	public function testRun_echo_scope_global_1() {
+		// start testScope
+		$this->assertEquals(
+				Runtime::runSource('global $glob; $glob=1000;', array('testScope'), 0),
+				array()
+				);
+	}
+	public function testRun_echo_scope_global_2() {
+		// {{testTemplate}}
+		$this->assertEquals(
+				Runtime::runSource('global $glob; echo ++$glob;', array('testTemplate'), 1),
+				array('1001')
+				);
+	}
+	public function testRun_echo_scope_global_3() {
+		// {{testTemplate}}
+		$this->assertEquals(
+				Runtime::runSource('global $glob; echo ++$glob;', array('testTemplate'), 2),
+				array('1002')
+				);
+	}
+	public function testRun_echo_scope_global_4() {
+		// {{testTemplateGLOBAL}}
+		$this->assertEquals(
+				Runtime::runSource('echo ++$GLOBALS["glob"];', array('testTemplateGLOBAL'), 3),
+				array('1003')
+				);
+	}
+	public function testRun_echo_scope_global_5() {
+		// end testScope
+		$this->assertEquals(
+				Runtime::runSource('echo $glob;', array('testScope'), 0),
+				array('1003')
+				);
+	}
+	public function testRun_echo_scope_global_6() {
+		// end testScope
+		$this->assertEquals(
+				Runtime::runSource('global $glob, $glob2, $glob3; $glob2 = $glob3 = $glob = "GLOBAL"; echo $glob, $glob2, $glob3;', array('testGlobalList'), 0),
+				array('GLOBAL', 'GLOBAL', 'GLOBAL')
+				);
+	}
+	public function testRun_echo_scope_global_7() {
+		// end testScope
+		$this->assertEquals(
+				Runtime::runSource('global $glob, $glob2, $glob3; echo $glob, $glob2, $glob3;', array('testGlobalList2'), 0),
+				array('GLOBAL', 'GLOBAL', 'GLOBAL')
+				);
+	}
+
 }
