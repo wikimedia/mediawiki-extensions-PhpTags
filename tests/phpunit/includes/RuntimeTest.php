@@ -332,13 +332,13 @@ echo "\$foo * \$bar = $foo * $bar = ", $foo * $bar, "\n\n";'),
 				Runtime::runSource('$foo=1; echo $foo++ + $foo = 40 + $foo = 400 + $foo, $foo;'), // $foo = 400 + 2; $foo = 40 + 402; echo 1 + 442, 442
 				array('443', '442')
 				);
-	}*/
+	}
 	public function testRun_echo_math_variables_short_circuit_1() {
 		$this->assertEquals(
 				Runtime::runSource('$foo=10; echo $foo = 400 + $foo or $foo = 10000, $foo;'), // $foo = 400 + 10; echo 441 or ... , 410
 				array(true, '410')
 				);
-	}/*
+	}
 	public function testRun_echo_math_variables_short_circuit_2() {
 		$this->assertEquals(
 				Runtime::runSource('$foo=10; echo $foo = 10 - $foo or $foo = 10000, $foo;'), // $foo = 10 - 10; echo 0 or $foo=10000 , 10000
@@ -1338,6 +1338,24 @@ if ( $foo + $bar ) echo "\$foo + \$bar";'),
 				array('false second FALSE')
 				);
 	}
+	public function testRun_echo_if_double_24() {
+		$this->assertEquals(
+				Runtime::runSource('if( true ) if( true ) echo "true2"; else echo "false2"; else echo "false";'),
+				array('true2')
+				);
+	}
+	public function testRun_echo_if_double_25() {
+		$this->assertEquals(
+				Runtime::runSource('if( true ) if( false ) echo "true2"; else echo "false2"; else echo "false";'),
+				array('false2')
+				);
+	}
+	public function testRun_echo_if_double_26() {
+		$this->assertEquals(
+				Runtime::runSource('if( false ) if( false ) echo "true2"; else echo "false2"; else echo "false";'),
+				array('false')
+				);
+	}
 	public function testRun_echo_elseif_1() {
 		$this->assertEquals(
 				Runtime::runSource('if( true ) echo "one"; elseif( true ) echo "two"; else echo "three";'),
@@ -1628,6 +1646,102 @@ if ( $foo + $bar ) echo "\$foo + \$bar";'),
 		$this->assertEquals(
 				Runtime::runSource('$i=1; while( $i <= 3 ) echo $i++;'),
 				array('1', '2', '3')
+				);
+	}
+	public function testRun_while_continue_1() {
+		$this->assertEquals(
+				Runtime::runSource('$i=1; while( $i <= 3 ) { echo $i++; continue; $i++; }'),
+				array('1', '2', '3')
+				);
+	}
+	public function testRun_while_break_1() {
+		$this->assertEquals(
+				Runtime::runSource('$i=1; while( $i <= 33 ) { echo $i++; break; $i++; }'),
+				array('1')
+				);
+	}
+	public function testRun_while_if_break_1() {
+		$this->assertEquals(
+				Runtime::runSource('$i=1; while( $i <= 33 ) { echo $i++; if($i == 3) break; }'),
+				array('1', '2')
+				);
+	}
+	public function testRun_while_if_break_2() {
+		$this->assertEquals(
+				Runtime::runSource('$i=1; while( $i <= 33 ) { echo $i++; if($i == 3){echo "The end"; break; echo "anything";} }'),
+				array('1', '2', 'The end')
+				);
+	}
+	public function testRun_while_if_continue_1() {
+		$this->assertEquals(
+				Runtime::runSource('$i=0; while( $i <= 2 ) { $i++; if($i == 2) continue; echo $i; }'),
+				array('1', '3')
+				);
+	}
+	public function testRun_while_if_continue_2() {
+		$this->assertEquals(
+				Runtime::runSource('$i=0; while( $i <= 2 ) { $i++; if($i == 2) { echo "Two"; continue; } echo $i; }'),
+				array('1', 'Two', '3')
+				);
+	}
+	public function testRun_while_while_1() {
+		$this->assertEquals(
+				implode( Runtime::runSource('$i=1; while( $i<=3 ){ echo "|$i|"; $y=1; while( $y<=$i ){ echo "($y)"; $y++; } $i++; }') ),
+				'|1|(1)|2|(1)(2)|3|(1)(2)(3)'
+				);
+	}
+	public function testRun_while_while_continue_1() {
+		$this->assertEquals(
+				implode( Runtime::runSource('$i=1; while( $i<=3 ){ echo "|$i|"; $y=0; while( $y<3 ){ $y++; if( $y==2) continue; echo "($y)";  } $i++; }') ),
+				'|1|(1)(3)|2|(1)(3)|3|(1)(3)'
+				);
+	}
+	public function testRun_while_while_continue_2() {
+		$this->assertEquals(
+				implode( Runtime::runSource('$i=0; while( $i<5 ){ $i++; echo "|$i|"; $y=0; while( $y<3 ){ $y++; if( $y==$i ){ continue 2; } echo "($y)";  } }') ),
+				'|1||2|(1)|3|(1)(2)|4|(1)(2)(3)|5|(1)(2)(3)'
+				);
+	}
+	public function testRun_while_while_break_1() {
+		$this->assertEquals(
+				implode( Runtime::runSource('$i=1; while( $i<=5 ){ echo "|$i|"; $y=0; while( $y<3 ){ $y++; if( $y==2) break; echo "($y)";  } $i++; }') ),
+				'|1|(1)|2|(1)|3|(1)|4|(1)|5|(1)'
+				);
+	}
+	public function testRun_while_while_break_2() {
+		$this->assertEquals(
+				implode( Runtime::runSource('$i=1; $y=0; while($y<4&&$y<$i){$y++; if($y==3){break; echo "hohoho";} echo "($y)";}') ),
+				'(1)'
+				);
+	}
+	public function testRun_while_while_break_3() {
+		$this->assertEquals(
+				implode( Runtime::runSource('$i=1; while( $i<=5 ){ echo "|$i|"; $y=0; while( $y<4 && $y<$i ){ $y++; if( $y==3) { break 2; echo "hohoho"; } echo "($y)";  } $i++; }') ),
+				'|1|(1)|2|(1)(2)|3|(1)(2)'
+				);
+	}
+	public function testRun_while_if_while_1() {
+		$this->assertEquals(
+				implode( Runtime::runSource('$i=1; while( $i<=5 ){ echo "|$i|"; $y=0; if( $i==2 || $i == 4 ) while( $y<$i ){ $y++; echo "($y)"; } $i++; } ') ),
+				'|1||2|(1)(2)|3||4|(1)(2)(3)(4)|5|'
+				);
+	}
+	public function testRun_while_if_while_2() {
+		$this->assertEquals(
+				implode( Runtime::runSource('$i=1; while( $i<=5 ){ echo "|$i|"; $y=0; if( $i==2 || $i == 4 ) { echo "."; while( $y<$i ){ $y++; echo "($y)"; } } $i++; } ') ),
+				'|1||2|.(1)(2)|3||4|.(1)(2)(3)(4)|5|'
+				);
+	}
+	public function testRun_while_if_while_if_1() {
+		$this->assertEquals(
+				implode( Runtime::runSource('$i=2; $y=0; if( $i==2 || $i == 4 ) { echo "."; while( $y<$i ){ $y++; if($y< 3) echo "($y)"; else break 2;} }') ),
+				'.(1)(2)'
+				);
+	}
+	public function testRun_while_if_while_if_2() {
+		$this->assertEquals(
+				implode( Runtime::runSource('$i=1; while( $i<=5 ){ echo "|$i|"; $y=0; if( $i==2 || $i == 4 ) { echo "."; while( $y<$i ){ $y++; if($y < 3) echo "($y)"; else break 2; } } $i++; } ') ),
+				'|1||2|.(1)(2)|3||4|.(1)(2)'
 				);
 	}
 

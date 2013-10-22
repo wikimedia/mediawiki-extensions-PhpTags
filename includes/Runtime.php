@@ -609,10 +609,25 @@ class Runtime {
 		$return = array();
 		$break = 0; // used for T_BREAK
 		$continue = false; // used for T_CONTINUE
+		$loopsOwner = null;
 
 		$c=count($code);
 		$i=-1;
 		do {
+			if( $break ) {
+				if( $loopsOwner == T_WHILE ) {
+					$break--;
+					continue;
+				}
+				break;
+			}elseif( $continue ) {
+				if( $loopsOwner == T_WHILE ) {
+					$i = -1;
+					$continue = false;
+				}else{
+					continue;
+				}
+			}
 			$i++;
 			for(; $i<$c; $i++ ) {
 				$value = &$code[$i];
@@ -662,14 +677,16 @@ class Runtime {
 					case T_SR:			// >>
 						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] >> $value[FOXWAY_STACK_PARAM_2];
 						break;
+					case T_BOOLEAN_AND:	// &&
 					case T_LOGICAL_AND:	// and
-						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] and $value[FOXWAY_STACK_PARAM_2];
+						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] && $value[FOXWAY_STACK_PARAM_2];
 						break;
 					case T_LOGICAL_XOR:	// xor
 						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] xor $value[FOXWAY_STACK_PARAM_2];
 						break;
+					case T_BOOLEAN_OR:	// ||
 					case T_LOGICAL_OR:	// or
-						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] or $value[FOXWAY_STACK_PARAM_2];
+						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] || $value[FOXWAY_STACK_PARAM_2];
 						break;
 					case '<':
 						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] < $value[FOXWAY_STACK_PARAM_2];
@@ -727,19 +744,21 @@ class Runtime {
 					case '?':
 						if( $value[FOXWAY_STACK_PARAM] ) { // true ?
 							if( $value[FOXWAY_STACK_PARAM_2][FOXWAY_STACK_DO_TRUE] ) { // true ? 1+2 :
-								$memory[] = array( &$value[FOXWAY_STACK_PARAM_2][FOXWAY_STACK_PARAM], $code, $i, $c );
+								$memory[] = array( &$value[FOXWAY_STACK_PARAM_2][FOXWAY_STACK_PARAM], $code, $i, $c, $loopsOwner );
 								$code = $value[FOXWAY_STACK_PARAM_2][FOXWAY_STACK_DO_TRUE];
 								$i = -1;
 								$c = count($code);
+								$loopsOwner = '?';
 							}else{ // true ? 1 :
 								$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM_2][FOXWAY_STACK_PARAM];
 							}
 						}else{ // false ?
 							if( $value[FOXWAY_STACK_PARAM_2][FOXWAY_STACK_DO_FALSE] ) { // false ? ... : 1+2
-								$memory[] = array( &$value[FOXWAY_STACK_PARAM_2][FOXWAY_STACK_PARAM_2], $code, $i, $c );
+								$memory[] = array( &$value[FOXWAY_STACK_PARAM_2][FOXWAY_STACK_PARAM_2], $code, $i, $c, $loopsOwner );
 								$code = $value[FOXWAY_STACK_PARAM_2][FOXWAY_STACK_DO_FALSE];
 								$i = -1;
 								$c = count($code);
+								$loopsOwner = '?';
 							}else{ // false ? ... : 1
 								$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM_2][FOXWAY_STACK_PARAM_2];
 							}
@@ -748,46 +767,54 @@ class Runtime {
 					case T_IF:
 						if( $value[FOXWAY_STACK_PARAM] ) { // Example: if( true )
 							if( $value[FOXWAY_STACK_DO_TRUE] ) { // Stack not empty: if(true);
-								$memory[] = array( null, $code, $i, $c );
+								$memory[] = array( null, $code, $i, $c, $loopsOwner );
 								$code = $value[FOXWAY_STACK_DO_TRUE];
 								$i = -1;
 								$c = count($code);
+								$loopsOwner = T_IF;
 							}
 						}else{ // Example: if( false )
 							if( isset($value[FOXWAY_STACK_DO_FALSE]) ) { // Stack not empty: if(false) ; else ;
-								$memory[] = array( null, $code, $i, $c );
+								$memory[] = array( null, $code, $i, $c, $loopsOwner );
 								$code = $value[FOXWAY_STACK_DO_FALSE];
 								$i = -1;
 								$c = count($code);
+								$loopsOwner = T_IF;
 							}
 						}
 						break;
 					case T_WHILE: // PHP code "while($foo) { ... }" doing as T_WHILE { T_DO($foo) ... }. If $foo == false, T_DO doing as T_BREAK
-						if( $break ) { // was used T_BREAK
+						/*if( $break ) { // was used T_BREAK
 							if( --$break ) { // T_BREAK is 2 or more
 								break 2; // go to one level down
 							}
 							break; // T_BREAK is 1, just go to next operator (T_WHILE will be skiped)
-						} // T_BREAK is not used
-						$memory[] = array( null, $code, $i, $c );
+						} */// T_BREAK is not used
+						$memory[] = array( null, $code, $i, $c, $loopsOwner );
 						$code = $value[FOXWAY_STACK_DO_TRUE];
 						$i = -1;
 						$c = count($code);
+						$loopsOwner = T_WHILE;
 						break;
 					case T_DO:
 						if( $value[FOXWAY_STACK_PARAM] ) {
 							continue; // this is "while(true)", just go next
 						}// while(false) doing as T_BREAK;
-						$break = 1;
 						break 2; // go to one level down
 					case T_BREAK:
-						// @todo T_BREAK is 2 or more
-						$break = 1;
+						$break = $value[FOXWAY_STACK_RESULT];
+						if( $loopsOwner == T_WHILE ) {
+							$break--;
+						}
 						break 2; // go to one level down
 					case T_CONTINUE:
-						// @todo T_CONTINUE is 2 or more
-						$i = -1;
-						break;
+						$break = $value[FOXWAY_STACK_RESULT]-1;
+						if( $loopsOwner == T_WHILE && $break == 0 ) { // Example: while(true) continue;
+							$i = -1;
+							break;
+						}
+						$continue = true;
+						break 2; // go to one level down
 					case T_ARRAY:			// array
 						$value[FOXWAY_STACK_RESULT] = array(); // init array
 						foreach ($value[FOXWAY_STACK_PARAM] as $v) {
@@ -896,7 +923,7 @@ class Runtime {
 						break;
 				}
 			}
-		} while( list($code[$i][FOXWAY_STACK_RESULT], $code, $i, $c) = array_pop($memory) );
+		} while( list($code[$i][FOXWAY_STACK_RESULT], $code, $i, $c, $loopsOwner) = array_pop($memory) );
 
 		return $return;
 	}
