@@ -11,6 +11,10 @@ define( 'FOXWAY_STACK_DO_TRUE', 't' );
 define( 'FOXWAY_STACK_DO_FALSE', 'f' );
 define( 'FOXWAY_STACK_ARRAY_INDEX', 'a' );
 
+// definitions for Runtame::$functions
+define( 'FOXWAY_DEFAULT_VALUES', 'd' );
+define( 'FOXWAY_MIN_VALUES', '<' );
+
 /**
  * Runtime class of Foxway extension.
  *
@@ -21,6 +25,9 @@ define( 'FOXWAY_STACK_ARRAY_INDEX', 'a' );
  */
 class Runtime {
 
+	static public $functions=array();
+	static public $allowedNamespaces = true;
+	static public $time = 0;
 	protected $lastCommand = false;
 	protected $passByReference = 0;
 
@@ -43,7 +50,7 @@ class Runtime {
 	protected static $variables = array();
 	protected static $staticVariables = array();
 	protected static $globalVariables = array();
-	protected static $time = array();
+	//protected static $time = array();
 	protected static $startTime = array();
 	protected $thisVariables;
 	protected $args;
@@ -714,7 +721,7 @@ class Runtime {
 						break;
 					case T_ECHO:
 						foreach( $value[FOXWAY_STACK_PARAM] as $v ) {
-							$return[] = $v;
+							$return[] = $v[FOXWAY_STACK_RESULT];
 						}
 						break;
 					case '~':
@@ -784,12 +791,6 @@ class Runtime {
 						}
 						break;
 					case T_WHILE: // PHP code "while($foo) { ... }" doing as T_WHILE { T_DO($foo) ... }. If $foo == false, T_DO doing as T_BREAK
-						/*if( $break ) { // was used T_BREAK
-							if( --$break ) { // T_BREAK is 2 or more
-								break 2; // go to one level down
-							}
-							break; // T_BREAK is 1, just go to next operator (T_WHILE will be skiped)
-						} */// T_BREAK is not used
 						$memory[] = array( null, $code, $i, $c, $loopsOwner );
 						$code = $value[FOXWAY_STACK_DO_TRUE];
 						$i = -1;
@@ -865,6 +866,85 @@ class Runtime {
 								self::$globalVariables[$vn] = null;
 							}
 							$thisVariables[$vn] = &self::$globalVariables[$vn];
+						}
+						break;
+					case T_STRING:
+						if( isset($value[FOXWAY_STACK_PARAM]) ) { // This is function or object
+							if( is_array($value[FOXWAY_STACK_PARAM]) ) { // This is function
+								if( isset( self::$functions[ $value[FOXWAY_STACK_PARAM_2] ] ) ) {
+									$function = &self::$functions[ $value[FOXWAY_STACK_PARAM_2] ];
+									$param = array();
+									foreach($value[FOXWAY_STACK_PARAM] as $val) {
+										if( $val[FOXWAY_STACK_COMMAND] == T_VARIABLE ) { // Example $foo
+											$ref = &$thisVariables[ $val[FOXWAY_STACK_PARAM] ];
+											if( isset($val[FOXWAY_STACK_ARRAY_INDEX]) ) { // Example: $foo[1]
+												foreach( $val[FOXWAY_STACK_ARRAY_INDEX] as $v ) {
+													if( !isset($ref[$v]) ) {
+														$ref[$v]=null;
+														// @todo E_NOTICE
+													}
+													$ref = &$ref[$v];
+												}
+											}
+											$param[] = &$ref;
+										}else{
+											$param[] = $val[FOXWAY_STACK_RESULT];
+										}
+									}
+									$count = count( $param );
+									do {
+										if( isset($function[$count]) ) {
+											$function = &$function[$count];
+											break;
+										}else{
+											if( isset($function[FOXWAY_DEFAULT_VALUES]) ) { // Has default values
+												$param += $function[FOXWAY_DEFAULT_VALUES];
+												$count = count( $param );
+												if( isset($function[$count]) ) {
+													$function = &$function[$count];
+													break;
+												}
+											}
+											if( isset($function[FOXWAY_MIN_VALUES]) ) {
+												if( $count >= $function[FOXWAY_MIN_VALUES] && isset($function['']) ) {
+													$function = &$function[''];
+													break;
+												}
+											}
+										}
+										throw new ExceptionFoxway($value[FOXWAY_STACK_PARAM_2], FOXWAY_PHP_WARNING_WRONG_PARAMETER_COUNT, $value[FOXWAY_STACK_TOKEN_LINE]);
+									} while(false);
+
+									if( is_callable($function) ) {
+										try {
+											wfSuppressWarnings();
+											$result = $function($param);
+											if( $result instanceof outPrint ) {
+												$value[FOXWAY_STACK_RESULT] = $result->returnValue;
+												$return[] = $result;
+											} else {
+												$value[FOXWAY_STACK_RESULT] = $result;
+											}
+											wfRestoreWarnings();
+										} catch ( ExceptionFoxway $e ) {
+											// @todo
+											// $e add $value[FOXWAY_STACK_TOKEN_LINE]
+											// $e add $value[FOXWAY_STACK_PARAM_2]
+											throw $e;
+										} catch (Exception $e) {
+											throw new ExceptionFoxway($value[FOXWAY_STACK_PARAM_2], FOXWAY_PHP_FATAL_ERROR_CALL_TO_FUNCTION, $value[FOXWAY_STACK_TOKEN_LINE]);
+										}
+									}else{
+										throw new ExceptionFoxway($value[FOXWAY_STACK_PARAM_2], FOXWAY_PHP_FATAL_UNABLE_CALL_TO_FUNCTION, $value[FOXWAY_STACK_TOKEN_LINE]);
+									}
+								}else{
+									throw new ExceptionFoxway($value[FOXWAY_STACK_PARAM_2], FOXWAY_PHP_FATAL_CALL_TO_UNDEFINED_FUNCTION, $value[FOXWAY_STACK_TOKEN_LINE]);
+								}
+							}else{ // This is object
+								// @todo
+							}
+						}else{ // This is constant
+							// @todo
 						}
 						break;
 					default:

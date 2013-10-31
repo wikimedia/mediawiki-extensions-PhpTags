@@ -1,4 +1,7 @@
 <?php
+
+require_once __DIR__ . '/Settings.php';
+
 /**
  * Main class of Foxway extension.
  *
@@ -10,7 +13,6 @@
 class Foxway {
 
 	static $DebugLoops = false;
-	static $time = false;
 	static $startTime = false;
 
 	static $frames=array();
@@ -52,7 +54,7 @@ class Foxway {
 			$return = $exc->getTraceAsString();
 		}
 
-		self::$time += microtime(true) - self::$startTime;
+		$GLOBALS['wgFoxwayTime'] += microtime(true) - self::$startTime;
 		return \UtfNormal::cleanUp($return);
 	}
 
@@ -82,7 +84,7 @@ class Foxway {
 					self::getScope($frame)
 					);
 		} catch (Exception $exc) {
-			self::$time += microtime(true) - self::$startTime;
+			$GLOBALS['wgFoxwayTime'] += microtime(true) - self::$startTime;
 			return $exc->getTraceAsString();
 		}
 
@@ -99,16 +101,16 @@ class Foxway {
 			$return .= self::insertGeneral( $parser, $parser->recursiveTagParse(implode($result),$frame) );
 		}
 
-		self::$time += microtime(true) - self::$startTime;
+		$GLOBALS['wgFoxwayTime'] += microtime(true) - self::$startTime;
 		return \UtfNormal::cleanUp($return);
 	}
 
 	public static function isBanned(PPFrame $frame) {
-		global $wgNamespacesWithFoxway, $wgFoxway_max_execution_time;
-		if( $wgNamespacesWithFoxway !== true && empty($wgNamespacesWithFoxway[$frame->getTitle()->getNamespace()]) ) {
+		global $wgFoxway_max_execution_time;
+		if( \Foxway\Runtime::$allowedNamespaces !== true && empty(\Foxway\Runtime::$allowedNamespaces[$frame->getTitle()->getNamespace()]) ) {
 			return Html::element( 'span', array('class'=>'error'), wfMessage('foxway-disabled-for-namespace', $frame->getTitle()->getNsText())->escaped() );
 		}
-		if( $wgFoxway_max_execution_time !== false && self::$time >= $wgFoxway_max_execution_time) {
+		if( $wgFoxway_max_execution_time !== false && $GLOBALS['wgFoxwayTime'] >= $wgFoxway_max_execution_time) {
 			return Html::element( 'span', array('class'=>'error'),
 				wfMessage( 'foxway-php-fatal-error-max-execution-time' )
 					->numParams( $wgFoxway_max_execution_time )

@@ -51,9 +51,8 @@ $wgHooks['ParserFirstCallInit'][] = function( Parser &$parser ) {
  * @codeCoverageIgnore
  */
 $wgHooks['ParserLimitReport'][] = function( $parser, &$limitReport ) {
-	if( Foxway::$time !== false ) {
-		$limitReport .= sprintf( "Foxway time usage: %.3f secs\n", Foxway::$time );
-		# print_r(Foxway\Runtime::getTime(),true);
+	if( \Foxway\Runtime::$time > 0 ) {
+		$limitReport .= sprintf( "Foxway time usage: %.3f secs\n", \Foxway\Runtime::$time );
 	}
 	return true;
 };
@@ -62,24 +61,14 @@ $wgHooks['ParserLimitReport'][] = function( $parser, &$limitReport ) {
 $wgAutoloadClasses['Foxway']					= $dir . '/Foxway.body.php';
 
 $wgAutoloadClasses['Foxway\\iRawOutput']		= $dir . '/includes/iRawOutput.php';
+$wgAutoloadClasses['Foxway\\outPrint']			= $dir . '/includes/outPrint.php';
 
-$wgAutoloadClasses['Foxway\\Debug']				= $dir . '/includes/Debug.php';
-$wgAutoloadClasses['Foxway\\ErrorMessage']		= $dir . '/includes/ErrorMessage.php';
+//$wgAutoloadClasses['Foxway\\Debug']				= $dir . '/includes/Debug.php';
+//$wgAutoloadClasses['Foxway\\ErrorMessage']		= $dir . '/includes/ErrorMessage.php';
 $wgAutoloadClasses['Foxway\\ExceptionFoxway']	= $dir . '/includes/ExceptionFoxway.php';
 $wgAutoloadClasses['Foxway\\Compiler']			= $dir . '/includes/Compiler.php';
-$wgAutoloadClasses['Foxway\\RArray']			= $dir . '/includes/RArray.php';
-$wgAutoloadClasses['Foxway\\ROutput']			= $dir . '/includes/ROutput.php';
-$wgAutoloadClasses['Foxway\\RValue']			= $dir . '/includes/RValue.php';
-$wgAutoloadClasses['Foxway\\RVariable']			= $dir . '/includes/RVariable.php';
 $wgAutoloadClasses['Foxway\\Runtime']			= $dir . '/includes/Runtime.php';
-$wgAutoloadClasses['Foxway\\RuntimeDebug']		= $dir . '/includes/RuntimeDebug.php';
-
-$wgAutoloadClasses['Foxway\\BaseFunction']		= $dir . '/includes/functions/BaseFunction.php';
-$wgAutoloadClasses['Foxway\\FArray']			= $dir . '/includes/functions/FArray.php';
-$wgAutoloadClasses['Foxway\\FMath']				= $dir . '/includes/functions/FMath.php';
-$wgAutoloadClasses['Foxway\\Fpcre']				= $dir . '/includes/functions/Fpcre.php';
-$wgAutoloadClasses['Foxway\\FString']			= $dir . '/includes/functions/FString.php';
-$wgAutoloadClasses['Foxway\\FVariable']			= $dir . '/includes/functions/FVariable.php';
+//$wgAutoloadClasses['Foxway\\RuntimeDebug']		= $dir . '/includes/RuntimeDebug.php';
 
 // Resources
 $wgResourceModules['ext.Foxway.Debug'] = array(
@@ -106,43 +95,3 @@ $wgHooks['UnitTestsList'][] = function ( &$files ) {
 		$files = array_merge( $files, glob( "$testDir/includes/*Test.php" ) );
 		return true;
 };
-
-include_once 'Settings.php';
-
-// @todo Reverse shift ???
-// Do not change the value of this variable in LocalSettings.php!!!
-$wgFoxwayPassByReference = array(
-	'settype' => 1,
-	'unset' => -1,
-	'array_multisort' => -1,
-	'array_pop' => 1,
-	'array_push' => 1,
-	'array_shift' => 1,
-	'array_splice' => 1,
-	'array_unshift' => 1,
-	'arsort' => 1,
-	'asort' => 1,
-	'current' => 1,
-	'each' => 1,
-	'end' => 1,
-	'key' => 1,
-	'krsort' => 1,
-	'ksort' => 1,
-	'natcasesort' => 1,
-	'natsort' => 1,
-	'next' => 1,
-	'pos' => 1,
-	'prev' => 1,
-	'reset' => 1,
-	'rsort' => 1,
-	'shuffle' => 1,
-	'sort' => 1,
-	'similar_text' => 4, // 0b100
-	'sscanf' => 2147483644, // 0b1111111111111111111111111111100
-	'str_ireplace' => 8, // 0b1000
-	'str_replace' => 8, // 0b1000
-	'preg_filter' => 16, // 0b10000
-	'preg_match_all' => 4, // 0b100
-	'preg_match' => 4, // 0b100
-	'preg_replace' => 16, // 0b10000
-);
