@@ -54,7 +54,7 @@ class Foxway {
 			$return = $exc->getTraceAsString();
 		}
 
-		$GLOBALS['wgFoxwayTime'] += microtime(true) - self::$startTime;
+		\Foxway\Runtime::$time += microtime(true) - self::$startTime;
 		return \UtfNormal::cleanUp($return);
 	}
 
@@ -84,7 +84,7 @@ class Foxway {
 					self::getScope($frame)
 					);
 		} catch (Exception $exc) {
-			$GLOBALS['wgFoxwayTime'] += microtime(true) - self::$startTime;
+			\Foxway\Runtime::$time += microtime(true) - self::$startTime;
 			return $exc->getTraceAsString();
 		}
 
@@ -101,7 +101,7 @@ class Foxway {
 			$return .= self::insertGeneral( $parser, $parser->recursiveTagParse(implode($result),$frame) );
 		}
 
-		$GLOBALS['wgFoxwayTime'] += microtime(true) - self::$startTime;
+		\Foxway\Runtime::$time += microtime(true) - self::$startTime;
 		return \UtfNormal::cleanUp($return);
 	}
 
@@ -110,7 +110,7 @@ class Foxway {
 		if( \Foxway\Runtime::$allowedNamespaces !== true && empty(\Foxway\Runtime::$allowedNamespaces[$frame->getTitle()->getNamespace()]) ) {
 			return Html::element( 'span', array('class'=>'error'), wfMessage('foxway-disabled-for-namespace', $frame->getTitle()->getNsText())->escaped() );
 		}
-		if( $wgFoxway_max_execution_time !== false && $GLOBALS['wgFoxwayTime'] >= $wgFoxway_max_execution_time) {
+		if( $wgFoxway_max_execution_time !== false && \Foxway\Runtime::$time >= $wgFoxway_max_execution_time) {
 			return Html::element( 'span', array('class'=>'error'),
 				wfMessage( 'foxway-php-fatal-error-max-execution-time' )
 					->numParams( $wgFoxway_max_execution_time )

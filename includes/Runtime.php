@@ -26,6 +26,7 @@ define( 'FOXWAY_MIN_VALUES', '<' );
 class Runtime {
 
 	static public $functions=array();
+	static public $constants=array();
 	static public $allowedNamespaces = true;
 	static public $time = 0;
 	protected $lastCommand = false;
@@ -724,6 +725,9 @@ class Runtime {
 							$return[] = $v[FOXWAY_STACK_RESULT];
 						}
 						break;
+					case T_PRINT:
+						$return[] = $value[FOXWAY_STACK_PARAM];
+						break;
 					case '~':
 						$value[FOXWAY_STACK_RESULT] = ~$value[FOXWAY_STACK_PARAM_2];
 						break;
@@ -869,10 +873,11 @@ class Runtime {
 						}
 						break;
 					case T_STRING:
+						$name = $value[FOXWAY_STACK_PARAM_2];
 						if( isset($value[FOXWAY_STACK_PARAM]) ) { // This is function or object
 							if( is_array($value[FOXWAY_STACK_PARAM]) ) { // This is function
-								if( isset( self::$functions[ $value[FOXWAY_STACK_PARAM_2] ] ) ) {
-									$function = &self::$functions[ $value[FOXWAY_STACK_PARAM_2] ];
+								if( isset( self::$functions[$name] ) ) {
+									$function = &self::$functions[$name];
 									$param = array();
 									foreach($value[FOXWAY_STACK_PARAM] as $val) {
 										if( $val[FOXWAY_STACK_COMMAND] == T_VARIABLE ) { // Example $foo
@@ -912,7 +917,7 @@ class Runtime {
 												}
 											}
 										}
-										throw new ExceptionFoxway($value[FOXWAY_STACK_PARAM_2], FOXWAY_PHP_WARNING_WRONG_PARAMETER_COUNT, $value[FOXWAY_STACK_TOKEN_LINE]);
+										throw new ExceptionFoxway($name, FOXWAY_PHP_WARNING_WRONG_PARAMETER_COUNT, $value[FOXWAY_STACK_TOKEN_LINE]);
 									} while(false);
 
 									if( is_callable($function) ) {
@@ -929,22 +934,27 @@ class Runtime {
 										} catch ( ExceptionFoxway $e ) {
 											// @todo
 											// $e add $value[FOXWAY_STACK_TOKEN_LINE]
-											// $e add $value[FOXWAY_STACK_PARAM_2]
+											// $e add $name
 											throw $e;
 										} catch (Exception $e) {
-											throw new ExceptionFoxway($value[FOXWAY_STACK_PARAM_2], FOXWAY_PHP_FATAL_ERROR_CALL_TO_FUNCTION, $value[FOXWAY_STACK_TOKEN_LINE]);
+											throw new ExceptionFoxway($name, FOXWAY_PHP_FATAL_ERROR_CALL_TO_FUNCTION, $value[FOXWAY_STACK_TOKEN_LINE]);
 										}
 									}else{
-										throw new ExceptionFoxway($value[FOXWAY_STACK_PARAM_2], FOXWAY_PHP_FATAL_UNABLE_CALL_TO_FUNCTION, $value[FOXWAY_STACK_TOKEN_LINE]);
+										throw new ExceptionFoxway($name, FOXWAY_PHP_FATAL_UNABLE_CALL_TO_FUNCTION, $value[FOXWAY_STACK_TOKEN_LINE]);
 									}
 								}else{
-									throw new ExceptionFoxway($value[FOXWAY_STACK_PARAM_2], FOXWAY_PHP_FATAL_CALL_TO_UNDEFINED_FUNCTION, $value[FOXWAY_STACK_TOKEN_LINE]);
+									throw new ExceptionFoxway($name, FOXWAY_PHP_FATAL_CALL_TO_UNDEFINED_FUNCTION, $value[FOXWAY_STACK_TOKEN_LINE]);
 								}
 							}else{ // This is object
 								// @todo
 							}
 						}else{ // This is constant
-							// @todo
+							if( isset(self::$constants[$name]) ) {
+								$value[FOXWAY_STACK_RESULT] = is_callable(self::$constants[$name]) ? self::$constants[$name]() :self::$constants[$name];
+							}else{
+								$value[FOXWAY_STACK_RESULT] = $name;
+								// @todo send notice undefined constant
+							}
 						}
 						break;
 					default:

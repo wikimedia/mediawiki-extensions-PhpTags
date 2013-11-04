@@ -1,13 +1,28 @@
 <?php
 namespace Foxway;
 
-Runtime::$functions = array_merge( Runtime::$functions
-		, include __DIR__ . '/../../../includes/functions/strings.php' // String Functions @see http://php.net/manual/en/ref.strings.php
-		, include __DIR__ . '/../../../includes/functions/array.php' // Array Functions @see http://www.php.net/manual/en/ref.array.php
-		, include __DIR__ . '/../../../includes/functions/math.php' // Math Functions @see http://www.php.net/manual/en/ref.math.php
-		, include __DIR__ . '/../../../includes/functions/var.php' // Variable handling Functions @see http://www.php.net/manual/en/ref.var.php
-		, include __DIR__ . '/../../../includes/functions/pcre.php' // PCRE Functions @see http://www.php.net/manual/en/ref.pcre.php
+//$ttt = microtime(true);
+//Runtime::$functions = Runtime::$functions +
+//		( include __DIR__ . '/../../../includes/functions/strings.php' ) + // String Functions @see http://php.net/manual/en/ref.strings.php
+//		( include __DIR__ . '/../../../includes/functions/array.php' ) + // Array Functions @see http://www.php.net/manual/en/ref.array.php
+//		( include __DIR__ . '/../../../includes/functions/math.php' ) + // Math Functions @see http://www.php.net/manual/en/ref.math.php
+//		( include __DIR__ . '/../../../includes/functions/var.php' ) + // Variable handling Functions @see http://www.php.net/manual/en/ref.var.php
+//		( include __DIR__ . '/../../../includes/functions/pcre.php' ); // PCRE Functions @see http://www.php.net/manual/en/ref.pcre.php
+
+Runtime::$functions = array_merge(
+		include __DIR__ . '/../../../includes/functions/strings.php', // String Functions @see http://php.net/manual/en/ref.strings.php
+		include __DIR__ . '/../../../includes/functions/array.php', // Array Functions @see http://www.php.net/manual/en/ref.array.php
+		include __DIR__ . '/../../../includes/functions/math.php', // Math Functions @see http://www.php.net/manual/en/ref.math.php
+		include __DIR__ . '/../../../includes/functions/var.php', // Variable handling Functions @see http://www.php.net/manual/en/ref.var.php
+		include __DIR__ . '/../../../includes/functions/pcre.php', // PCRE Functions @see http://www.php.net/manual/en/ref.pcre.php
+		Runtime::$functions
 );
+
+Runtime::$constants = array_merge(
+		include __DIR__ . '/../../../includes/constants.php',
+		Runtime::$constants
+);
+//echo microtime(true) - $ttt, "\n\n"; // 0.004227876663208
 
 class RuntimeTest extends \PHPUnit_Framework_TestCase {
 
@@ -1640,6 +1655,61 @@ if ( $foo + $bar ) echo "\$foo + \$bar";'),
 		$this->assertEquals(
 				Runtime::runSource('$foo[$bar="BAR"]="FOO"; echo "-={$foo[$bar]}=-", $bar;'),
 				array('-=FOO=-', 'BAR')
+				);
+	}
+
+	public function testRun_print_1() {
+		$this->assertEquals(
+				Runtime::runSource('print "hello";'),
+				array('hello')
+				);
+	}
+	public function testRun_print_2() {
+		$this->assertEquals(
+				Runtime::runSource('print("Hello World");'),
+				array('Hello World')
+				);
+	}
+	public function testRun_print_3() {
+		$this->assertEquals(
+				Runtime::runSource('$foo = "foobar"; print $foo;'),
+				array('foobar')
+				);
+	}
+	public function testRun_print_4() {
+		$this->assertEquals(
+				Runtime::runSource('print "foo is $foo";'),
+				array('foo is foobar')
+				);
+	}
+	public function testRun_echo_print_1() {
+		$this->assertEquals(
+				Runtime::runSource('echo print $foo;'),
+				array('foobar', 1)
+				);
+	}
+	public function testRun_echo_print_2() {
+		$this->assertEquals(
+				Runtime::runSource('echo -print $foo;'),
+				array('foobar', -1)
+				);
+	}
+	public function testRun_echo_print_3() {
+		$this->assertEquals(
+				Runtime::runSource('echo 2+print $foo;'),
+				array('foobar', 3)
+				);
+	}
+	public function testRun_echo_print_4() {
+		$this->assertEquals(
+				Runtime::runSource('echo 5*2+print $foo;'),
+				array('foobar', 11)
+				);
+	}
+	public function testRun_echo_print_5() {
+		$this->assertEquals(
+				Runtime::runSource('echo 5+2*print $foo;'),
+				array('foobar', 7)
 				);
 	}
 

@@ -19,7 +19,7 @@ $foxway_check_preg_replace_pattern = function ( $arg ) {
 
 		$delimPos = strpos( $regexStarts, $pattern[0] );
 		if ( $delimPos === false ) {
-			throw new ExceptionFoxway('preg_replace', FOXWAY_PHP_WARNING_WRONG_DELIMITER );
+			throw new Foxway\ExceptionFoxway('preg_replace', FOXWAY_PHP_WARNING_WRONG_DELIMITER );
 		}
 
 		$end = $regexEnds[$delimPos];
@@ -28,7 +28,7 @@ $foxway_check_preg_replace_pattern = function ( $arg ) {
 		while ( !isset( $endPos ) ) {
 			$pos = strpos( $pattern, $end, $pos );
 			if ( $pos === false ) {
-				throw new ExceptionFoxway( array('preg_replace', $end), FOXWAY_PHP_WARNING_NO_ENDING_DELIMITER );
+				throw new Foxway\ExceptionFoxway( array('preg_replace', $end), FOXWAY_PHP_WARNING_NO_ENDING_DELIMITER );
 			}
 			$backslashes = 0;
 			for ( $l = $pos - 1; $l >= 0; $l-- ) {
@@ -43,7 +43,7 @@ $foxway_check_preg_replace_pattern = function ( $arg ) {
 		$len = strlen( $endRegex );
 		for ( $c = 0; $c < $len; $c++ ) {
 			if ( strpos( $regexModifiers, $endRegex[$c] ) === false ) {
-				throw new ExceptionFoxway( array('preg_replace', $endRegex[$c]), FOXWAY_PHP_WARNING_UNKNOWN_MODIFIER );
+				throw new Foxway\Foxway\ExceptionFoxway( array('preg_replace', $endRegex[$c]), FOXWAY_PHP_WARNING_UNKNOWN_MODIFIER );
 			}
 		}
 		return $startRegex . $endRegex . 'u';
