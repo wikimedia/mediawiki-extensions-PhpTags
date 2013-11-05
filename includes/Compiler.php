@@ -100,7 +100,7 @@ class Compiler {
 		//$operator = false;
 		$stackEncapsed = false; // for encapsulated strings
 		$parentheses = array();
-		$parentLevel = false;
+		$parentLevel = 0;
 		$parentFlags = FOXWAY_EXPECT_START_COMMAND | FOXWAY_EXPECT_SEMICOLON;
 		$stack = array();
 		$math = array();
@@ -193,16 +193,60 @@ class Compiler {
 								$tmp = null;
 							} else { // constant, function, etc...
 								$tmp = array( FOXWAY_STACK_COMMAND=>T_STRING, FOXWAY_STACK_PARAM_2=>$text, FOXWAY_STACK_RESULT=>null, FOXWAY_STACK_TOKEN_LINE=>$tokenLine, );
-								if( $rightOperators ) { // right operator was used
-									$stack[] = &$tmp;
-									$rightOperators[0][FOXWAY_STACK_PARAM_2] = &$tmp[FOXWAY_STACK_RESULT];
-									$stack = array_merge( $stack, $rightOperators );
-									$rightOperators = array();
-								}else{
-									$lastValue = &$tmp;
-									$values[] = &$lastValue;
+
+								for( $index++; $index < $countTokens; $index++ ){ // find '('
+									$token = &$tokens[$index];
+									if ( is_string($token) ) {
+										$id = $token;
+									} else {
+										list($id, $text, $tokenLine) = $token;
+									}
+									switch ($id) {
+										case T_COMMENT:
+										case T_DOC_COMMENT:
+										case T_WHITESPACE:
+											break; // ignore it
+										case '(': // T_STRING is function
+											$parentLevel++;
+											$parentheses[] = $parentFlags;
+											$parentFlags = FOXWAY_EXPECT_PARENTHES_CLOSE | FOXWAY_THIS_IS_FUNCTION | FOXWAY_EXPECT_LIST_PARAMS | FOXWAY_EXPECT_VARIABLE_REFERENCE;
+											$tmp[FOXWAY_STACK_PARAM] = array();
+											$needParams = array_merge( array(&$tmp), $needParams );
+											//$stack[] = &$tmp;
+											unset( $tmp );
+											if( isset($operator) ) { // Operator exists. Examples: echo 1+function
+												$memOperators[] = &$operator; // push $operator temporarily without PARAM_2
+												unset($operator);
+												$parentFlags |= FOXWAY_NEED_RESTORE_OPERATOR;
+											}
+											if( $rightOperators ) { // right operator was used, example: echo -function
+												$memOperators[] = $rightOperators; // push $rightOperators for restore later
+												$rightOperators = array();
+												$parentFlags |= FOXWAY_NEED_RESTORE_RIGHT_OPERATORS;
+												unset($lastValue);
+											}
+											ksort( $math );
+											$memory[] = array($stack, $math); // push stack for restore late. Example: echo 1 + function
+											$stack = array();
+											$math = array();
+											$needOperator = false;
+											break 4; /******* EXIT *******/
+										default: // T_STRING is constant
+											if( $rightOperators ) { // right operator was used
+												$stack[] = &$tmp;
+												$rightOperators[0][FOXWAY_STACK_PARAM_2] = &$tmp[FOXWAY_STACK_RESULT];
+												$stack = array_merge( $stack, $rightOperators );
+												$rightOperators = array();
+											}else{
+												$values[] = &$tmp;
+												$lastValue = &$tmp;
+											}
+											unset( $tmp );
+											$index--;
+											break 4; /******* EXIT *******/
+									}
 								}
-								unset( $tmp );
+								throw new ExceptionFoxway('$end', FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine);
 								break 2; /******* EXIT *******/
 							}
 							break;
@@ -456,7 +500,7 @@ class Compiler {
 					}
 					unset($lastValue);
 
-					array_unshift( $memory, $stack ); // Save $stack for restore late
+					$memory[] = $stack; // Save $stack for restore late
 					$math = array(); // @todo $math must be empty array
 					$stack = array();
 					break;
@@ -525,7 +569,7 @@ closeoperator:
 						}
 						array_shift($needParams);
 						$parentFlags = array_pop( $parentheses );
-						$s = array_shift($memory); // restore $stack
+						$s = array_pop($memory); // restore $stack
 						if( $s ) {
 							$stack = array_merge($stack, $s);
 						}
@@ -548,13 +592,14 @@ closeoperator:
 							}
 							$parentFlags = array_pop($parentheses);
 
-							list( $tmp, $math ) = array_shift($memory); // restore $stack, $math
+							list( $tmp, $math ) = array_pop($memory); // restore $stack, $math
 							$s = self::mergeStackAndMath($tmp, $math);
 							if( $s ) {
 								$stack = array_merge( $s, $stack );
 							}
 							break 2;
 						case ')':
+							$parentLevel--;
 							if( $parentFlags & FOXWAY_EXPECT_PARENTHES_CLOSE == 0 ) { throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine); }
 							if( $parentFlags & FOXWAY_THIS_IS_FUNCTION ) {
 								if( isset($operator) ) {
@@ -571,14 +616,11 @@ closeoperator:
 								$operator = &$needParams[0]; // restore result of function as value, this will be set as $lastValue
 								$stack[] = &$operator;
 								array_shift($needParams);
-
-								list( $tmp, $math ) = array_shift($memory);
-								$s = self::mergeStackAndMath($tmp, $math);
+								list( $s, $math ) = array_pop($memory); // restore $stack, $math
 								if( $s ) {
 									$stack = array_merge( $s, $stack );
 								}
 							}
-							$parentLevel--;
 
 							// Save result of parentheses to $lastValue
 							unset($lastValue);
@@ -624,7 +666,9 @@ closeoperator:
 								throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine);
 							}
 							if( $stack ) {
-								$memory[0][0] = array_merge( $memory[0][0], $stack );
+								$k = array_keys($memory);
+								$lk = array_pop( $k );
+								$memory[$lk][0] = array_merge( $memory[$lk][0], $stack );
 								$stack = array();
 							}
 							unset($lastValue);
@@ -638,7 +682,7 @@ closeoperator:
 								$needParams[0][FOXWAY_STACK_PARAM][] = &$operator;
 								$parentFlags = array_pop($parentheses);
 
-								list( $s ) = array_shift( $memory ); // restore $stack
+								list( $s ) = array_pop( $memory ); // restore $stack
 								if( $s ) {
 									$stack = array_merge( $s, $stack );
 								}
@@ -712,31 +756,17 @@ closeoperator:
 								}
 							}
 							$stack = array();
-							$parentLevel = false;
+							$parentLevel = 0;
 							break;
 					}
 					unset($operator);
 					//$operator = false;
 					break;
 				case '(':
+					if( $needOperator ) { throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine); }
+
 					$parentheses[] = $parentFlags;
-					if( $needOperator ) {
-						if( isset($lastValue) && $lastValue[FOXWAY_STACK_COMMAND] == T_STRING ) { // This is function. Example: foo(
-							$lastValue[FOXWAY_STACK_PARAM] = array();
-							$needParams = array_merge( array(&$lastValue), $needParams );
-							$parentFlags = FOXWAY_EXPECT_PARENTHES_CLOSE | FOXWAY_THIS_IS_FUNCTION | FOXWAY_EXPECT_LIST_PARAMS | FOXWAY_EXPECT_VARIABLE_REFERENCE;
-							array_pop( $values );
-							unset($lastValue);
-							array_unshift( $memory, array($stack, $math) ); // push stack for restore late. Example: echo $a + array
-							$stack = array();
-							$math = array();
-							$needOperator = false;
-						}else{
-							throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine);
-						}
-					}else{ // This is math parentheses. Example: 1*2+(
-						$parentFlags = FOXWAY_EXPECT_PARENTHES_CLOSE | ($parentFlags & FOXWAY_CLEAR_FLAG_FOR_SHIFT_BEFORE_PARENTHESES) >> 1;
-					}
+					$parentFlags = FOXWAY_EXPECT_PARENTHES_CLOSE | ($parentFlags & FOXWAY_CLEAR_FLAG_FOR_SHIFT_BEFORE_PARENTHESES) >> 1;
 
 					if( isset($operator) ) { // Operator exists. Examples: echo 1+(
 						$memOperators[] = &$operator; // push $operator temporarily without PARAM_2
@@ -755,7 +785,7 @@ closeoperator:
 					if( $parentFlags & FOXWAY_EXPECT_START_COMMAND == 0 ) { throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine); }
 
 					// for compatible with functions that use flag FOXWAY_EXPECT_LIST_PARAMS
-					array_unshift( $memory, array($stack) );
+					$memory[] = array(array(), array());
 					/*ksort($math);
 					array_unshift( $memory, array($stack, $math) );
 					$stack = array();
@@ -823,7 +853,8 @@ closeoperator:
 					}
 					$parentLevel++;
 
-					array_unshift( $memory, array($stack, $math) ); // push stack for restore late. Example: echo $a + array
+					ksort($math);
+					$memory[] = array($stack, $math); // push stack for restore late. Example: echo $a + array
 					$stack = array();
 					$math = array();
 
@@ -866,7 +897,7 @@ closeoperator:
 					}
 
 					ksort($math);
-					array_unshift( $memory, array($stack, $math) ); // save $stack, $math for restore late
+					$memory[] = array( $stack, $math ); // save $stack, $math for restore late
 					$math = array();
 					$stack = array();
 
@@ -1025,6 +1056,7 @@ closeoperator:
 						unset($lastValue);
 					}
 
+					ksort($math);
 					$memory[] = array($stack, $math); // push stack for restore late. Example: echo $a + array
 					$stack = array();
 					$math = array();

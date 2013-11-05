@@ -2082,6 +2082,72 @@ echo $foo, $argv[0], $argc, $bar, $stat, $argv["test"];', array('testTemplate', 
 				array('-34')
 				);
 	}
+	public function testRun_echo_intval_math_1() {
+		$this->assertEquals(
+				Runtime::runSource('echo -intval(4.2);'),
+				array('-4')
+				);
+	}
+	public function testRun_echo_intval_math_2() {
+		$this->assertEquals(
+				Runtime::runSource('echo 7-intval(4.2);'),
+				array('3')
+				);
+	}
+	public function testRun_echo_intval_math_3() {
+		$this->assertEquals(
+				Runtime::runSource('echo 2*7-intval(4.2);'),
+				array('10')
+				);
+	}
+	public function testRun_echo_intval_math_4() {
+		$this->assertEquals(
+				Runtime::runSource('echo 2-7*intval(4.2);'),
+				array(-26)
+				);
+	}
+	public function testRun_echo_intval_math_5() {
+		$this->assertEquals(
+				Runtime::runSource('echo 2-7*intval(2.2+2);'),
+				array(-26)
+				);
+	}
+	public function testRun_echo_intval_math_6() {
+		$this->assertEquals(
+				Runtime::runSource('echo 2-7*intval(2.2+2*8);'),
+				array(-124)
+				);
+	}
+	public function testRun_echo_intval_math_7() {
+		$this->assertEquals(
+				Runtime::runSource('echo 2-7*intval(2.2*2+8);'),
+				array(-82)
+				);
+	}
+	public function testRun_echo_intval_math_8() {
+		$this->assertEquals(
+				Runtime::runSource('echo 2-7*intval(2.2*2+8)+5;'),
+				array(-77)
+				);
+	}
+	public function testRun_echo_intval_math_9() {
+		$this->assertEquals(
+				Runtime::runSource('echo 2-7*intval(2.2*2+8)+5*9;'),
+				array(-37)
+				);
+	}
+	public function testRun_echo_intval_math_10() {
+		$this->assertEquals(
+				Runtime::runSource('echo 2-7*intval(2.2*2+8)*5-9;'),
+				array(-427)
+				);
+	}
+	public function testRun_echo_intval_math_11() {
+		$this->assertEquals(
+				Runtime::runSource('echo 2-7*-intval(2.2*2+8)*5-9;'),
+				array(413)
+				);
+	}
 
 	public function testRun_echo_boolval_1() {
 		$this->assertEquals(
