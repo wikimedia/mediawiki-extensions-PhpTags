@@ -2778,6 +2778,49 @@ echo $count; //3'),
 				array('empty')
 				);
 	}
+	public function testRun_echo_empty_array_1() {
+		$this->assertEquals(
+				Runtime::runSource('$a = array ("test" => 1, "hello" => NULL, "pie" => array("a" => "apple"));
+echo empty($a["test"]) ? "true" : "false";'),
+				array('false')
+				);
+	}
+	public function testRun_echo_empty_array_2() {
+		$this->assertEquals(
+				Runtime::runSource('echo empty($a["foo"]) ? "true" : "false";'),
+				array('true')
+				);
+	}
+	public function testRun_echo_empty_array_3() {
+		$this->assertEquals(
+				Runtime::runSource('echo empty($a["hello"]) ? "true" : "false";'),
+				array('true')
+				);
+	}
+	public function testRun_echo_empty_array_4() {
+		$this->assertEquals(
+				Runtime::runSource('echo empty($a["pie"]["a"]) ? "true" : "false";'),
+				array('false')
+				);
+	}
+	public function testRun_echo_empty_array_5() {
+		$this->assertEquals(
+				Runtime::runSource('echo empty($a["pie"]["b"]) ? "true" : "false";'),
+				array('true')
+				);
+	}
+	public function testRun_echo_empty_array_6() {
+		$this->assertEquals(
+				Runtime::runSource('echo empty($a["pie"]["a"]["b"]) ? "true" : "false";'),
+				array('true')
+				);
+	}
+	public function testRun_echo_empty_array_7() {
+		$this->assertEquals(
+				Runtime::runSource('echo empty($a["pie"]["b"]["a"]) ? "true" : "false";'),
+				array('true')
+				);
+	}
 	public function testRun_echo_empty_key_string_1() {
 		$this->assertEquals(
 				Runtime::runSource('$expected_array_got_string = "somestring";
@@ -2813,6 +2856,123 @@ echo empty($expected_array_got_string[0]) ? "true" : "false";'),
 		$this->assertEquals(
 				Runtime::runSource('echo empty($expected_array_got_string["0 Mostel"]) ? "true" : "false";'),
 				array('true')
+				);
+	}
+
+	public function testRun_echo_isset_1() {
+		$this->assertEquals(
+				Runtime::runSource('$var = ""; echo isset($var) ? "true" : "false";'),
+				array('true')
+				);
+	}
+	public function testRun_echo_isset_2() {
+		$this->assertEquals(
+				Runtime::runSource('echo isset($varForIsset) ? "true" : "false";'),
+				array('false')
+				);
+	}
+	public function testRun_echo_isset_3() {
+		$this->assertEquals(
+				Runtime::runSource('echo isset($var, $varForIsset) ? "true" : "false";'),
+				array('false')
+				);
+	}
+	public function testRun_echo_isset_4() {
+		$this->assertEquals(
+				Runtime::runSource('echo isset($varForIsset, $var) ? "true" : "false";'),
+				array('false')
+				);
+	}
+	public function testRun_echo_isset_5() {
+		$this->assertEquals(
+				Runtime::runSource('$varForIsset = "test"; echo isset($varForIsset, $var) ? "true" : "false";'),
+				array('true')
+				);
+	}
+	public function testRun_echo_isset_6() {
+		$this->assertEquals(
+				Runtime::runSource('$varForIsset = NULL; echo isset($varForIsset, $var) ? "true" : "false";'),
+				array('false')
+				);
+	}
+	public function testRun_echo_isset_array_1() {
+		$this->assertEquals(
+				Runtime::runSource('$a = array ("test" => 1, "hello" => NULL, "pie" => array("a" => "apple"));
+echo isset($a["test"]) ? "true" : "false";'),
+				array('true')
+				);
+	}
+	public function testRun_echo_isset_array_2() {
+		$this->assertEquals(
+				Runtime::runSource('echo isset($a["foo"]) ? "true" : "false";'),
+				array('false')
+				);
+	}
+	public function testRun_echo_isset_array_3() {
+		$this->assertEquals(
+				Runtime::runSource('echo isset($a["hello"]) ? "true" : "false";'),
+				array('false')
+				);
+	}
+	public function testRun_echo_isset_array_4() {
+		$this->assertEquals(
+				Runtime::runSource('echo isset($a["pie"]["a"]) ? "true" : "false";'),
+				array('true')
+				);
+	}
+	public function testRun_echo_isset_array_5() {
+		$this->assertEquals(
+				Runtime::runSource('echo isset($a["pie"]["b"]) ? "true" : "false";'),
+				array('false')
+				);
+	}
+	public function testRun_echo_isset_array_6() {
+		$this->assertEquals(
+				Runtime::runSource('echo isset($a["pie"]["a"]["b"]) ? "true" : "false";'),
+				array('false')
+				);
+	}
+	public function testRun_echo_isset_array_7() {
+		$this->assertEquals(
+				Runtime::runSource('echo isset($a["pie"]["b"]["a"]) ? "true" : "false";'),
+				array('false')
+				);
+	}
+	public function testRun_echo_isset_key_string_1() {
+		$this->assertEquals(
+				Runtime::runSource('$expected_array_got_string = "somestring";
+echo isset($expected_array_got_string[0]) ? "true" : "false";'),
+				array('true')
+				);
+	}
+	public function testRun_echo_isset_key_string_2() {
+		$this->assertEquals(
+				Runtime::runSource('echo isset($expected_array_got_string["0"]) ? "true" : "false";'),
+				array('true')
+				);
+	}
+	public function testRun_echo_isset_key_string_3() {
+		$this->assertEquals(
+				Runtime::runSource('echo isset($expected_array_got_string[0.5]) ? "true" : "false";'),
+				array('true')
+				);
+	}
+	public function testRun_echo_isset_key_string_4() { //PHP 5.4 changes how isset() behaves when passed string offsets.
+		$this->assertEquals(
+				Runtime::runSource('echo isset($expected_array_got_string["some_key"]) ? "true" : "false";'),
+				array('false')
+				);
+	}
+	public function testRun_echo_isset_key_string_5() { //PHP 5.4 changes how isset() behaves when passed string offsets.
+		$this->assertEquals(
+				Runtime::runSource('echo isset($expected_array_got_string["0.5"]) ? "true" : "false";'),
+				array('false')
+				);
+	}
+	public function testRun_echo_isset_key_string_6() { //PHP 5.4 changes how isset() behaves when passed string offsets.
+		$this->assertEquals(
+				Runtime::runSource('echo isset($expected_array_got_string["0 Mostel"]) ? "true" : "false";'),
+				array('false')
 				);
 	}
 }

@@ -957,6 +957,34 @@ class Runtime {
 							}
 						}
 						break;
+					case T_ISSET:
+						foreach($value[FOXWAY_STACK_PARAM] as $val) {
+							if( $val[FOXWAY_STACK_COMMAND] != T_VARIABLE ) { // Example: isset($foo);
+								throw new Exception; // @todo
+							}
+							if( !isset($thisVariables[ $val[FOXWAY_STACK_PARAM] ]) ) { // undefined variable
+								$value[FOXWAY_STACK_RESULT] = false;
+								break 2;
+							} // true, variable is defined
+							if( isset($val[FOXWAY_STACK_ARRAY_INDEX]) ) { // Example: isset($foo[1])
+								$ref = &$thisVariables[ $val[FOXWAY_STACK_PARAM] ];
+								$vn = array_pop( $val[FOXWAY_STACK_ARRAY_INDEX] );
+								foreach( $val[FOXWAY_STACK_ARRAY_INDEX] as $v ) {
+									if( !isset($ref[$v]) ) { // undefined array index
+										$value[FOXWAY_STACK_RESULT] = false;
+										break 3;
+									}
+									$ref = &$ref[$v];
+								}
+								// @todo ->>>>>>>>>>>> | ************************************************************* | <<<<< it only for compatible with PHP 5.4 if used PHP 5.3 @see http://www.php.net/manual/en/function.isset.php Example #2 isset() on String Offsets
+								if( !isset($ref[$vn]) || (is_string($ref) && is_string($vn) && $vn != (string)(int)$vn) ) {
+									$value[FOXWAY_STACK_RESULT] = false;
+									break 2;
+								}
+							} // true, variable is defined and have no array index
+						}
+						$value[FOXWAY_STACK_RESULT] = true;
+						break;
 					case T_EMPTY:
 						foreach($value[FOXWAY_STACK_PARAM] as $val) {
 							if( $val[FOXWAY_STACK_COMMAND] == T_VARIABLE ) { // Example: empty($foo);
@@ -967,7 +995,7 @@ class Runtime {
 							}else{
 								$ref = &$val[FOXWAY_STACK_RESULT];
 							}
-							if( isset($val[FOXWAY_STACK_ARRAY_INDEX]) ) { // Example: $foo[1]
+							if( isset($val[FOXWAY_STACK_ARRAY_INDEX]) ) { // Example: empty($foo[1])
 								$vn = array_pop( $val[FOXWAY_STACK_ARRAY_INDEX] );
 								foreach( $val[FOXWAY_STACK_ARRAY_INDEX] as $v ) {
 									if( !isset($ref[$v]) ) { // undefined array index
@@ -975,16 +1003,12 @@ class Runtime {
 									}
 									$ref = &$ref[$v];
 								}
-								if( is_string($ref) ) { // @todo it only for compatible with PHP 5.4 on PHP 5.3 @see http://www.php.net/manual/en/function.empty.php Example #2 empty() on String Offsets
-									if( (is_string($vn) && $vn == (string)(int)$vn && !empty($ref[$vn]) || (!is_string($vn) && !empty($ref[$vn]))) ) {
-										$value[FOXWAY_STACK_RESULT] = false;
-										break 2;
-									}// index is string
-								}elseif( !empty($ref[$vn]) ) {
+								// @todo ->>>>>>>>>>>> | ************************************************************* | <<<<< it only for compatible with PHP 5.4 if used PHP 5.3 @see http://www.php.net/manual/en/function.empty.php Example #2 empty() on String Offsets
+								if( !empty($ref[$vn]) && (is_array($ref) || !is_string($vn) || $vn == (string)(int)$vn) ) {
 									$value[FOXWAY_STACK_RESULT] = false;
 									break 2;
 								}
-							}elseif( !empty($ref) ) { // there is no array index and empty() returns false
+							}elseif( !empty($ref) ) { // there is no array index and empty() returns false (PHP 5.5.0 supports expressions)
 								$value[FOXWAY_STACK_RESULT] = false;
 								break 2;
 							}

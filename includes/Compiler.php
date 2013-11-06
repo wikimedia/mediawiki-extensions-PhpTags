@@ -25,6 +25,7 @@ define( 'FOXWAY_THIS_IS_FUNCTION', 1 << 18 );
 define( 'FOXWAY_EXPECT_ARRAY_INDEX_CLOSE', 1 << 19 );
 define( 'FOXWAY_EXPECT_EQUAL_END', 1 << 20 );
 define( 'FOXWAY_EQUAL_HAVE_OPERATOR', 1 << 21 );
+define( 'FOXWAY_ALLOW_ONLY_VARIABLES', 1 << 22 );
 
 define( 'FOXWAY_CLEAR_FLAG_FOR_SHIFT_BEFORE_PARENTHESES', FOXWAY_EXPECT_PARENTHESES_WITH_LIST_PARAMS );
 //define( 'FOXWAY_CLEAR_FLAG_FOR_SHIFT_AFTER_PARENTHESES', FOXWAY_EXPECT_PARENTHESES_WITH_LIST_PARAMS );
@@ -169,7 +170,7 @@ class Compiler {
 				case T_CONSTANT_ENCAPSED_STRING: // "foo" or 'bar'
 				case T_STRING: // true, false, null ...
 				case T_NUM_STRING: // echo "$foo[1]"; 1 is num string
-					if( $needOperator ) { throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine); }
+					if( $needOperator || $parentFlags & FOXWAY_ALLOW_ONLY_VARIABLES ) { throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine); }
 					$needOperator = true;
 					$parentFlags &= FOXWAY_CLEAR_FLAG_FOR_VALUE;
 
@@ -268,7 +269,7 @@ class Compiler {
 						break;
 					}
 					// This is a closing double quote
-					if( $needOperator ) { throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine); }
+					if( $needOperator || $parentFlags & FOXWAY_ALLOW_ONLY_VARIABLES ) { throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine); }
 					$needOperator = true;
 
 					$tmp = array(
@@ -292,7 +293,7 @@ class Compiler {
 					break;
 				case T_INC:
 				case T_DEC:
-					if( $stackEncapsed !== false || $incrementOperator ) { throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine); }
+					if( $stackEncapsed !== false || $incrementOperator || $parentFlags & FOXWAY_ALLOW_ONLY_VARIABLES ) { throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine); }
 
 					$precedence = self::$precedencesMatrix[$id];
 					if( $needOperator ) { // $foo++
@@ -312,7 +313,7 @@ class Compiler {
 					break;
 				case '+':
 				case '-':
-					if( !$needOperator ) { // This is negative statement of the next value: -$foo, -5, 5 + -5 ...
+					if( !$needOperator && ($parentFlags & FOXWAY_ALLOW_ONLY_VARIABLES) == 0 ) { // This is negative statement of the next value: -$foo, -5, 5 + -5 ...
 						if( $id == '-' ) { // ignore '+'
 							array_unshift( $rightOperators, array(FOXWAY_STACK_COMMAND=>$id, FOXWAY_STACK_RESULT=>null, FOXWAY_STACK_PARAM=>0, FOXWAY_STACK_TOKEN_LINE=>$tokenLine) );
 							if( isset($rightOperators[1]) ) { // this is not first right operator. Example: echo (int)-
@@ -348,7 +349,7 @@ class Compiler {
 				case T_IS_IDENTICAL:		// ===
 				case T_IS_NOT_IDENTICAL:	// !==
 				case '?':			// Ternary operator
-					if( !$needOperator ) { throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine); }
+					if( !$needOperator || $parentFlags & FOXWAY_ALLOW_ONLY_VARIABLES ) { throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine); }
 					// break is not necessary here
 				case ':': // Ternary middle
 					if( $rightOperators ) { throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine); }
@@ -461,7 +462,7 @@ class Compiler {
 					array_pop( $values ); // remove T_VARIABLE from $values
 					// break is not necessary here
 				case T_DOUBLE_ARROW:	// =>
-					if( !$needOperator || !$lastValue || $rightOperators ) { throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine); }
+					if( !$needOperator || !$lastValue || $rightOperators || $parentFlags & FOXWAY_ALLOW_ONLY_VARIABLES ) { throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine); }
 					$needOperator = false;
 
 					array_unshift( $needParams, array(FOXWAY_STACK_COMMAND=>$id, FOXWAY_STACK_RESULT=>&$lastValue[FOXWAY_STACK_RESULT], FOXWAY_STACK_PARAM=>&$lastValue, FOXWAY_STACK_TOKEN_LINE=>$tokenLine) );
@@ -763,7 +764,7 @@ closeoperator:
 					//$operator = false;
 					break;
 				case '(':
-					if( $needOperator ) { throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine); }
+					if( $needOperator || $parentFlags & FOXWAY_ALLOW_ONLY_VARIABLES ) { throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine); }
 
 					$parentheses[] = $parentFlags;
 					$parentFlags = FOXWAY_EXPECT_PARENTHES_CLOSE | ($parentFlags & FOXWAY_CLEAR_FLAG_FOR_SHIFT_BEFORE_PARENTHESES) >> 1;
@@ -839,7 +840,7 @@ closeoperator:
 					self::getNextToken( $tokens, $index, $countTokens, $tokenLine, array('(') );
 					break;
 				case T_ARRAY:		// array
-					if( $needOperator ) { throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine); }
+					if( $needOperator || $parentFlags & FOXWAY_ALLOW_ONLY_VARIABLES ) { throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine); }
 
 					$parentheses[] = $parentFlags;
 					$parentFlags = FOXWAY_EXPECT_PARENTHES_CLOSE|FOXWAY_ALLOW_COMMA_AT_END_PARENTHES|FOXWAY_EXPECT_LIST_PARAMS|FOXWAY_THIS_IS_FUNCTION|FOXWAY_ALLOW_DOUBLE_ARROW;
@@ -868,7 +869,7 @@ closeoperator:
 				case T_STRING_CAST:	// (string)
 				case T_BOOL_CAST:	// (bool)
 				case T_UNSET_CAST:	// (unset)
-					if( $needOperator ) { throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine); }
+					if( $needOperator || $parentFlags & FOXWAY_ALLOW_ONLY_VARIABLES ) { throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine); }
 
 					array_unshift( $rightOperators, array(FOXWAY_STACK_COMMAND=>$id, FOXWAY_STACK_RESULT=>null, FOXWAY_STACK_TOKEN_LINE=>$tokenLine) );
 					if( isset($rightOperators[1]) ) { // this is not first right operator. Example: echo (int)-
@@ -1037,7 +1038,7 @@ closeoperator:
 					$bytecode[][] = $tmp;
 					break;
 				case T_PRINT: // print
-					if( $needOperator ) { throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine); }
+					if( $needOperator || $parentFlags & FOXWAY_ALLOW_ONLY_VARIABLES ) { throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine); }
 					$parentheses[] = $parentFlags;
 					$parentFlags = FOXWAY_EXPECT_SEMICOLON | FOXWAY_THIS_IS_FUNCTION;
 
@@ -1064,10 +1065,14 @@ closeoperator:
 				case T_ISSET:
 				case T_UNSET:
 				case T_EMPTY:
-					if( $needOperator ) { throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine); }
+					if( $needOperator || $parentFlags & FOXWAY_ALLOW_ONLY_VARIABLES ) { throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine); }
 
 					$parentheses[] = $parentFlags;
-					$parentFlags = FOXWAY_EXPECT_PARENTHES_CLOSE|FOXWAY_EXPECT_LIST_PARAMS|FOXWAY_THIS_IS_FUNCTION;
+					if( $id == T_EMPTY ) {
+						$parentFlags = FOXWAY_EXPECT_PARENTHES_CLOSE|FOXWAY_EXPECT_LIST_PARAMS|FOXWAY_THIS_IS_FUNCTION;
+					}else{
+						$parentFlags = FOXWAY_EXPECT_PARENTHES_CLOSE|FOXWAY_EXPECT_LIST_PARAMS|FOXWAY_THIS_IS_FUNCTION|FOXWAY_ALLOW_ONLY_VARIABLES;
+					}
 
 					array_unshift( $needParams, array( FOXWAY_STACK_COMMAND=>$id, FOXWAY_STACK_RESULT=>null, FOXWAY_STACK_PARAM=>array(), FOXWAY_STACK_TOKEN_LINE=>$tokenLine ) );
 
