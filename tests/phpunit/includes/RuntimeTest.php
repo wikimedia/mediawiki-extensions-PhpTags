@@ -2975,4 +2975,24 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 				array('false')
 				);
 	}
+
+	public function testRun_echo_unset_1() {
+		$this->assertEquals(
+				Runtime::runSource('$var = "string"; echo isset($var) ? "true" : "false"; unset($var); echo isset($var) ? "true" : "false";'),
+				array('true', 'false')
+				);
+	}
+	public function testRun_echo_unset_2() {
+		$this->assertEquals(
+				Runtime::runSource('$var = array("string"); echo isset($var[0]) ? "true" : "false"; unset($var[0]); echo isset($var[0]) ? "true" : "false";'),
+				array('true', 'false')
+				);
+	}
+	public function testRun_echo_unset_3() {
+		$this->assertEquals(
+				Runtime::runSource('$var = array("foo" => "string"); echo isset($var["foo"]) ? "true" : "false"; unset($var["foo"]); echo isset($var["foo"]) ? "true" : "false";'),
+				array('true', 'false')
+				);
+	}
+
 }

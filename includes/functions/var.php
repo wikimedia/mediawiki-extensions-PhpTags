@@ -13,7 +13,7 @@ return array(
 	'boolval' => array( 1=>function($args) { return (bool)$args[0]; } ),
 // @todo debug_zval_dump()
 	'doubleval' => array( 1=>function($args) { return doubleval($args[0]); } ),
-// @todo empty() in runtime.php
+	// empty() in runtime.php
 	'floatval' => array( 1=>function($args) { return floatval($args[0]); } ),
 // @todo get_defined_vars() in runtime.php
 	// get_resource_type() it have not resources
@@ -38,7 +38,7 @@ return array(
 	// is_resource it have not resources
 	'is_scalar' => array( 1=>function($args) { return is_scalar($args[0]); } ),
 	'is_string' => array( 1=>function($args) { return is_string($args[0]); } ),
-// @todo isset() in runtime.php
+	// isset() in runtime.php
 	'print_r' => array(
 		FOXWAY_DEFAULT_VALUES=>array( 1=>false ),
 		2=>function($args) { $ret = print_r($args[0], true); return $args[1] ? $ret : new Foxway\outPrint(true, $ret); },
@@ -47,7 +47,7 @@ return array(
 	'settype' => array( 2=>function($args) { return settype($args[0], $args[1]); } ),
 	'strval' => array( 1=>function($args) { return strval($args[0]); } ),
 // @todo mixed unserialize ( string $str )
-// @todo unset() in runtime.php
+	// unset() in runtime.php
 	'var_dump' => array(
 		FOXWAY_MIN_VALUES=>1,
 		''=>function($args) { ob_start(); call_user_func_array('var_dump', $args); return new Foxway\outPrint( null, ob_get_clean() ); },
