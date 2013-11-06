@@ -35,45 +35,6 @@ class Runtime {
 	protected static $staticVariables = array();
 	protected static $globalVariables = array();
 
-	// @see http://www.php.net/manual/ru/language.operators.precedence.php
-	protected static $operatorsPrecedence = array(
-		//array('['),
-		//		++		--		(int)			(float)		(string)		(array)		(bool)			(unset)
-		array(T_INC, T_DEC, '~', T_INT_CAST, T_DOUBLE_CAST, T_STRING_CAST, T_ARRAY_CAST, T_BOOL_CAST, T_UNSET_CAST),
-		array('!'),
-		array('*', '/', '%'),
-		array('+', '-', '.'),
-		//		<<	>>
-		array(T_SL, T_SR),
-		//						<=						>=
-		array('<', '>', T_IS_SMALLER_OR_EQUAL, T_IS_GREATER_OR_EQUAL),
-		//		==				!=				===				!==
-		array(T_IS_EQUAL, T_IS_NOT_EQUAL, T_IS_IDENTICAL, T_IS_NOT_IDENTICAL),
-		array('&'),
-		array('^'),
-		array('|'),
-		array(T_BOOLEAN_AND), // &&
-		array(T_BOOLEAN_OR), // ||
-		array('?', ':'),
-		//				+=			-=				*=			/=			.=				%=				&=			|=			^=			<<=			>>=				=>
-		array('=', T_PLUS_EQUAL, T_MINUS_EQUAL, T_MUL_EQUAL, T_DIV_EQUAL, T_CONCAT_EQUAL, T_MOD_EQUAL, T_AND_EQUAL, T_OR_EQUAL, T_XOR_EQUAL, T_SL_EQUAL, T_SR_EQUAL, T_DOUBLE_ARROW),
-		array(T_LOGICAL_AND), // and
-		array(T_LOGICAL_XOR), // xor
-		array(T_LOGICAL_OR), // or
-		array(','),
-	);
-	private static $precedencesCount;
-	private static $precedencesMatrix=array();
-
-	public function __construct() {
-		if( self::$precedencesCount === null ) {
-			foreach (self::$operatorsPrecedence as $key => &$value) {
-				self::$precedencesMatrix += array_fill_keys($value, $key);
-			}
-			self::$precedencesCount = $key;
-		}
-	}
-
 	/*public function startTime($scope) {
 		self::$startTime[$scope] = microtime(true);
 		if( isset(self::$time[$scope]) ) {

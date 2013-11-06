@@ -44,6 +44,7 @@ class Compiler {
 
 	/**
 	 * Operator Precedence
+	 * @see http://www.php.net/manual/en/language.operators.precedence.php
 	 * @var array
 	 */
 	protected static $operatorsPrecedence = array(
@@ -700,10 +701,12 @@ closeoperator:
 									$k = array_keys($tmp);
 									$lk = array_pop( $k ); // Get key of last right operator
 									$lastValue = &$tmp[$lk]; // Set $lastValue as link to last right operator
+									$stack[] = &$needParams[0]; // add operator T_PRINT to stack
 									$stack = array_merge($stack, $tmp); // Push right operators to stack
 									unset($tmp);
 								}else{
 									$lastValue = &$needParams[0]; // restore T_PRINT as value
+									$stack[] = &$lastValue; // add operator T_PRINT to stack
 								}
 								array_shift($needParams);
 								if( $parentFlags & FOXWAY_NEED_RESTORE_OPERATOR ) { // Restore $operator if necessary
@@ -1037,43 +1040,14 @@ closeoperator:
 					}while( ',' == self::getNextToken( $tokens, $index, $countTokens, $tokenLine, array(',', ';') ) );
 					$bytecode[][] = $tmp;
 					break;
-				case T_PRINT: // print
-					if( $needOperator || $parentFlags & FOXWAY_ALLOW_ONLY_VARIABLES ) { throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine); }
-					$parentheses[] = $parentFlags;
-					$parentFlags = FOXWAY_EXPECT_SEMICOLON | FOXWAY_THIS_IS_FUNCTION;
-
-					array_unshift( $needParams, array(FOXWAY_STACK_COMMAND=>T_PRINT, FOXWAY_STACK_RESULT=>1, FOXWAY_STACK_TOKEN_LINE=>$tokenLine) );
-					$stack[] = &$needParams[0];
-
-					if( isset($operator) ) { // Operator exists. Examples: echo 1+print
-						$memOperators[] = &$operator; // push $operator temporarily without PARAM_2
-						unset($operator);
-						$parentFlags |= FOXWAY_NEED_RESTORE_OPERATOR;
-					}
-					if( $rightOperators ) { // right operator was used, example: echo -print
-						$memOperators[] = $rightOperators; // push $rightOperators for restore later
-						$rightOperators = array();
-						$parentFlags |= FOXWAY_NEED_RESTORE_RIGHT_OPERATORS;
-						unset($lastValue);
-					}
-
-					ksort($math);
-					$memory[] = array($stack, $math); // push stack for restore late. Example: echo $a + array
-					$stack = array();
-					$math = array();
-					break;
+				case T_PRINT:
 				case T_ISSET:
 				case T_UNSET:
 				case T_EMPTY:
 					if( $needOperator || $parentFlags & FOXWAY_ALLOW_ONLY_VARIABLES ) { throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine); }
 
 					$parentheses[] = $parentFlags;
-					if( $id == T_EMPTY ) {
-						$parentFlags = FOXWAY_EXPECT_PARENTHES_CLOSE|FOXWAY_EXPECT_LIST_PARAMS|FOXWAY_THIS_IS_FUNCTION;
-					}else{
-						$parentFlags = FOXWAY_EXPECT_PARENTHES_CLOSE|FOXWAY_EXPECT_LIST_PARAMS|FOXWAY_THIS_IS_FUNCTION|FOXWAY_ALLOW_ONLY_VARIABLES;
-					}
-
+					$parentFlags = FOXWAY_THIS_IS_FUNCTION;
 					array_unshift( $needParams, array( FOXWAY_STACK_COMMAND=>$id, FOXWAY_STACK_RESULT=>null, FOXWAY_STACK_PARAM=>array(), FOXWAY_STACK_TOKEN_LINE=>$tokenLine ) );
 
 					if( isset($operator) ) { // Operator exists. Example: $foo = isset
@@ -1087,12 +1061,22 @@ closeoperator:
 						$parentFlags |= FOXWAY_NEED_RESTORE_RIGHT_OPERATORS;
 						unset($lastValue);
 					}
-					$parentLevel++;
 
 					ksort($math);
 					$memory[] = array($stack, $math); // push stack for restore late. Example: echo $a + array
 					$stack = array();
 					$math = array();
+
+					if( $id == T_PRINT ) {
+						$parentFlags |= FOXWAY_EXPECT_SEMICOLON;
+						$needParams[0][FOXWAY_STACK_RESULT] = 1;
+						break; /**** EXIT ****/
+					}elseif( $id == T_EMPTY ) {
+						$parentFlags |= FOXWAY_EXPECT_PARENTHES_CLOSE|FOXWAY_EXPECT_LIST_PARAMS;
+					}else{ // T_UNSET, T_ISSET
+						$parentFlags |= FOXWAY_EXPECT_PARENTHES_CLOSE|FOXWAY_EXPECT_LIST_PARAMS|FOXWAY_ALLOW_ONLY_VARIABLES;
+					}
+					$parentLevel++;
 
 					self::getNextToken( $tokens, $index, $countTokens, $tokenLine, array('(') );
 					break;
