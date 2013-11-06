@@ -1061,9 +1061,36 @@ closeoperator:
 					$stack = array();
 					$math = array();
 					break;
-				case T_EMPTY:
 				case T_ISSET:
 				case T_UNSET:
+				case T_EMPTY:
+					if( $needOperator ) { throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine); }
+
+					$parentheses[] = $parentFlags;
+					$parentFlags = FOXWAY_EXPECT_PARENTHES_CLOSE|FOXWAY_EXPECT_LIST_PARAMS|FOXWAY_THIS_IS_FUNCTION;
+
+					array_unshift( $needParams, array( FOXWAY_STACK_COMMAND=>$id, FOXWAY_STACK_RESULT=>null, FOXWAY_STACK_PARAM=>array(), FOXWAY_STACK_TOKEN_LINE=>$tokenLine ) );
+
+					if( isset($operator) ) { // Operator exists. Example: $foo = isset
+						$memOperators[] = &$operator; // push $operator temporarily without PARAM_2
+						unset($operator);
+						$parentFlags |= FOXWAY_NEED_RESTORE_OPERATOR;
+					}
+					if( $rightOperators ) { // right operator was used, example: echo -isset
+						$memOperators[] = $rightOperators; // push $rightOperators for restore later
+						$rightOperators = array();
+						$parentFlags |= FOXWAY_NEED_RESTORE_RIGHT_OPERATORS;
+						unset($lastValue);
+					}
+					$parentLevel++;
+
+					ksort($math);
+					$memory[] = array($stack, $math); // push stack for restore late. Example: echo $a + array
+					$stack = array();
+					$math = array();
+
+					self::getNextToken( $tokens, $index, $countTokens, $tokenLine, array('(') );
+					break;
 				case T_LIST:
 
 					// @todo

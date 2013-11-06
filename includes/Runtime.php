@@ -957,6 +957,40 @@ class Runtime {
 							}
 						}
 						break;
+					case T_EMPTY:
+						foreach($value[FOXWAY_STACK_PARAM] as $val) {
+							if( $val[FOXWAY_STACK_COMMAND] == T_VARIABLE ) { // Example: empty($foo);
+								if( !isset($thisVariables[ $val[FOXWAY_STACK_PARAM] ]) ) { // undefined variable
+									continue;
+								}
+								$ref = &$thisVariables[ $val[FOXWAY_STACK_PARAM] ];
+							}else{
+								$ref = &$val[FOXWAY_STACK_RESULT];
+							}
+							if( isset($val[FOXWAY_STACK_ARRAY_INDEX]) ) { // Example: $foo[1]
+								$vn = array_pop( $val[FOXWAY_STACK_ARRAY_INDEX] );
+								foreach( $val[FOXWAY_STACK_ARRAY_INDEX] as $v ) {
+									if( !isset($ref[$v]) ) { // undefined array index
+										continue 2;
+									}
+									$ref = &$ref[$v];
+								}
+								if( is_string($ref) ) { // @todo it only for compatible with PHP 5.4 on PHP 5.3 @see http://www.php.net/manual/en/function.empty.php Example #2 empty() on String Offsets
+									if( (is_string($vn) && $vn == (string)(int)$vn && !empty($ref[$vn]) || (!is_string($vn) && !empty($ref[$vn]))) ) {
+										$value[FOXWAY_STACK_RESULT] = false;
+										break 2;
+									}// index is string
+								}elseif( !empty($ref[$vn]) ) {
+									$value[FOXWAY_STACK_RESULT] = false;
+									break 2;
+								}
+							}elseif( !empty($ref) ) { // there is no array index and empty() returns false
+								$value[FOXWAY_STACK_RESULT] = false;
+								break 2;
+							}
+						}
+						$value[FOXWAY_STACK_RESULT] = true;
+						break;
 					default:
 						if( !isset($thisVariables[ $value[FOXWAY_STACK_PARAM][FOXWAY_STACK_PARAM] ]) ) { // Use undefined variable
 							if( isset($value[FOXWAY_STACK_ARRAY_INDEX]) ) { // Example: $foo[1]++

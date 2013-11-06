@@ -2760,4 +2760,59 @@ echo $count; //3'),
 				);
 	}
 
+	public function testRun_echo_empty_1() {
+		$this->assertEquals(
+				Runtime::runSource('$a = 0.00; echo (empty($a)? "empty": "not empty");'),
+				array('empty')
+				);
+	}
+	public function testRun_echo_empty_2() {
+		$this->assertEquals(
+				Runtime::runSource('$b = "0.00"; echo (empty($b)? "empty": "not empty");'),
+				array('not empty')
+				);
+	}
+	public function testRun_echo_empty_3() {
+		$this->assertEquals(
+				Runtime::runSource('echo (empty($undefined_variable)? "empty": "not empty");'),
+				array('empty')
+				);
+	}
+	public function testRun_echo_empty_key_string_1() {
+		$this->assertEquals(
+				Runtime::runSource('$expected_array_got_string = "somestring";
+echo empty($expected_array_got_string[0]) ? "true" : "false";'),
+				array('false')
+				);
+	}
+	public function testRun_echo_empty_key_string_2() {
+		$this->assertEquals(
+				Runtime::runSource('echo empty($expected_array_got_string["0"]) ? "true" : "false";'),
+				array('false')
+				);
+	}
+	public function testRun_echo_empty_key_string_3() {
+		$this->assertEquals(
+				Runtime::runSource('echo empty($expected_array_got_string[0.5]) ? "true" : "false";'),
+				array('false')
+				);
+	}
+	public function testRun_echo_empty_key_string_4() { //PHP 5.4 changes how isset() behaves when passed string offsets.
+		$this->assertEquals(
+				Runtime::runSource('echo empty($expected_array_got_string["some_key"]) ? "true" : "false";'),
+				array('true')
+				);
+	}
+	public function testRun_echo_empty_key_string_5() { //PHP 5.4 changes how isset() behaves when passed string offsets.
+		$this->assertEquals(
+				Runtime::runSource('echo empty($expected_array_got_string["0.5"]) ? "true" : "false";'),
+				array('true')
+				);
+	}
+	public function testRun_echo_empty_key_string_6() { //PHP 5.4 changes how isset() behaves when passed string offsets.
+		$this->assertEquals(
+				Runtime::runSource('echo empty($expected_array_got_string["0 Mostel"]) ? "true" : "false";'),
+				array('true')
+				);
+	}
 }
