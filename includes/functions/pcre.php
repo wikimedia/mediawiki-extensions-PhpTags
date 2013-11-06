@@ -9,6 +9,27 @@ if ( !defined( 'MEDIAWIKI' ) ) {
 	die( 'This file is an extension to MediaWiki and thus not a valid entry point.' );
 }
 
+/**
+ * add pcre constants in Runtime class
+ * @see http://www.php.net/manual/en/pcre.constants.php
+ */
+Foxway\Runtime::$constants += array(
+	'PREG_PATTERN_ORDER' => PREG_PATTERN_ORDER,
+	'PREG_SET_ORDER' => PREG_SET_ORDER,
+	'PREG_OFFSET_CAPTURE' => PREG_OFFSET_CAPTURE,
+	'PREG_SPLIT_NO_EMPTY' => PREG_SPLIT_NO_EMPTY,
+	'PREG_SPLIT_DELIM_CAPTURE' => PREG_SPLIT_DELIM_CAPTURE,
+	'PREG_SPLIT_OFFSET_CAPTURE' => PREG_SPLIT_OFFSET_CAPTURE,
+	'PREG_NO_ERROR' => PREG_NO_ERROR,
+	'PREG_INTERNAL_ERROR' => PREG_INTERNAL_ERROR,
+	'PREG_BACKTRACK_LIMIT_ERROR' => PREG_BACKTRACK_LIMIT_ERROR,
+	'PREG_RECURSION_LIMIT_ERROR' => PREG_RECURSION_LIMIT_ERROR,
+	'PREG_BAD_UTF8_ERROR' => PREG_BAD_UTF8_ERROR,
+	'PREG_BAD_UTF8_OFFSET_ERROR' => PREG_BAD_UTF8_OFFSET_ERROR,
+	'PCRE_VERSION' => PCRE_VERSION,
+	'PREG_GREP_INVERT' => PREG_GREP_INVERT,
+);
+
 $foxway_check_preg_replace_pattern = function ( $arg ) {
 	$getValidPattern = function ( $pattern ) {
 		$pattern = str_replace(chr(0), '', $pattern);
