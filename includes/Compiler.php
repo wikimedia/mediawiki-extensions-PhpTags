@@ -540,6 +540,7 @@ closeoperator:
 					}elseif( isset($lastValue) ) { // Operator does not exists, but there is value. Operator and value not exists for: array() or array(1,)
 						if( isset($lastValue) ) {
 							$operator = &$lastValue;
+							unset($lastValue);
 						}else{ // Value does not exist. Examples: echo () OR echo , OR echo ;
 							// @todo ternary without middle
 							throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine);
@@ -550,7 +551,6 @@ closeoperator:
 						// prepare $math
 						$needParams[0][FOXWAY_STACK_DO_FALSE] = $stack; // Save stack in operator ':'
 						$needParams[0][FOXWAY_STACK_PARAM_2] = &$operator[FOXWAY_STACK_RESULT]; // Save result in operator ':'
-						unset($lastValue);
 						$lastValue = array( FOXWAY_STACK_RESULT=>&$needParams[0] ); // restore operator ':' as value
 						$operator = &$needParams[1]; // restore operator '?'
 						unset($needParams[0]);
@@ -583,7 +583,6 @@ closeoperator:
 							if( $stackEncapsed !== false ) {
 								$needOperator = false;
 							}
-							unset($lastValue);
 							$lastValue = &$needParams[0];
 							array_shift($needParams);
 							$lastValue[FOXWAY_STACK_ARRAY_INDEX][] = &$operator[FOXWAY_STACK_RESULT]; // $lastValue must be T_VARIABLE only
@@ -625,7 +624,6 @@ closeoperator:
 							}
 
 							// Save result of parentheses to $lastValue
-							unset($lastValue);
 							if( $parentFlags & FOXWAY_NEED_RESTORE_RIGHT_OPERATORS ) { // Need restore right operators
 								$tmp = array_pop( $memOperators ); // restore right operators to $tmp
 								$tmp[0][FOXWAY_STACK_PARAM_2] = &$operator[FOXWAY_STACK_RESULT]; // Set parents result as param to right operators
@@ -673,7 +671,6 @@ closeoperator:
 								$memory[$lk][0] = array_merge( $memory[$lk][0], $stack );
 								$stack = array();
 							}
-							unset($lastValue);
 							$needOperator = false;
 							break;
 						default: // ';'
