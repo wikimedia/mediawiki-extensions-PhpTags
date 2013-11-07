@@ -2995,4 +2995,35 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 				);
 	}
 
+	public function testRun_echo_list_1() {
+		$this->assertEquals(
+				Runtime::runSource('$info = array("coffee", "brown", "caffeine"); list($drink, $color, $power) = $info; echo "$drink is $color and $power makes it special.";', array('testList'), 1),
+				array('coffee is brown and caffeine makes it special.')
+				);
+	}
+	public function testRun_echo_list_2() {
+		$this->assertEquals(
+				Runtime::runSource('$info = array("coffee", "brown", "caffeine"); list($drink, , $power) = $info; echo "$drink has $power.";', array('testList'), 2),
+				array('coffee has caffeine.')
+				);
+	}
+	public function testRun_echo_list_3() {
+		$this->assertEquals(
+				Runtime::runSource('$info = array("coffee", "brown", "caffeine"); list( , , $power) = $info; echo "I need $power!";', array('testList'), 3),
+				array('I need caffeine!')
+				);
+	}
+	public function testRun_echo_list_4() {
+		$this->assertEquals(
+				Runtime::runSource('list($bar) = "abcde"; echo print_r($bar,true);'),
+				array('')
+				);
+	}
+	public function testRun_echo_list_5() {
+		$this->assertEquals(
+				Runtime::runSource('list($a, list($b, $c)) = array(1, array(2, 3)); echo $a, $b, $c;'),
+				array(1, 2, 3)
+				);
+	}
+
 }

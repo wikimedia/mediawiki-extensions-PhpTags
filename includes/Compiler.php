@@ -26,6 +26,7 @@ define( 'FOXWAY_EXPECT_ARRAY_INDEX_CLOSE', 1 << 19 );
 define( 'FOXWAY_EXPECT_EQUAL_END', 1 << 20 );
 define( 'FOXWAY_EQUAL_HAVE_OPERATOR', 1 << 21 );
 define( 'FOXWAY_ALLOW_ONLY_VARIABLES', 1 << 22 );
+define( 'FOXWAY_ALLOW_SKIP_PARAMS', 1 << 23 ); // used in operator T_LIST
 
 define( 'FOXWAY_CLEAR_FLAG_FOR_SHIFT_BEFORE_PARENTHESES', FOXWAY_EXPECT_PARENTHESES_WITH_LIST_PARAMS );
 //define( 'FOXWAY_CLEAR_FLAG_FOR_SHIFT_AFTER_PARENTHESES', FOXWAY_EXPECT_PARENTHESES_WITH_LIST_PARAMS );
@@ -459,17 +460,23 @@ class Compiler {
 				case T_XOR_EQUAL:		// ^=
 				case T_SL_EQUAL:		// <<=
 				case T_SR_EQUAL:		// >>=
-					if( $lastValue[FOXWAY_STACK_COMMAND] != T_VARIABLE ) { throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine); }
-					array_pop( $values ); // remove T_VARIABLE from $values
-					// break is not necessary here
 				case T_DOUBLE_ARROW:	// =>
-					if( !$needOperator || !$lastValue || $rightOperators || $parentFlags & FOXWAY_ALLOW_ONLY_VARIABLES ) { throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine); }
+					if ( !$needOperator || !isset($lastValue) || $rightOperators || $parentFlags & FOXWAY_ALLOW_ONLY_VARIABLES ) { throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine); }
 					$needOperator = false;
 
 					array_unshift( $needParams, array(FOXWAY_STACK_COMMAND=>$id, FOXWAY_STACK_RESULT=>&$lastValue[FOXWAY_STACK_RESULT], FOXWAY_STACK_PARAM=>&$lastValue, FOXWAY_STACK_TOKEN_LINE=>$tokenLine) );
-					if( $id == T_DOUBLE_ARROW ) {
+					if ( $id == T_DOUBLE_ARROW ) {
 						if( $parentFlags & FOXWAY_ALLOW_DOUBLE_ARROW == 0 ) { throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine); }
-					}else{
+					} elseif ( $id == '=' ) {
+						if ( $lastValue[FOXWAY_STACK_COMMAND] == T_VARIABLE ) {
+							array_pop( $values ); // remove T_VARIABLE from $values
+						} elseif ( $lastValue[FOXWAY_STACK_COMMAND] != T_LIST ) {
+							throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine);
+						}
+						$stack[] = &$needParams[0];
+					} else {
+						if ( $lastValue[FOXWAY_STACK_COMMAND] != T_VARIABLE ) { throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine); }
+						array_pop( $values ); // remove T_VARIABLE from $values
 						$stack[] = &$needParams[0];
 					}
 					$parentheses[] = $parentFlags;
@@ -514,6 +521,10 @@ class Compiler {
 					if( !$needOperator && !isset($operator) && $parentFlags & FOXWAY_THIS_IS_FUNCTION ) { $needOperator = true; }
 					// break is not necessary here
 				case ',':
+					if ( !$needOperator && !isset($lastValue) && $parentFlags & FOXWAY_ALLOW_SKIP_PARAMS ) {
+						$needOperator = true;
+						$lastValue = null;
+					}
 				case ';':
 					if( !$needOperator || !$parentFlags & FOXWAY_EXPECT_TERNARY_MIDDLE || $rightOperators ) { throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine); }
 
@@ -615,7 +626,9 @@ closeoperator:
 									unset($operator);
 								}
 								$operator = &$needParams[0]; // restore result of function as value, this will be set as $lastValue
-								$stack[] = &$operator;
+								if( $operator[FOXWAY_STACK_COMMAND] != T_LIST ) { // T_LIST doesn't need add to stack
+									$stack[] = &$operator; // add function to stack
+								}
 								array_shift($needParams);
 								list( $s, $math ) = array_pop($memory); // restore $stack, $math
 								if( $s ) {
@@ -980,8 +993,8 @@ closeoperator:
 									$needParams[0][FOXWAY_STACK_DO_FALSE] = $tmp;
 									$parentFlags = array_pop($parentheses);
 									$ifOperators[] = &$needParams[0];
+									array_shift($needParams);
 								}
-								array_shift($needParams);
 								break; /********** EXIT **********/
 							} else { // Example: if(1) { echo 2; }
 								$bytecode[] = $tmp;
@@ -1037,6 +1050,18 @@ closeoperator:
 					}while( ',' == self::getNextToken( $tokens, $index, $countTokens, $tokenLine, array(',', ';') ) );
 					$bytecode[][] = $tmp;
 					break;
+				case T_LIST:
+					if ( $rightOperators ) { throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine); }
+					if ( $parentFlags & FOXWAY_ALLOW_ONLY_VARIABLES && $needParams[0][FOXWAY_STACK_COMMAND] == T_LIST ) { // T_LIST inside T_LIST. Example: list($a, list
+						$parentheses[] = $parentFlags;
+						array_unshift( $needParams, array( FOXWAY_STACK_COMMAND=>$id, FOXWAY_STACK_RESULT=>null, FOXWAY_STACK_PARAM=>array(), FOXWAY_STACK_TOKEN_LINE=>$tokenLine ) );
+						$memory[] = array($stack, array()); // push stack for restore late.
+						$stack = array();
+						$parentLevel++;
+						self::getNextToken( $tokens, $index, $countTokens, $tokenLine, array('(') );
+						break; /**** EXIT ****/
+					}
+					// break is not necessary here
 				case T_PRINT:
 				case T_ISSET:
 				case T_UNSET:
@@ -1064,22 +1089,21 @@ closeoperator:
 					$stack = array();
 					$math = array();
 
-					if( $id == T_PRINT ) {
-						$parentFlags |= FOXWAY_EXPECT_SEMICOLON;
-						$needParams[0][FOXWAY_STACK_RESULT] = 1;
+					if ( $id == T_PRINT ) {
+							$parentFlags |= FOXWAY_EXPECT_SEMICOLON;
+							$needParams[0][FOXWAY_STACK_RESULT] = 1;
 						break; /**** EXIT ****/
-					}elseif( $id == T_EMPTY ) {
+					} elseif ( $id == T_LIST ) {
+						$parentFlags |= FOXWAY_EXPECT_PARENTHES_CLOSE|FOXWAY_EXPECT_LIST_PARAMS|FOXWAY_ALLOW_ONLY_VARIABLES|FOXWAY_ALLOW_SKIP_PARAMS;
+					} elseif ( $id == T_EMPTY ) {
 						$parentFlags |= FOXWAY_EXPECT_PARENTHES_CLOSE|FOXWAY_EXPECT_LIST_PARAMS;
-					}else{ // T_UNSET, T_ISSET
+					} else { // T_UNSET, T_ISSET
 						$parentFlags |= FOXWAY_EXPECT_PARENTHES_CLOSE|FOXWAY_EXPECT_LIST_PARAMS|FOXWAY_ALLOW_ONLY_VARIABLES;
 					}
 					$parentLevel++;
 
 					self::getNextToken( $tokens, $index, $countTokens, $tokenLine, array('(') );
 					break;
-				case T_LIST:
-
-					// @todo
 				default :
 					throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine);
 					break;

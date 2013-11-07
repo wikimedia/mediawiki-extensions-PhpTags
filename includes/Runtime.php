@@ -500,18 +500,24 @@ class Runtime {
 						}
 						$value[FOXWAY_STACK_RESULT] = true;
 						break;
-					default:
-						if( !isset($thisVariables[ $value[FOXWAY_STACK_PARAM][FOXWAY_STACK_PARAM] ]) ) { // Use undefined variable
-							if( isset($value[FOXWAY_STACK_ARRAY_INDEX]) ) { // Example: $foo[1]++
-								$thisVariables[ $value[FOXWAY_STACK_PARAM][FOXWAY_STACK_PARAM] ] = array();
-							}else{
-								$thisVariables[ $value[FOXWAY_STACK_PARAM][FOXWAY_STACK_PARAM] ] = null;
-							}
-							// @todo E_NOTICE
+					default: // ++, --, =, +=, -=, *=, etc...
+						$param = &$value[FOXWAY_STACK_PARAM];
+						if ( $param[FOXWAY_STACK_COMMAND] == T_LIST ) { // this is T_LIST. Example: list($foo, $bar) = $array;
+							self::fillList( $value[FOXWAY_STACK_PARAM_2], $param, $thisVariables );
+							unset( $param );
+							break; /**** EXIT ****/
 						}
-						$ref = &$thisVariables[ $value[FOXWAY_STACK_PARAM][FOXWAY_STACK_PARAM] ];
-						if( isset($value[FOXWAY_STACK_PARAM][FOXWAY_STACK_ARRAY_INDEX]) ) { // Example: $foo[1]++
-							foreach( $value[FOXWAY_STACK_PARAM][FOXWAY_STACK_ARRAY_INDEX] as $v ) {
+						if( !isset($thisVariables[ $param[FOXWAY_STACK_PARAM] ]) ) { // Use undefined variable
+							if( isset($value[FOXWAY_STACK_ARRAY_INDEX]) ) { // Example: $foo[1]++
+								$thisVariables[ $param[FOXWAY_STACK_PARAM] ] = array();
+							}else{
+								$thisVariables[ $param[FOXWAY_STACK_PARAM] ] = null;
+							}
+							// @todo E_NOTICE if need
+						}
+						$ref = &$thisVariables[ $param[FOXWAY_STACK_PARAM] ];
+						if ( isset($param[FOXWAY_STACK_ARRAY_INDEX]) ) { // Example: $foo[1]++
+							foreach ( $param[FOXWAY_STACK_ARRAY_INDEX] as $v ) {
 								if( $v === null ) { // Example: $foo[]
 									$t = null;
 									$ref[] = &$t;
@@ -526,7 +532,7 @@ class Runtime {
 								}
 							}
 						}
-						switch ($value[FOXWAY_STACK_COMMAND]) {
+						switch ( $value[FOXWAY_STACK_COMMAND] ) {
 							case T_INC:
 								$ref++;
 								break;
@@ -535,54 +541,99 @@ class Runtime {
 								break;
 							case '=':
 								// Save result in T_VARIABLE FOXWAY_STACK_RESULT, Save result in $thisVariables[variable name]
-								$value[FOXWAY_STACK_PARAM][FOXWAY_STACK_RESULT] = $ref = $value[FOXWAY_STACK_PARAM_2];
+								$param[FOXWAY_STACK_RESULT] = $ref = $value[FOXWAY_STACK_PARAM_2];
 								break;
 							case T_PLUS_EQUAL:		// +=
-								$value[FOXWAY_STACK_PARAM][FOXWAY_STACK_RESULT] = $ref += $value[FOXWAY_STACK_PARAM_2];
+								$param[FOXWAY_STACK_RESULT] = $ref += $value[FOXWAY_STACK_PARAM_2];
 								break;
 							case T_MINUS_EQUAL:		// -=
-								$value[FOXWAY_STACK_PARAM][FOXWAY_STACK_RESULT] = $ref -= $value[FOXWAY_STACK_PARAM_2];
+								$param[FOXWAY_STACK_RESULT] = $ref -= $value[FOXWAY_STACK_PARAM_2];
 								break;
 							case T_MUL_EQUAL:		// *=
-								$value[FOXWAY_STACK_PARAM][FOXWAY_STACK_RESULT] = $ref *= $value[FOXWAY_STACK_PARAM_2];
+								$param[FOXWAY_STACK_RESULT] = $ref *= $value[FOXWAY_STACK_PARAM_2];
 								break;
 							case T_DIV_EQUAL:		// /=
 								if( (int)$value[FOXWAY_STACK_PARAM_2] == 0 ) {
 									throw new ExceptionFoxway(null, FOXWAY_PHP_WARNING_DIVISION_BY_ZERO, $value[FOXWAY_STACK_TOKEN_LINE]);
 								}
-								$value[FOXWAY_STACK_PARAM][FOXWAY_STACK_RESULT] = $ref /= $value[FOXWAY_STACK_PARAM_2];
+								$param[FOXWAY_STACK_RESULT] = $ref /= $value[FOXWAY_STACK_PARAM_2];
 								break;
 							case T_CONCAT_EQUAL:	// .=
-								$value[FOXWAY_STACK_PARAM][FOXWAY_STACK_RESULT] = $ref .= $value[FOXWAY_STACK_PARAM_2];
+								$param[FOXWAY_STACK_RESULT] = $ref .= $value[FOXWAY_STACK_PARAM_2];
 								break;
 							case T_MOD_EQUAL:		// %=
 								if( (int)$value[FOXWAY_STACK_PARAM_2] == 0 ) {
 									throw new ExceptionFoxway(null, FOXWAY_PHP_WARNING_DIVISION_BY_ZERO, $value[FOXWAY_STACK_TOKEN_LINE]);
 								}
-								$value[FOXWAY_STACK_PARAM][FOXWAY_STACK_RESULT] = $ref %= $value[FOXWAY_STACK_PARAM_2];
+								$param[FOXWAY_STACK_RESULT] = $ref %= $value[FOXWAY_STACK_PARAM_2];
 								break;
 							case T_AND_EQUAL:		// &=
-								$value[FOXWAY_STACK_PARAM][FOXWAY_STACK_RESULT] = $ref &= $value[FOXWAY_STACK_PARAM_2];
+								$param[FOXWAY_STACK_RESULT] = $ref &= $value[FOXWAY_STACK_PARAM_2];
 								break;
 							case T_OR_EQUAL:		// |=
-								$value[FOXWAY_STACK_PARAM][FOXWAY_STACK_RESULT] = $ref |= $value[FOXWAY_STACK_PARAM_2];
+								$param[FOXWAY_STACK_RESULT] = $ref |= $value[FOXWAY_STACK_PARAM_2];
 								break;
 							case T_XOR_EQUAL:		// ^=
-								$value[FOXWAY_STACK_PARAM][FOXWAY_STACK_RESULT] = $ref ^= $value[FOXWAY_STACK_PARAM_2];
+								$param[FOXWAY_STACK_RESULT] = $ref ^= $value[FOXWAY_STACK_PARAM_2];
 								break;
 							case T_SL_EQUAL:		// <<=
-								$value[FOXWAY_STACK_PARAM][FOXWAY_STACK_RESULT] = $ref <<= $value[FOXWAY_STACK_PARAM_2];
+								$param[FOXWAY_STACK_RESULT] = $ref <<= $value[FOXWAY_STACK_PARAM_2];
 								break;
 							case T_SR_EQUAL:		// >>=
-								$value[FOXWAY_STACK_PARAM][FOXWAY_STACK_RESULT] = $ref >>= $value[FOXWAY_STACK_PARAM_2];
+								$param[FOXWAY_STACK_RESULT] = $ref >>= $value[FOXWAY_STACK_PARAM_2];
 								break;
 						}
+						unset($param);
 						break;
 				}
 			}
 		} while( list($code[$i][FOXWAY_STACK_RESULT], $code, $i, $c, $loopsOwner) = array_pop($memory) );
 
 		return $return;
+	}
+
+	private static function fillList( &$values, &$param, &$thisVariables ) {
+		$return = array();
+		foreach ( $param[FOXWAY_STACK_PARAM] as $key => $val ) {
+			if( $val !== null ) { // skip emty params. Example: list(, $bar) = $array;
+				if( $val[FOXWAY_STACK_COMMAND] == T_LIST ) { // T_LIST inside other T_LIST. Example: list($a, list($b, $c)) = array(1, array(2, 3));
+					if ( is_array($values) && isset($values[$key]) ) {
+						$return[$key] = self::fillList($values[$key], $val, $thisVariables);
+					} else {
+						static $a=array();
+						$return[$key] = self::fillList($a, $val, $thisVariables);
+					}
+					continue;
+				}
+				$ref = &$thisVariables[ $val[FOXWAY_STACK_PARAM] ];
+				if ( isset($val[FOXWAY_STACK_ARRAY_INDEX]) ) { // Example: list($foo[0], $foo[1]) = $array;
+					foreach ( $val[FOXWAY_STACK_ARRAY_INDEX] as $v ) {
+						if (  $v === null ) { // Example: $foo[]
+							$t = null;
+							$ref[] = &$t;
+							$ref = &$t;
+							unset( $t );
+						} else {
+							if ( !isset($ref[$v]) ) {
+								$ref[$v] = null;
+							}
+							$ref = &$ref[$v];
+						}
+					}
+				}
+				if ( is_array($values) ) {
+					if ( isset($values[$key]) ) {
+						$ref = $values[$key];
+					} else {
+						$ref = null;
+						// @todo E_NOTICE
+					}
+				} else { // list() work with array only
+					$ref = null;
+				}
+				$return[$key] = $ref;
+			}
+		}
 	}
 
 }
