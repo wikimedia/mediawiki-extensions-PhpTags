@@ -44,6 +44,7 @@ Foxway\Runtime::$functions = array_merge(
 		include __DIR__ . '/includes/functions/math.php', // Math Functions @see http://www.php.net/manual/en/ref.math.php
 		include __DIR__ . '/includes/functions/var.php', // Variable handling Functions @see http://www.php.net/manual/en/ref.var.php
 		include __DIR__ . '/includes/functions/pcre.php', // PCRE Functions @see http://www.php.net/manual/en/ref.pcre.php
+		include __DIR__ . '/includes/functions/datetime.php', // Date/Time Functions @see http://www.php.net/manual/en/ref.datetime.php
 		Foxway\Runtime::$functions
 );
 

@@ -405,7 +405,8 @@ class Runtime {
 							}
 						}else{ // This is constant
 							if( isset(self::$constants[$name]) ) {
-								$value[FOXWAY_STACK_RESULT] = is_callable(self::$constants[$name]) ? self::$constants[$name]() :self::$constants[$name];
+								$function = &self::$constants[$name];
+								$value[FOXWAY_STACK_RESULT] = is_callable($function) ? $function() : $function;
 							}else{
 								$value[FOXWAY_STACK_RESULT] = $name;
 								// @todo send notice undefined constant

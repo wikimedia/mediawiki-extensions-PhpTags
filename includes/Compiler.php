@@ -27,6 +27,7 @@ define( 'FOXWAY_EXPECT_EQUAL_END', 1 << 20 );
 define( 'FOXWAY_EQUAL_HAVE_OPERATOR', 1 << 21 );
 define( 'FOXWAY_ALLOW_ONLY_VARIABLES', 1 << 22 );
 define( 'FOXWAY_ALLOW_SKIP_PARAMS', 1 << 23 ); // used in operator T_LIST
+define( 'FOXWAY_DOUBLE_ARROW_WAS_USED', 1 << 24 );
 
 define( 'FOXWAY_CLEAR_FLAG_FOR_SHIFT_BEFORE_PARENTHESES', FOXWAY_EXPECT_PARENTHESES_WITH_LIST_PARAMS );
 //define( 'FOXWAY_CLEAR_FLAG_FOR_SHIFT_AFTER_PARENTHESES', FOXWAY_EXPECT_PARENTHESES_WITH_LIST_PARAMS );
@@ -467,6 +468,7 @@ class Compiler {
 					array_unshift( $needParams, array(FOXWAY_STACK_COMMAND=>$id, FOXWAY_STACK_RESULT=>&$lastValue[FOXWAY_STACK_RESULT], FOXWAY_STACK_PARAM=>&$lastValue, FOXWAY_STACK_TOKEN_LINE=>$tokenLine) );
 					if ( $id == T_DOUBLE_ARROW ) {
 						if( $parentFlags & FOXWAY_ALLOW_DOUBLE_ARROW == 0 ) { throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine); }
+						$parentFlags = ( $parentFlags & ~FOXWAY_ALLOW_DOUBLE_ARROW ) | FOXWAY_DOUBLE_ARROW_WAS_USED; // Mark double arrow was used
 					} elseif ( $id == '=' ) {
 						if ( $lastValue[FOXWAY_STACK_COMMAND] == T_VARIABLE ) {
 							array_pop( $values ); // remove T_VARIABLE from $values
@@ -685,6 +687,7 @@ closeoperator:
 								$stack = array();
 							}
 							$needOperator = false;
+							if( $parentFlags & FOXWAY_DOUBLE_ARROW_WAS_USED ) { $parentFlags = ( $parentFlags & ~FOXWAY_DOUBLE_ARROW_WAS_USED ) | FOXWAY_ALLOW_DOUBLE_ARROW; }
 							break;
 						default: // ';'
 							$needOperator = false;
