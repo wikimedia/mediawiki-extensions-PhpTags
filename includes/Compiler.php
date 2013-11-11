@@ -304,8 +304,9 @@ class Compiler {
 							throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine);
 						}
 						array_pop($values); // Move last T_VARIABLE ...
+						$lastValue[FOXWAY_STACK_PARAM_2] = true; // Skip E_NOTICE when variable is undefined, it will be show in T_INC operator
 						$stack[] = &$lastValue; // ... to stack ...
-						$stack[] = array(FOXWAY_STACK_COMMAND=>$id, FOXWAY_STACK_PARAM=>&$lastValue, FOXWAY_STACK_TOKEN_LINE=>$tokenLine); // ... and add ++ after it
+						$stack[] = array( FOXWAY_STACK_COMMAND=>$id, FOXWAY_STACK_PARAM=>&$lastValue, FOXWAY_STACK_TOKEN_LINE=>$tokenLine ); // ... and add ++ after it
 					}else{ // ++$foo
 						if( is_string($tokens[$index+1]) && $tokens[$index+1][0] != T_VARIABLE ) {
 							throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine);
@@ -530,6 +531,8 @@ class Compiler {
 				case ';':
 					if( !$needOperator || !$parentFlags & FOXWAY_EXPECT_TERNARY_MIDDLE || $rightOperators ) { throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine); }
 
+					// @todo REFACTORING
+					//if( $values && (isset($operator) || $lastValue[FOXWAY_STACK_COMMAND] != T_VARIABLE) ) {
 					if( $values ) {
 						$stack = array_merge($stack, $values);
 						$values = array();
@@ -620,7 +623,7 @@ closeoperator:
 									if( $parentFlags & FOXWAY_EXPECT_LIST_PARAMS ) {
 										$needParams[0][FOXWAY_STACK_PARAM][] = &$operator;
 										if( $parentFlags & FOXWAY_EXPECT_VARIABLE_REFERENCE && $operator[FOXWAY_STACK_COMMAND] == T_VARIABLE ) {
-											array_pop( $stack );
+											array_pop( $stack ); // @todo refactoring
 										}
 									}else{
 										throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine);
@@ -675,7 +678,7 @@ closeoperator:
 							if( $parentFlags & FOXWAY_EXPECT_LIST_PARAMS ) {
 								$needParams[0][FOXWAY_STACK_PARAM][] = &$operator;
 								if( $parentFlags & FOXWAY_EXPECT_VARIABLE_REFERENCE && $operator[FOXWAY_STACK_COMMAND] == T_VARIABLE ) {
-									array_pop( $stack );
+									array_pop( $stack ); // @todo refactoring
 								}
 							}else{
 								throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine);
@@ -1097,11 +1100,11 @@ closeoperator:
 							$needParams[0][FOXWAY_STACK_RESULT] = 1;
 						break; /**** EXIT ****/
 					} elseif ( $id == T_LIST ) {
-						$parentFlags |= FOXWAY_EXPECT_PARENTHES_CLOSE|FOXWAY_EXPECT_LIST_PARAMS|FOXWAY_ALLOW_ONLY_VARIABLES|FOXWAY_ALLOW_SKIP_PARAMS;
+						$parentFlags |= FOXWAY_EXPECT_PARENTHES_CLOSE|FOXWAY_EXPECT_LIST_PARAMS|FOXWAY_ALLOW_ONLY_VARIABLES|FOXWAY_ALLOW_SKIP_PARAMS|FOXWAY_EXPECT_VARIABLE_REFERENCE;
 					} elseif ( $id == T_EMPTY ) {
-						$parentFlags |= FOXWAY_EXPECT_PARENTHES_CLOSE|FOXWAY_EXPECT_LIST_PARAMS;
+						$parentFlags |= FOXWAY_EXPECT_PARENTHES_CLOSE|FOXWAY_EXPECT_LIST_PARAMS|FOXWAY_EXPECT_VARIABLE_REFERENCE;
 					} else { // T_UNSET, T_ISSET
-						$parentFlags |= FOXWAY_EXPECT_PARENTHES_CLOSE|FOXWAY_EXPECT_LIST_PARAMS|FOXWAY_ALLOW_ONLY_VARIABLES;
+						$parentFlags |= FOXWAY_EXPECT_PARENTHES_CLOSE|FOXWAY_EXPECT_LIST_PARAMS|FOXWAY_ALLOW_ONLY_VARIABLES|FOXWAY_EXPECT_VARIABLE_REFERENCE;
 					}
 					$parentLevel++;
 

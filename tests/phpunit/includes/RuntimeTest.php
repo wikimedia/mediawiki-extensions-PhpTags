@@ -1841,7 +1841,9 @@ $foo = $argv[1];
 static $stat = 0;
 $bar++; $stat++;
 echo $foo, $argv[0], $argc, $bar, $stat, $argv["test"];', array('testTemplate', 'HELLO!'), 1),
-				array('HELLO!', 'testTemplate', 2, 1, 1, null)
+				array(
+					(string) new ExceptionFoxway( 'bar', FOXWAY_PHP_NOTICE_UNDEFINED_VARIABLE, 4, 'testTemplate' ),
+					'HELLO!', 'testTemplate', 2, 1, 1, null)
 				);
 	}
 	public function testRun_echo_scope_static_3() {
@@ -1852,7 +1854,9 @@ $foo = $argv[1];
 static $stat = 0;
 $bar++; $stat++;
 echo $foo, $argv[0], $argc, $bar, $stat, $argv["test"];', array('testTemplate', 'HELLO!', 'test'=>'TEST!!!'), 2),
-				array('HELLO!', 'testTemplate', 3, 1, 2, 'TEST!!!')
+				array(
+					(string) new ExceptionFoxway( 'bar', FOXWAY_PHP_NOTICE_UNDEFINED_VARIABLE, 4, 'testTemplate' ),
+					'HELLO!', 'testTemplate', 3, 1, 2, 'TEST!!!')
 				);
 	}
 	public function testRun_echo_scope_static_4() {
@@ -1863,7 +1867,9 @@ $foo = $argv[1];
 static $stat = 0;
 $bar++; $stat++;
 echo $foo, $argv[0], $argc, $bar, $stat, $argv["test"];', array('testTemplate', 'HELLO!'), 3),
-				array('HELLO!', 'testTemplate', 2, 1, 3, null)
+				array(
+					(string) new ExceptionFoxway( 'bar', FOXWAY_PHP_NOTICE_UNDEFINED_VARIABLE, 4, 'testTemplate' ),
+					'HELLO!', 'testTemplate', 2, 1, 3, null)
 				);
 	}
 	public function testRun_echo_scope_static_5() {
@@ -2367,7 +2373,8 @@ echo $foo, $argv[0], $argc, $bar, $stat, $argv["test"];', array('testTemplate', 
 	public function testRun_echo_is_null_1() {
 		$this->assertEquals(
 				Runtime::runSource('echo is_null($inexistent) ? "true" : "false";'),
-				array('true')
+				array( //(string) new ExceptionFoxway( 'inexistent', FOXWAY_PHP_NOTICE_UNDEFINED_VARIABLE, 1 ), @todo
+					'true')
 				);
 	}
 	public function testRun_echo_is_null_2() {
