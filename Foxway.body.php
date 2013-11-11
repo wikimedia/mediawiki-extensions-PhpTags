@@ -106,14 +106,13 @@ class Foxway {
 	}
 
 	public static function isBanned(PPFrame $frame) {
-		global $wgFoxway_max_execution_time;
 		if( \Foxway\Runtime::$allowedNamespaces !== true && empty(\Foxway\Runtime::$allowedNamespaces[$frame->getTitle()->getNamespace()]) ) {
 			return Html::element( 'span', array('class'=>'error'), wfMessage('foxway-disabled-for-namespace', $frame->getTitle()->getNsText())->escaped() );
 		}
-		if( $wgFoxway_max_execution_time !== false && \Foxway\Runtime::$time >= $wgFoxway_max_execution_time) {
+		if(\Foxway\Runtime::$permittedTime !== true && \Foxway\Runtime::$time >= \Foxway\Runtime::$permittedTime ) {
 			return Html::element( 'span', array('class'=>'error'),
 				wfMessage( 'foxway-php-fatal-error-max-execution-time' )
-					->numParams( $wgFoxway_max_execution_time )
+					->numParams( \Foxway\Runtime::$permittedTime )
 					->params( $frame->getTitle()->getPrefixedText() )
 					->text()
 			);

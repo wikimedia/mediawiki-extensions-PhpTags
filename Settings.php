@@ -18,8 +18,7 @@ if ( !defined( 'MEDIAWIKI' ) ) {
 }
 
 // Default settings
-$wgFoxway_max_execution_time = 2;
-$wgFoxway_max_execution_time_for_scope = 0.5;
+Foxway\Runtime::$permittedTime = 1;
 
 /**
  * You can specify the namespaces in which is allowed to use the extension Foxway.

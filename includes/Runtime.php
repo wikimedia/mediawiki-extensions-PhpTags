@@ -29,6 +29,7 @@ class Runtime {
 	static public $constants=array();
 	static public $allowedNamespaces = true;
 	static public $time = 0;
+	static public $permittedTime = true;
 	protected static $startTime = array();
 
 	protected static $variables = array();
