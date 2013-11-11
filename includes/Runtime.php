@@ -57,11 +57,11 @@ class Runtime {
 		return null;
 	}*/
 
-	public static function runSource($code, array $args = array(), $scope = '') {
-		return self::run( Compiler::compile($code), $args, $scope );
+	public static function runSource($code, array $args = array(), $scope = '', $transit = array() ) {
+		return self::run( Compiler::compile($code), $args, $scope, $transit );
 	}
 
-	public static function run($code, array $args, $scope = '') {
+	public static function run($code, array $args, $scope = '', $transit = array() ) {
 		if( !isset(self::$variables[$scope]) ) {
 			self::$variables[$scope] = array();
 		}
@@ -394,8 +394,8 @@ class Runtime {
 									if ( is_callable($function) ) {
 										try {
 											wfSuppressWarnings();
-											$result = $function($param);
-											if( $result instanceof outPrint ) {
+											$result = $function( $param, $transit );
+											if ( $result instanceof outPrint ) {
 												$value[FOXWAY_STACK_RESULT] = $result->returnValue;
 												$return[] = $result;
 											} else {
@@ -432,7 +432,7 @@ class Runtime {
 						} else { // This is constant
 							if ( isset(self::$constants[$name]) ) {
 								$function = &self::$constants[$name];
-								$value[FOXWAY_STACK_RESULT] = is_callable($function) ? $function() : $function;
+								$value[FOXWAY_STACK_RESULT] = is_callable($function) ? $function( $transit ) : $function;
 							} else {
 								$value[FOXWAY_STACK_RESULT] = $name;
 								$return[] = (string) new ExceptionFoxway( $name, FOXWAY_PHP_NOTICE_UNDEFINED_CONSTANT, $value[FOXWAY_STACK_TOKEN_LINE], $place );

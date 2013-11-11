@@ -45,10 +45,11 @@ class Foxway {
 				);*/
 		try {
 			$result = Foxway\Runtime::runSource(
-			   $command,
-			   array($frame->getTitle()->getPrefixedText()),
-			   self::getScope($frame)
-			   );
+					$command,
+					array($frame->getTitle()->getPrefixedText()),
+					self::getScope($frame),
+					array( 'Parser'=>&$parser, 'PPFrame'=>&$frame )
+					);
 			$return = implode($result);
 		} catch (Exception $exc) {
 			$return = $exc->getTraceAsString();
@@ -81,7 +82,8 @@ class Foxway {
 			$result = Foxway\Runtime::runSource(
 					$input,
 					array_merge((array)$frame->getTitle()->getPrefixedText(),$frame->getArguments()),
-					self::getScope($frame)
+					self::getScope($frame),
+					array( 'Parser'=>&$parser, 'PPFrame'=>&$frame )
 					);
 		} catch (Exception $exc) {
 			\Foxway\Runtime::$time += microtime(true) - self::$startTime;
