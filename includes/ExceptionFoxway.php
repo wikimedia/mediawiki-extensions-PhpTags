@@ -17,6 +17,11 @@ define( 'FOXWAY_PHP_NOTICE_UNDEFINED_VARIABLE', 112 ); // PHP Notice:  Undefined
 define( 'FOXWAY_PHP_NOTICE_UNINIT_STRING_OFFSET', 113 ); // PHP Notice:  Uninitialized string offset: $1
 define( 'FOXWAY_PHP_NOTICE_UNDEFINED_CONSTANT', 114 ); // PHP Notice:  Use of undefined constant $1 - assumed '$1'
 define( 'FOXWAY_PHP_FATAL_CANNOT_UNSET_STRING_OFFSETS', 115 ); // PHP Fatal error:  Cannot unset string offsets
+define( 'FOXWAY_PHP_WARNING_INVALID_ARGUMENT_FOR_FOREACH', 116 ); // PHP Warning:  Invalid argument supplied for foreach()
+// PHP Fatal error:  Allowed memory size of 134217728 bytes exhausted (tried to allocate 73 bytes)
+// PHP Fatal error:  Maximum execution time of 30 seconds exceeded
+// PHP Warning:  Variable passed to each() is not an array or object
+
 
 /**
  * Error Exception class of Foxway extension.
@@ -44,6 +49,9 @@ class ExceptionFoxway extends \Exception {
 		$place = $this->place;
 
 		switch ( $this->code ) {
+			case FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED:
+				$message = 'HP Parse error:  syntax error, unexpected ' . ( is_string($params) ? $params : token_name($params) );
+				break;
 			case FOXWAY_PHP_WARNING_DIVISION_BY_ZERO:
 				$message = "PHP Warning:  Division by zero";
 				break;
@@ -69,9 +77,13 @@ class ExceptionFoxway extends \Exception {
 				$message = "PHP Notice:  Use of undefined constant $params - assumed '$params'";
 				break;
 			case FOXWAY_PHP_FATAL_CANNOT_UNSET_STRING_OFFSETS:
-				$message = "PHP Fatal error:  Cannot unset string offsets";
+				$message = 'PHP Fatal error:  Cannot unset string offsets';
+				break;
+			case FOXWAY_PHP_WARNING_INVALID_ARGUMENT_FOR_FOREACH:
+				$message = 'PHP Warning:  Invalid argument supplied for foreach()';
 				break;
 			default:
+				$message = "PHP Fatal error:  Undefined error, code {$this->code}";
 				break;
 		}
 		//return "$message in $place on line $line\n";

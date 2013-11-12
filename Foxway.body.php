@@ -51,6 +51,8 @@ class Foxway {
 					array( 'Parser'=>&$parser, 'PPFrame'=>&$frame )
 					);
 			$return = implode($result);
+		} catch (\Foxway\ExceptionFoxway $exc) {
+			$return = (string) $exc;
 		} catch (Exception $exc) {
 			$return = $exc->getTraceAsString();
 		}
@@ -85,7 +87,10 @@ class Foxway {
 					self::getScope($frame),
 					array( 'Parser'=>&$parser, 'PPFrame'=>&$frame )
 					);
-		} catch (Exception $exc) {
+		} catch ( \Foxway\ExceptionFoxway $exc ) {
+			\Foxway\Runtime::$time += microtime(true) - self::$startTime;
+			return (string) $exc;
+		} catch ( Exception $exc ) {
 			\Foxway\Runtime::$time += microtime(true) - self::$startTime;
 			return $exc->getTraceAsString();
 		}

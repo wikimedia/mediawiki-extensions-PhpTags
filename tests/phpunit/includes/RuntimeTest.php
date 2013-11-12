@@ -1768,6 +1768,24 @@ if ( $foo + $bar ) echo "\$foo + \$bar";'),
 				'|1|(1)|2|(1)(2)|3|(1)(2)(3)'
 				);
 	}
+	public function testRun_while_while_2() {
+		$this->assertEquals(
+				Runtime::runSource('$i=1; $y=2; while($i++<4 && $y--) { while($y<5) { echo $y++; } }'),
+				array(1, 2, 3, 4, 4, 4)
+				);
+	}
+	public function testRun_while_while_3() {
+		$this->assertEquals(
+				Runtime::runSource('$i=1; $y=2; while($i++<4 && $y--) while($y<5) { echo $y++; }'),
+				array(1, 2, 3, 4, 4, 4)
+				);
+	}
+	public function testRun_while_while_4() {
+		$this->assertEquals(
+				Runtime::runSource('$i=1; $y=2; while($i++<4 && $y--) while($y<5) echo $y++;'),
+				array(1, 2, 3, 4, 4, 4)
+				);
+	}
 	public function testRun_while_while_continue_1() {
 		$this->assertEquals(
 				implode( Runtime::runSource('$i=1; while( $i<=3 ){ echo "|$i|"; $y=0; while( $y<3 ){ $y++; if( $y==2) continue; echo "($y)";  } $i++; }') ),
@@ -3031,6 +3049,73 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 		$this->assertEquals(
 				Runtime::runSource('list($a, list($b, $c)) = array(1, array(2, 3)); echo $a, $b, $c;'),
 				array(1, 2, 3)
+				);
+	}
+
+	public function testRun_foreach_1() {
+		$this->assertEquals(
+				Runtime::runSource('$arr = array("one", "two", "three"); foreach ($arr as $value) echo "* Value: $value\n";'),
+				array("* Value: one\n", "* Value: two\n", "* Value: three\n")
+				);
+	}
+	public function testRun_foreach_2() {
+		$this->assertEquals(
+				Runtime::runSource('foreach ($arr as $value) { echo "* Value: $value\n"; }'),
+				array("* Value: one\n", "* Value: two\n", "* Value: three\n")
+				);
+	}
+	public function testRun_foreach_3() {
+		$this->assertEquals(
+				Runtime::runSource('$arr = array("one", "two", "three"); foreach ($arr as $value) echo "* Value: $value\n"; echo "end";'),
+				array("* Value: one\n", "* Value: two\n", "* Value: three\n", 'end')
+				);
+	}
+	public function testRun_foreach_4() {
+		$this->assertEquals(
+				Runtime::runSource('foreach ($arr as $value) { echo "* Value: $value\n"; } echo "end";'),
+				array("* Value: one\n", "* Value: two\n", "* Value: three\n", 'end')
+				);
+	}
+	public function testRun_foreach_5() {
+		$this->assertEquals(
+				Runtime::runSource('foreach ($arr as $key => $value) { echo $key, $value; }'),
+				array(0, 'one', 1, 'two', 2, 'three')
+				);
+	}
+	public function testRun_foreach_6() {
+		$this->assertEquals(
+				Runtime::runSource('foreach ($arr as $key => $value) echo "* Key: $key; Value: $value\n"; echo "end";'),
+				array("* Key: 0; Value: one\n", "* Key: 1; Value: two\n", "* Key: 2; Value: three\n", 'end')
+				);
+	}
+	public function testRun_foreach_7() {
+		$this->assertEquals(
+				Runtime::runSource('foreach ($arr as $key => $value) { echo "* Key: $key; Value: $value\n"; } echo "end";'),
+				array("* Key: 0; Value: one\n", "* Key: 1; Value: two\n", "* Key: 2; Value: three\n", 'end')
+				);
+	}
+	public function testRun_foreach_8() {
+		$this->assertEquals(
+				Runtime::runSource('$a = array("one" => 1,"two" => 2,"three" => 3,"seventeen" => 17); foreach ($a as $k => $v) {echo "\$a[$k] => $v.";}'),
+				array('$a[one] => 1.', '$a[two] => 2.', '$a[three] => 3.', '$a[seventeen] => 17.')
+				);
+	}
+	public function testRun_foreach_9() {
+		$this->assertEquals(
+				Runtime::runSource('$a=array(); $a[0][0]="a"; $a[0][1]="b"; $a[1][0]="y"; $a[1][1]="z"; foreach ($a as $v1) { foreach ($v1 as $v2) { echo $v2; } }'),
+				array('a', 'b', 'y', 'z')
+				);
+	}
+	public function testRun_foreach_10() {
+		$this->assertEquals(
+				Runtime::runSource('foreach ($a as $v1) foreach ($v1 as $v2) { echo $v2; }'),
+				array('a', 'b', 'y', 'z')
+				);
+	}
+	public function testRun_foreach_11() {
+		$this->assertEquals(
+				Runtime::runSource('foreach ($a as $v1) foreach ($v1 as $v2) echo $v2;'),
+				array('a', 'b', 'y', 'z')
 				);
 	}
 

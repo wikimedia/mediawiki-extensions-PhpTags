@@ -255,6 +255,19 @@ class Runtime {
 							}
 						}
 						break;
+					case T_FOREACH:
+						$vn = $value[FOXWAY_STACK_PARAM]; // Variable name
+						if ( !array_key_exists($vn, $thisVariables) ) {
+							$return[] = (string) new ExceptionFoxway( $vn, FOXWAY_PHP_NOTICE_UNDEFINED_VARIABLE, $value[FOXWAY_STACK_TOKEN_LINE], $place );
+							$return[] = (string) new ExceptionFoxway( null, FOXWAY_PHP_WARNING_INVALID_ARGUMENT_FOR_FOREACH, $value[FOXWAY_STACK_TOKEN_LINE], $place );
+							break; // **** EXIT ****
+						}
+						if ( !is_array($thisVariables[ $value[FOXWAY_STACK_PARAM] ]) ) {
+							$return[] = (string) new ExceptionFoxway( null, FOXWAY_PHP_WARNING_INVALID_ARGUMENT_FOR_FOREACH, $value[FOXWAY_STACK_TOKEN_LINE], $place );
+							break; // **** EXIT ****
+						}
+						reset( $thisVariables[ $value[FOXWAY_STACK_PARAM] ] );
+						// break is not necessary here
 					case T_WHILE: // PHP code "while($foo) { ... }" doing as T_WHILE { T_DO($foo) ... }. If $foo == false, T_DO doing as T_BREAK
 						$memory[] = array( null, $code, $i, $c, $loopsOwner );
 						$code = $value[FOXWAY_STACK_DO_TRUE];
@@ -267,6 +280,17 @@ class Runtime {
 							continue; // this is "while(true)", just go next
 						}// while(false) doing as T_BREAK;
 						break 2; // go to one level down
+					case T_AS:
+						if ( is_string($value[FOXWAY_STACK_PARAM_2]) ) { // T_VARIABLE. Example: while ( $foo as $value )
+							if ( !list(,$thisVariables[ $value[FOXWAY_STACK_PARAM_2] ]) = each($thisVariables[ $value[FOXWAY_STACK_PARAM] ]) ) {
+								break 2; // go to one level down
+							}
+						} else { // T_DOUBLE_ARROW Example: while ( $foo as $key=>$value )
+							if ( !list($thisVariables[ $value[FOXWAY_STACK_PARAM_2][0] ], $thisVariables[ $value[FOXWAY_STACK_PARAM_2][1] ]) = each($thisVariables[ $value[FOXWAY_STACK_PARAM] ]) ) {
+								break 2; // go to one level down
+							}
+						}
+						break;
 					case T_BREAK:
 						$break = $value[FOXWAY_STACK_RESULT];
 						if( $loopsOwner == T_WHILE ) {
