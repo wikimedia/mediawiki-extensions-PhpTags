@@ -654,21 +654,25 @@ closeoperator:
 								$stack = array_merge( $stack, $rightOperators );
 								$rightOperators = array();
 							}
+							$lastVariable = &$needParams[0];
+							$lastVariable[FOXWAY_STACK_ARRAY_INDEX][] = &$lastValue;
 							$stackEncapsed = array_pop( $memEncapsed );
 							if ( $stackEncapsed !== false ) {
 								$needOperator = false;
+								if( !is_string($tokens[$index+1]) || $tokens[$index+1][0] != '[' ) {
+									unset( $lastVariable, $lastValue );
+								}
+							} else {
+								$lastValue = &$lastVariable;
+								if ( $parentFlags & FOXWAY_NEED_RESTORE_RIGHT_OPERATORS ) { // Need restore right operators
+									$rightOperators = array_pop( $memOperators );
+								}
+								if ( $parentFlags & FOXWAY_NEED_RESTORE_OPERATOR ) {
+									$operator = array_pop( $memOperators );
+								}
 							}
-							$lastVariable = &$needParams[0];
-							$lastVariable[FOXWAY_STACK_ARRAY_INDEX][] = &$lastValue;
-							$lastValue = &$lastVariable;
-							array_shift($needParams);
-							if( $parentFlags & FOXWAY_NEED_RESTORE_RIGHT_OPERATORS ) { // Need restore right operators
-								$rightOperators = array_pop( $memOperators );
-							}
-							if( $parentFlags & FOXWAY_NEED_RESTORE_OPERATOR ) {
-								$operator = array_pop( $memOperators );
-							}
-							$parentFlags = array_pop($parentheses);
+							array_shift( $needParams );
+							$parentFlags = array_pop( $parentheses );
 //							if ( !is_string($tokens[$index+1]) || $tokens[$index+1][0] != '[' ) { // leave $lastVariable for array index only
 //								unset( $lastVariable );
 //							}
@@ -682,6 +686,15 @@ closeoperator:
 						case ')':
 							$parentLevel--;
 							if( $parentFlags & FOXWAY_EXPECT_PARENTHES_CLOSE == 0 ) { throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine); }
+
+							if ( $rightOperators ) {
+								$rightOperators[0][FOXWAY_STACK_PARAM_2] = &$lastValue[FOXWAY_STACK_RESULT];
+								$k = array_keys( $rightOperators );
+								$lk = array_pop( $k );
+								$lastValue = &$rightOperators[$lk];
+								$stack = array_merge( $stack, $rightOperators );
+								$rightOperators = array();
+							}
 							if ( $parentFlags & FOXWAY_THIS_IS_FUNCTION ) {
 								if ( isset($lastVariable) ) {
 									if ( $parentFlags & FOXWAY_NEED_ADD_VARIABLE_IN_STACK ) {

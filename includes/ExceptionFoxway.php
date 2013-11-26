@@ -87,7 +87,7 @@ class ExceptionFoxway extends \Exception {
 				break;
 		}
 		//return "$message in $place on line $line\n";
-		return \Html::element( 'span', array('class'=>'error'), "$message in $place on line $line" );
+		return \Html::element( 'span', array('class'=>'error'), "$message in $place on line $line" ) . '<br />';
 	}
 }
 

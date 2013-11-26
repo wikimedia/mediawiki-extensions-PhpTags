@@ -1664,6 +1664,54 @@ if ( $foo + $bar ) echo "\$foo + \$bar";'),
 				array('-=FOO=-', 'BAR')
 				);
 	}
+	public function testRun_echo_array_encapsed_7() {
+		$this->assertEquals(
+				Runtime::runSource('$foo=(array)5; echo "*$foo[0]*|*$foo[0]*";'),
+				array('*5*|*5*')
+				);
+	}
+	public function testRun_echo_array_encapsed_8() {
+		$this->assertEquals(
+				Runtime::runSource('$foo=(array)5; echo "*$foo[0]$foo[0]*";'),
+				array('*55*')
+				);
+	}
+	public function testRun_echo_array_encapsed_9() {
+		$this->assertEquals(
+				Runtime::runSource('$foo=(array)5; echo "*{$foo[0]}*|*{$foo[0]}*";'),
+				array('*5*|*5*')
+				);
+	}
+	public function testRun_echo_array_encapsed_10() {
+		$this->assertEquals(
+				Runtime::runSource('$foo=(array)5; echo "*{$foo[0]}{$foo[0]}*";'),
+				array('*55*')
+				);
+	}
+	public function testRun_echo_array_encapsed_11() {
+		$this->assertEquals(
+				Runtime::runSource('$foo=array(3,array(5)); echo "*$foo[0]*|*{$foo[1][0]}*";'),
+				array('*3*|*5*')
+				);
+	}
+	public function testRun_echo_array_encapsed_12() {
+		$this->assertEquals(
+				Runtime::runSource('$foo=array(3,array(5)); echo "*$foo[0]{$foo[1][0]}*";'),
+				array('*35*')
+				);
+	}
+	public function testRun_echo_array_encapsed_13() {
+		$this->assertEquals(
+				Runtime::runSource('$foo=array(3,array(5)); echo "*{$foo[0]}{$foo[1][0]}*";'),
+				array('*35*')
+				);
+	}
+	public function testRun_echo_array_encapsed_14() {
+		$this->assertEquals(
+				Runtime::runSource('$foo=array(3,(array)5); echo "*{$foo[0]}{$foo[1][0]}*";'),
+				array('*35*')
+				);
+	}
 	public function testRun_echo_array_right_1() {
 		$this->assertEquals(
 				Runtime::runSource('$foo=array("123"); echo (bool)$foo[0];'),
