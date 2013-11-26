@@ -218,6 +218,12 @@ echo "foo is $foo"; // foo is foobar'),
 				array(7)
 				);
 	}
+	public function testRun_echo_variables_15() {
+		$this->assertEquals(
+				Runtime::runSource('echo -$foo=7, $foo;'),
+				array(-7, 7)
+				);
+	}
 
 	public function testRun_echo_escaping_1() {
 		$this->assertEquals(
@@ -329,45 +335,45 @@ echo "\$foo * \$bar = $foo * $bar = ", $foo * $bar, "\n\n";'),
 	public function testRun_echo_math_variables_2() {
 		$this->assertEquals(
 				Runtime::runSource('$foo=1; echo $foo + $foo = 40 + $foo;'), // $foo = 40 + 1; echo 41 + 41
-				array('82')
+				array(82)
 				);
 	}
 	public function testRun_echo_math_variables_3() {
 		$this->assertEquals(
 				Runtime::runSource('$foo=1; echo $foo + $foo = 40 + $foo, $foo;'), // $foo = 40 + 1; echo 41 + 41, 41
-				array('82', '41')
+				array(82, 41)
 				);
 	}
 	public function testRun_echo_math_variables_4() {
 		$this->assertEquals(
 				Runtime::runSource('$foo=1; echo $foo + $foo = 40 + $foo = 400 + $foo, $foo;'), // $foo = 400 + 1; $foo = 40 + 401; echo 441 + 441, 441
-				array('882', '441')
+				array(882, 441)
 				);
 	}
 	public function testRun_echo_math_variables_4_increment_1() {
 		$this->assertEquals(
 				Runtime::runSource('$foo=1; echo $foo + $foo = 40 + $foo = 400 + $foo++, $foo;'), // $foo = 400 + 1; $foo = 40 + 401; echo 441 + 441, 441
-				array('882', '441')
+				array(882, 441)
 				);
-	}/*
+	}
 	public function testRun_echo_math_variables_4_increment_2() {
 		$this->assertEquals(
 				Runtime::runSource('$foo=1; echo $foo++ + $foo = 40 + $foo = 400 + $foo, $foo;'), // $foo = 400 + 2; $foo = 40 + 402; echo 1 + 442, 442
-				array('443', '442')
+				array(443, 442)
 				);
 	}
 	public function testRun_echo_math_variables_short_circuit_1() {
 		$this->assertEquals(
 				Runtime::runSource('$foo=10; echo $foo = 400 + $foo or $foo = 10000, $foo;'), // $foo = 400 + 10; echo 441 or ... , 410
-				array(true, '410')
+				array(true, 410)
 				);
 	}
 	public function testRun_echo_math_variables_short_circuit_2() {
 		$this->assertEquals(
 				Runtime::runSource('$foo=10; echo $foo = 10 - $foo or $foo = 10000, $foo;'), // $foo = 10 - 10; echo 0 or $foo=10000 , 10000
-				array(true, '10000')
+				array(true, 10000)
 				);
-	}*/
+	}
 	public function testRun_echo_math_variables_5() {
 		$this->assertEquals(
 				Runtime::runSource('$foo=10; echo $foo = 400 + $foo | $foo = 10000, $foo;'), // $foo = 400 + 10 | 10000; echo 10138, 10138
@@ -1485,13 +1491,13 @@ if ( $foo + $bar ) echo "\$foo + \$bar";'),
 	public function testRun_echo_array_variable_1() {
 		$this->assertEquals(
 				Runtime::runSource('$bar="BAR"; $foo=array( 5, 6, $bar ); echo $foo[0],$foo[1],$foo[2];'),
-				array('5', '6', 'BAR')
+				array(5, 6, 'BAR')
 				);
 	}
 	public function testRun_echo_array_variable_2() {
 		$this->assertEquals(
 				Runtime::runSource('$foo="FOO"; $foo=array( 5, 6, $foo ); echo $foo[0],$foo[1],$foo[2];'),
-				array('5', '6', 'FOO')
+				array(5, 6, 'FOO')
 				);
 	}
 	public function testRun_echo_array_variable_3() {
@@ -1656,6 +1662,23 @@ if ( $foo + $bar ) echo "\$foo + \$bar";'),
 		$this->assertEquals(
 				Runtime::runSource('$foo[$bar="BAR"]="FOO"; echo "-={$foo[$bar]}=-", $bar;'),
 				array('-=FOO=-', 'BAR')
+				);
+	}
+	public function testRun_echo_array_right_1() {
+		$this->assertEquals(
+				Runtime::runSource('$foo=array("123"); echo (bool)$foo[0];'),
+				array(1)
+				);
+	}
+	public function testRun_echo_array_right_increment_1() {
+		$this->assertEquals(
+				Runtime::runSource('$foo=array(1); echo (string)++$foo[0];'),
+				array('2')
+				);
+	}public function testRun_echo_array_right_increment_2() {
+		$this->assertEquals(
+				Runtime::runSource('$foo=array(1); echo (string)++$foo[0], $foo[0];'),
+				array('2', 2)
 				);
 	}
 
@@ -1841,9 +1864,9 @@ if ( $foo + $bar ) echo "\$foo + \$bar";'),
 				);
 	}
 
-	/**
-	 * Test static variable $stat in testTemplate
-	 */
+//	 *
+//	 * Test static variable $stat in testTemplate
+//	 *
 	public function testRun_echo_scope_static_1() {
 		// start testScope
 		$this->assertEquals(
@@ -1928,9 +1951,9 @@ echo $foo, $argv[0], $argc, $bar, $stat, $argv["test"];', array('testTemplate', 
 				);
 	}
 
-	/**
-	 * Test global variable $glob
-	 */
+//	 *
+//	 * Test global variable $glob
+//	 *
 	public function testRun_echo_scope_global_1() {
 		// start testScope
 		$this->assertEquals(
@@ -2222,19 +2245,19 @@ echo $foo, $argv[0], $argc, $bar, $stat, $argv["test"];', array('testTemplate', 
 				array('false')
 				);
 	}
-	/*  @todo
-	public function testRun_echo_boolval_9() {
-		$this->assertEquals(
-				Runtime::runSource('echo boolval([1, 2]) ? "true" : "false";'),
-				array('true')
-				);
-	}
-	public function testRun_echo_boolval_10() {
-		$this->assertEquals(
-				Runtime::runSource('echo boolval(new stdClass) ? "true" : "false";'),
-				array('true')
-				);
-	}*/
+//	@todo
+//	public function testRun_echo_boolval_9() {
+//		$this->assertEquals(
+//				Runtime::runSource('echo boolval([1, 2]) ? "true" : "false";'),
+//				array('true')
+//				);
+//	}
+//	public function testRun_echo_boolval_10() {
+//		$this->assertEquals(
+//				Runtime::runSource('echo boolval(new stdClass) ? "true" : "false";'),
+//				array('true')
+//				);
+//	}
 
 	public function testRun_echo_doubleval() {
 		$this->assertEquals(
@@ -2274,13 +2297,13 @@ echo $foo, $argv[0], $argc, $bar, $stat, $argv["test"];', array('testTemplate', 
 				array('string')
 				);
 	}
-	/* @todo
-	public function testRun_echo_gettype_5() {
-		$this->assertEquals(
-				Runtime::runSource('echo gettype("new stdClass");'),
-				array('object')
-				);
-	}*/
+//	@todo
+//	public function testRun_echo_gettype_5() {
+//		$this->assertEquals(
+//				Runtime::runSource('echo gettype("new stdClass");'),
+//				array('object')
+//				);
+//	}
 
 	public function testRun_echo_is_array_1() {
 		$this->assertEquals(
@@ -2431,13 +2454,14 @@ echo $foo, $argv[0], $argc, $bar, $stat, $argv["test"];', array('testTemplate', 
 				Runtime::runSource('echo is_numeric(02471) ? "true" : "false";'),
 				array('true')
 				);
-	}/* @todo
-	public function testRun_echo_is_numeric_5() {
-		$this->assertEquals(
-				Runtime::runSource('echo is_numeric(0b10100111001) ? "true" : "false";'),
-				array('true')
-				);
-	}*/
+	}
+//	@todo
+//	public function testRun_echo_is_numeric_5() {
+//		$this->assertEquals(
+//				Runtime::runSource('echo is_numeric(0b10100111001) ? "true" : "false";'),
+//				array('true')
+//				);
+//	}
 	public function testRun_echo_is_numeric_6() {
 		$this->assertEquals(
 				Runtime::runSource('echo is_numeric(1337e0) ? "true" : "false";'),

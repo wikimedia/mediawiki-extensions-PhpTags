@@ -320,11 +320,11 @@ class Runtime {
 							$value[FOXWAY_STACK_RESULT] = $thisVariables[ $value[FOXWAY_STACK_PARAM] ];
 							if ( isset($value[FOXWAY_STACK_ARRAY_INDEX]) ) { // Example: $foo[1]
 								foreach ( $value[FOXWAY_STACK_ARRAY_INDEX] as $v ) {
-									if ( isset($value[FOXWAY_STACK_RESULT][$v]) ) {
-										$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_RESULT][$v];
+									if ( isset($value[FOXWAY_STACK_RESULT][ $v[FOXWAY_STACK_RESULT] ]) ) {
+										$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_RESULT][ $v[FOXWAY_STACK_RESULT] ];
 									} else {
 										if ( is_string($value[FOXWAY_STACK_RESULT]) ) {
-											$return[] = (string) new ExceptionFoxway( (int)$v, FOXWAY_PHP_NOTICE_UNINIT_STRING_OFFSET, $value[FOXWAY_STACK_TOKEN_LINE], $place );
+											$return[] = (string) new ExceptionFoxway( (int)$v[FOXWAY_STACK_RESULT] , FOXWAY_PHP_NOTICE_UNINIT_STRING_OFFSET, $value[FOXWAY_STACK_TOKEN_LINE], $place );
 										}
 										$value[FOXWAY_STACK_RESULT] = null;
 									}
@@ -372,14 +372,14 @@ class Runtime {
 											$ref = &$thisVariables[ $val[FOXWAY_STACK_PARAM] ];
 											if ( isset($val[FOXWAY_STACK_ARRAY_INDEX]) ) { // Example: $foo[1]
 												foreach ( $val[FOXWAY_STACK_ARRAY_INDEX] as $v ) {
-													if ( !isset($ref[$v]) ) {
-														$ref[$v]=null;
+													if ( !isset($ref[ $v[FOXWAY_STACK_RESULT] ]) ) {
+														$ref[ $v[FOXWAY_STACK_RESULT] ] = null;
 														// @todo PHP Fatal error:  Only variables can be passed by reference
 														if( is_string($ref) ) {
-															$return[] = (string) new ExceptionFoxway( (int)$v, FOXWAY_PHP_NOTICE_UNINIT_STRING_OFFSET, $value[FOXWAY_STACK_TOKEN_LINE], $place );
+															$return[] = (string) new ExceptionFoxway( (int)$v[FOXWAY_STACK_RESULT] , FOXWAY_PHP_NOTICE_UNINIT_STRING_OFFSET, $value[FOXWAY_STACK_TOKEN_LINE], $place );
 														}
 													}
-													$ref = &$ref[$v];
+													$ref = &$ref[ $v[FOXWAY_STACK_RESULT] ];
 												}
 											}
 											$param[] = &$ref;
@@ -476,13 +476,13 @@ class Runtime {
 									foreach ( $val[FOXWAY_STACK_ARRAY_INDEX] as $v ) {
 										if ( is_string($ref) ) {
 											throw new ExceptionFoxway( null, FOXWAY_PHP_FATAL_CANNOT_UNSET_STRING_OFFSETS, $value[FOXWAY_STACK_TOKEN_LINE], $place );
-										} elseif ( !isset($ref[$v]) ) { // undefined array index not for string
+										} elseif ( !isset($ref[ $v[FOXWAY_STACK_RESULT] ]) ) { // undefined array index not for string
 											continue 2;
 										}
-										$ref = &$ref[$v];
+										$ref = &$ref[ $v[FOXWAY_STACK_RESULT] ];
 									}
 									if ( is_array($ref) ) {
-										unset( $ref[$tmp] );
+										unset( $ref[ $tmp[FOXWAY_STACK_RESULT] ] );
 									} else {
 										throw new ExceptionFoxway( null, FOXWAY_PHP_FATAL_CANNOT_UNSET_STRING_OFFSETS, $value[FOXWAY_STACK_TOKEN_LINE], $place );
 									}
@@ -507,14 +507,14 @@ class Runtime {
 								$ref = &$thisVariables[ $val[FOXWAY_STACK_PARAM] ];
 								$tmp = array_pop( $val[FOXWAY_STACK_ARRAY_INDEX] );
 								foreach( $val[FOXWAY_STACK_ARRAY_INDEX] as $v ) {
-									if( !isset($ref[$v]) ) { // undefined array index
+									if( !isset($ref[ $v[FOXWAY_STACK_RESULT] ]) ) { // undefined array index
 										$value[FOXWAY_STACK_RESULT] = false;
 										break 3;
 									}
-									$ref = &$ref[$v];
+									$ref = &$ref[ $v[FOXWAY_STACK_RESULT] ];
 								}
 								// @todo ->>>>>>>>>>>> | ************************************************************* | <<<<< it only for compatible with PHP 5.4 if used PHP 5.3 @see http://www.php.net/manual/en/function.isset.php Example #2 isset() on String Offsets
-								if( !isset($ref[$tmp]) || (is_string($ref) && is_string($tmp) && $tmp != (string)(int)$tmp) ) {
+								if( !isset($ref[ $tmp[FOXWAY_STACK_RESULT] ]) || (is_string($ref) && is_string($tmp[FOXWAY_STACK_RESULT] ) && $tmp[FOXWAY_STACK_RESULT]  != (string)(int)$tmp[FOXWAY_STACK_RESULT] ) ) {
 									$value[FOXWAY_STACK_RESULT] = false;
 									break 2;
 								}
@@ -535,13 +535,13 @@ class Runtime {
 							if( isset($val[FOXWAY_STACK_ARRAY_INDEX]) ) { // Example: empty($foo[1])
 								$tmp = array_pop( $val[FOXWAY_STACK_ARRAY_INDEX] );
 								foreach( $val[FOXWAY_STACK_ARRAY_INDEX] as $v ) {
-									if( !isset($ref[$v]) ) { // undefined array index
+									if( !isset($ref[ $v[FOXWAY_STACK_RESULT] ]) ) { // undefined array index
 										continue 2;
 									}
-									$ref = &$ref[$v];
+									$ref = &$ref[ $v[FOXWAY_STACK_RESULT] ];
 								}
 								// @todo ->>>>>>>>>>>> | ************************************************************* | <<<<< it only for compatible with PHP 5.4 if used PHP 5.3 @see http://www.php.net/manual/en/function.empty.php Example #2 empty() on String Offsets
-								if( !empty($ref[$tmp]) && (is_array($ref) || !is_string($tmp) || $tmp == (string)(int)$tmp) ) {
+								if( !empty($ref[ $tmp[FOXWAY_STACK_RESULT] ]) && (is_array($ref) || !is_string( $tmp[FOXWAY_STACK_RESULT] ) || $tmp[FOXWAY_STACK_RESULT]  == (string)(int)$tmp[FOXWAY_STACK_RESULT] ) ) {
 									$value[FOXWAY_STACK_RESULT] = false;
 									break 2;
 								}
@@ -578,20 +578,28 @@ class Runtime {
 									$ref = &$t;
 									unset($t);
 								}else{
-									if( !isset($ref[$v]) ) {
-										$ref[$v] = null;
+									if( !isset($ref[ $v[FOXWAY_STACK_RESULT] ]) ) {
+										$ref[ $v[FOXWAY_STACK_RESULT] ] = null;
 										// @todo E_NOTICE
 									}
-									$ref = &$ref[$v];
+									$ref = &$ref[ $v[FOXWAY_STACK_RESULT] ];
 								}
 							}
 						}
 						switch ( $value[FOXWAY_STACK_COMMAND] ) {
 							case T_INC:
-								$ref++;
+								if ( $value[FOXWAY_STACK_PARAM_2] ) { // $foo++
+									$param[FOXWAY_STACK_RESULT] = $ref++;
+								}else{ // ++$foo
+									$param[FOXWAY_STACK_RESULT] = ++$ref;
+								}
 								break;
 							case T_DEC:
-								$ref--;
+								if ( $value[FOXWAY_STACK_PARAM_2] ) { // $foo--
+									$param[FOXWAY_STACK_RESULT] = $ref--;
+								}else{ // --$foo
+									$param[FOXWAY_STACK_RESULT] = --$ref;
+								}
 								break;
 							case '=':
 								// Save result in T_VARIABLE FOXWAY_STACK_RESULT, Save result in $thisVariables[variable name]
@@ -672,10 +680,10 @@ class Runtime {
 							$ref = &$t;
 							unset( $t );
 						} else {
-							if ( !isset($ref[$v]) ) {
-								$ref[$v] = null;
+							if ( !isset($ref[ $v[FOXWAY_STACK_RESULT] ]) ) {
+								$ref[ $v[FOXWAY_STACK_RESULT] ] = null;
 							}
-							$ref = &$ref[$v];
+							$ref = &$ref[ $v[FOXWAY_STACK_RESULT] ];
 						}
 					}
 				}

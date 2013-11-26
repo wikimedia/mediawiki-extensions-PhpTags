@@ -15,13 +15,14 @@ if ( !defined( 'MEDIAWIKI' ) ) {
 	die( 'This file is an extension to MediaWiki and thus not a valid entry point.' );
 }
 
-define( 'Foxway_VERSION' , '1.0.0' );
+define( 'FOXWAY_VERSION' , '1.0.0' );
+define( 'FOXWAY_FUNCTION' , 1 );
 
 // Register this extension on Special:Version
 $wgExtensionCredits['parserhook'][] = array(
 	'path'				=> __FILE__,
 	'name'				=> 'Foxway',
-	'version'			=> Foxway_VERSION,
+	'version'			=> FOXWAY_VERSION,
 	'url'				=> 'https://www.mediawiki.org/wiki/Extension:Foxway',
 	'author'			=> '[https://www.mediawiki.org/wiki/User:Pastakhov Pavel Astakhov]',
 	'descriptionmsg'	=> 'foxway-desc'

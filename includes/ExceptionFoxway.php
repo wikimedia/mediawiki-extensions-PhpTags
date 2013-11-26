@@ -40,7 +40,7 @@ class ExceptionFoxway extends \Exception {
 		parent::__construct('', $code);
 		$this->params = $params;
 		$this->tokenLine = $tokenLine;
-		$this->place = $place != '' ? : 'Command line code';
+		$this->place = $place != '' ? $place : 'Command line code';
 	}
 
 	function __toString() {
