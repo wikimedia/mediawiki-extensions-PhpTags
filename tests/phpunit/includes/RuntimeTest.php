@@ -380,6 +380,12 @@ echo "\$foo * \$bar = $foo * $bar = ", $foo * $bar, "\n\n";'),
 				array('10138', '10138')
 				);
 	}
+	public function testRun_echo_math_variables_6() {
+		$this->assertEquals(
+				Runtime::runSource('$foo=4; echo "(" . 2 * $foo . ")";'),
+				array('(8)')
+				);
+	}
 
 	public function testRun_echo_math_union_1() {
 		$this->assertEquals(
@@ -1516,6 +1522,12 @@ if ( $foo + $bar ) echo "\$foo + \$bar";'),
 		$this->assertEquals(
 				Runtime::runSource('$foo=1; $foo=array($foo+1,$foo+2,$foo+3); echo $foo[0],$foo[1],$foo[2];'),
 				array('2', '3', '4')
+				);
+	}
+	public function testRun_echo_array_variable_math_3() {
+		$this->assertEquals(
+				Runtime::runSource('$foo=array(4); echo "(" . 2 * $foo[0] . ")";'),
+				array('(8)')
 				);
 	}
 	public function testRun_echo_array_variable_increment_1() {
