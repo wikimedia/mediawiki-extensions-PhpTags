@@ -46,11 +46,11 @@ class Foxway {
 		try {
 			$result = Foxway\Runtime::runSource(
 					$command,
-					array($frame->getTitle()->getPrefixedText()),
-					self::getScope($frame),
+					array_merge( (array)$frame->getTitle()->getPrefixedText(), $frame->getArguments() ),
+					self::getScope( $frame ),
 					array( 'Parser'=>&$parser, 'PPFrame'=>&$frame )
 					);
-			$return = implode($result);
+			$return = implode( $result );
 		} catch (\Foxway\ExceptionFoxway $exc) {
 			$return = (string) $exc;
 		} catch (Exception $exc) {
@@ -83,8 +83,8 @@ class Foxway {
 		try {
 			$result = Foxway\Runtime::runSource(
 					$input,
-					array_merge((array)$frame->getTitle()->getPrefixedText(),$frame->getArguments()),
-					self::getScope($frame),
+					array_merge( (array)$frame->getTitle()->getPrefixedText(), $frame->getArguments() ),
+					self::getScope( $frame ),
 					array( 'Parser'=>&$parser, 'PPFrame'=>&$frame )
 					);
 		} catch ( \Foxway\ExceptionFoxway $exc ) {
