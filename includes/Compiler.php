@@ -915,23 +915,23 @@ closeoperator:
 					$parentLevel++;
 					break;
 				case T_ELSE:		// else
-					if( $parentFlags & FOXWAY_EXPECT_ELSE == 0 || $stack || isset($operator) || $values ) { throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine); }
+					if ( $parentFlags & FOXWAY_EXPECT_ELSE == 0 || $stack || isset($operator) || $values ) { throw new ExceptionFoxway( $id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine ); }
 
 					$needParams = array_merge( $ifOperators, $needParams  );
 					$ifOperators = array();
-					if( $parentFlags & FOXWAY_KEEP_EXPECT_ELSE == 0 ) { // Example: if (1) echo 2; else
+					if ( $parentFlags & FOXWAY_KEEP_EXPECT_ELSE == 0 ) { // Example: if (1) echo 2; else
 						$parentFlags &= ~FOXWAY_EXPECT_ELSE; // Skip for: if(1) if (2) echo 3; else
 					}
 					$parentheses[] = $parentFlags;
 					$parentFlags = FOXWAY_EXPECT_START_COMMAND | FOXWAY_EXPECT_SEMICOLON | FOXWAY_EXPECT_DO_FALSE_STACK;
 					break;
 				case T_ELSEIF:		// elseif
-					if( $parentFlags & FOXWAY_EXPECT_ELSE == 0 || $stack || isset($operator) || $values ) { throw new ExceptionFoxway($id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine); }
+					if ( $parentFlags & FOXWAY_EXPECT_ELSE == 0 || $stack || isset($operator) || $values ) { throw new ExceptionFoxway( $id, FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine ); }
 
 					$needParams = array_merge( $ifOperators, $needParams );
 					$ifOperators = array();
-					array_unshift( $needParams, array( FOXWAY_STACK_COMMAND=>T_IF, FOXWAY_STACK_RESULT=>null, FOXWAY_STACK_PARAM=>null, FOXWAY_STACK_TOKEN_LINE=>$tokenLine ) );
-					$parentheses[] = $parentFlags|FOXWAY_EXPECT_DO_FALSE_STACK;
+					array_unshift( $needParams, array(FOXWAY_STACK_COMMAND=>T_IF, FOXWAY_STACK_RESULT=>null, FOXWAY_STACK_PARAM=>null, FOXWAY_STACK_TOKEN_LINE=>$tokenLine) );
+					$parentheses[] = FOXWAY_EXPECT_START_COMMAND | FOXWAY_EXPECT_SEMICOLON | FOXWAY_EXPECT_DO_FALSE_STACK;
 					$parentheses[] = FOXWAY_EXPECT_START_COMMAND | FOXWAY_EXPECT_SEMICOLON | FOXWAY_EXPECT_DO_TRUE_STACK;
 					$parentheses[] = FOXWAY_EXPECT_RESULT_AS_PARAM;
 					$parentFlags = FOXWAY_EXPECT_PARENTHES_CLOSE;
