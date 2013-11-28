@@ -930,8 +930,12 @@ closeoperator:
 
 					$needParams = array_merge( $ifOperators, $needParams );
 					$ifOperators = array();
+					if ( $parentFlags & FOXWAY_KEEP_EXPECT_ELSE == 0 ) { // Example: if (1) echo 2; elseif
+						$parentFlags &= ~FOXWAY_EXPECT_ELSE; // Skip for: if(1) if (2) echo 3; elseif
+					}
+					$parentheses[] = $parentFlags;
 					array_unshift( $needParams, array(FOXWAY_STACK_COMMAND=>T_IF, FOXWAY_STACK_RESULT=>null, FOXWAY_STACK_PARAM=>null, FOXWAY_STACK_TOKEN_LINE=>$tokenLine) );
-					$parentheses[] = FOXWAY_EXPECT_START_COMMAND | FOXWAY_EXPECT_SEMICOLON | FOXWAY_EXPECT_DO_FALSE_STACK;
+					$parentheses[] = FOXWAY_EXPECT_START_COMMAND | FOXWAY_EXPECT_SEMICOLON | FOXWAY_EXPECT_DO_FALSE_STACK | FOXWAY_EXPECT_ELSE;
 					$parentheses[] = FOXWAY_EXPECT_START_COMMAND | FOXWAY_EXPECT_SEMICOLON | FOXWAY_EXPECT_DO_TRUE_STACK;
 					$parentheses[] = FOXWAY_EXPECT_RESULT_AS_PARAM;
 					$parentFlags = FOXWAY_EXPECT_PARENTHES_CLOSE;

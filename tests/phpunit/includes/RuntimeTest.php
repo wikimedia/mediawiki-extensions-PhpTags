@@ -1391,6 +1391,54 @@ if ( $foo + $bar ) echo "\$foo + \$bar";'),
 				array('false')
 				);
 	}
+	public function testRun_echo_if_double_27() {
+		$this->assertEquals(
+				Runtime::runSource('if( true ) { echo "true"; if( true ) echo "truetrue2"; else echo "truefalse2"; } else { echo "false"; if( true ) echo "falsetrue2"; else echo "falsefalse2"; }'),
+				array('true', 'truetrue2')
+				);
+	}
+	public function testRun_echo_if_double_28() {
+		$this->assertEquals(
+				Runtime::runSource('if( true ) { echo "true"; if( false ) echo "truetrue2"; else echo "truefalse2"; } else { echo "false"; if( true ) echo "falsetrue2"; else echo "falsefalse2"; }'),
+				array('true', 'truefalse2')
+				);
+	}
+	public function testRun_echo_if_double_29() {
+		$this->assertEquals(
+				Runtime::runSource('if( false ) { echo "true"; if( true ) echo "truetrue2"; else echo "truefalse2"; } else { echo "false"; if( true ) echo "falsetrue2"; else echo "falsefalse2"; }'),
+				array('false', 'falsetrue2')
+				);
+	}
+	public function testRun_echo_if_double_30() {
+		$this->assertEquals(
+				Runtime::runSource('if( false ) { echo "true"; if( true ) echo "truetrue2"; else echo "truefalse2"; } else { echo "false"; if( false ) echo "falsetrue2"; else echo "falsefalse2"; }'),
+				array('false', 'falsefalse2')
+				);
+	}
+	public function testRun_echo_if_double_31() {
+		$this->assertEquals(
+				Runtime::runSource('if( true ) { echo "true"; if( true ) { echo "truetrue2"; } else { echo "truefalse2"; } } else { echo "false"; if( true ) { echo "falsetrue2"; } else { echo "falsefalse2"; } }'),
+				array('true', 'truetrue2')
+				);
+	}
+	public function testRun_echo_if_double_32() {
+		$this->assertEquals(
+				Runtime::runSource('if( true ) { echo "true"; if( false ) { echo "truetrue2"; } else { echo "truefalse2"; } } else { echo "false"; if( true ) { echo "falsetrue2"; } else { echo "falsefalse2"; } }'),
+				array('true', 'truefalse2')
+				);
+	}
+	public function testRun_echo_if_double_33() {
+		$this->assertEquals(
+				Runtime::runSource('if( false ) { echo "true"; if( true ) { echo "truetrue2"; } else { echo "truefalse2"; } } else { echo "false"; if( true ) { echo "falsetrue2"; } else { echo "falsefalse2"; } }'),
+				array('false', 'falsetrue2')
+				);
+	}
+	public function testRun_echo_if_double_34() {
+		$this->assertEquals(
+				Runtime::runSource('if( false ) { echo "true"; if( true ) { echo "truetrue2"; } else { echo "truefalse2"; } } else { echo "false"; if( false ) { echo "falsetrue2"; } else { echo "falsefalse2"; } }'),
+				array('false', 'falsefalse2')
+				);
+	}
 	public function testRun_echo_elseif_1() {
 		$this->assertEquals(
 				Runtime::runSource('if( true ) echo "one"; elseif( true ) echo "two"; else echo "three";'),
@@ -1461,6 +1509,12 @@ if ( $foo + $bar ) echo "\$foo + \$bar";'),
 		$this->assertEquals(
 				Runtime::runSource('if( true ) { if( false ) echo "one"; elseif( false ) echo "two"; else echo "three"; }'),
 				array('three')
+				);
+	}
+	public function testRun_echo_elseif_13() {
+		$this->assertEquals(
+				Runtime::runSource('if(true) { echo "true"; if(true) echo "one"; elseif(true) echo "two"; if(true) echo "T"; }'),
+				array('true', 'one', 'T')
 				);
 	}
 	public function testRun_echo_elseif_variable_1() {
