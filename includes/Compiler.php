@@ -866,6 +866,7 @@ closeoperator:
 									break; /********** EXIT **********/
 								}
 							}
+							$parentFlags |= FOXWAY_EXPECT_START_COMMAND;
 							$stack = array();
 							//$parentLevel = 0; // @todo must be zero?
 							break;
@@ -1225,6 +1226,9 @@ closeoperator:
 
 		}
 
+		if ( !($parentFlags & FOXWAY_EXPECT_START_COMMAND) ) {
+			throw new ExceptionFoxway('$end', FOXWAY_PHP_SYNTAX_ERROR_UNEXPECTED, $tokenLine);
+		}
 		return $bytecode;
 		//return call_user_func_array( 'array_merge', $bytecode );
 		//return $stackOperation; //array_merge(array_reverse($defStak), $stackValues);
