@@ -1,14 +1,14 @@
 <?php
 /**
- * File defining the settings for the Foxway extension.
- * More info can be found at https://www.mediawiki.org/wiki/Extension:Foxway
+ * File defining the settings for the extension PHP Tags.
+ * More info can be found at https://www.mediawiki.org/wiki/Extension:PHP_Tags
  *
  *						  NOTICE:
  * Changing one of these settings can be done by copieng or cutting it,
- * and placing it in LocalSettings.php, AFTER the inclusion of Foxway.
+ * and placing it in LocalSettings.php, AFTER inclusion of the extension PHP.
  *
  * @file Settings.php
- * @ingroup Foxway
+ * @ingroup PhpTags
  * @author Pavel Astakhov <pastakhov@yandex.ru>
  */
 
@@ -18,10 +18,10 @@ if ( !defined( 'MEDIAWIKI' ) ) {
 }
 
 // Default settings
-Foxway\Runtime::$permittedTime = 1;
+\PhpTags\Runtime::$permittedTime = 1;
 
 /**
- * You can specify the namespaces in which is allowed to use the extension Foxway.
+ * You can specify the namespaces in which is allowed to use the extension PHP Tags.
  *
  * Thus it is possible to give permission to use this extension is just a special user group, example:
  * define("NS_PHP", 1000);
@@ -29,26 +29,26 @@ Foxway\Runtime::$permittedTime = 1;
  * $wgExtraNamespaces[NS_PHP] = "PHP";
  * $wgExtraNamespaces[NS_PHP_TALK] = "PHP_Talk";
  *
- * \Foxway\Runtime::$allowedNamespaces = array( NS_PHP );
+ * \PhpTags\Runtime::$allowedNamespaces = array( NS_PHP );
  * $wgNamespaceProtection[NS_PHP] = array( 'php_editor' );
  * $wgGroupPermissions['sysop']['php_editor'] = true;
  *
- * @var array Namespaces in which is allowed to use the extension Foxway, boolean 'true' for unlimited
+ * @var array Namespaces in which is allowed to use the extension PHP, boolean 'true' for unlimited
  */
-// Foxway\Runtime::$allowedNamespaces = true; // true by default
+// PhpTags\Runtime::$allowedNamespaces = true; // true by default
 
-Foxway\Runtime::$functions = array_merge(
+\PhpTags\Runtime::$functions = array_merge(
 		include __DIR__ . '/includes/functions/strings.php', // String Functions @see http://php.net/manual/en/ref.strings.php
 		include __DIR__ . '/includes/functions/array.php', // Array Functions @see http://www.php.net/manual/en/ref.array.php
 		include __DIR__ . '/includes/functions/math.php', // Math Functions @see http://www.php.net/manual/en/ref.math.php
 		include __DIR__ . '/includes/functions/var.php', // Variable handling Functions @see http://www.php.net/manual/en/ref.var.php
 		include __DIR__ . '/includes/functions/pcre.php', // PCRE Functions @see http://www.php.net/manual/en/ref.pcre.php
 		include __DIR__ . '/includes/functions/datetime.php', // Date/Time Functions @see http://www.php.net/manual/en/ref.datetime.php
-		Foxway\Runtime::$functions
+		\PhpTags\Runtime::$functions
 );
 
 
-Foxway\Runtime::$constants = array_merge(
+\PhpTags\Runtime::$constants = array_merge(
 		include __DIR__ . '/includes/constants.php',
-		Foxway\Runtime::$constants
+		\PhpTags\Runtime::$constants
 );

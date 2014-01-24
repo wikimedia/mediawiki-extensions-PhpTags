@@ -20,7 +20,7 @@ return array(
 	'gettype' => array( 1=>function($args) { return gettype($args[0]); } ),
 // @todo bool import_request_variables ( string $types [, string $prefix ] )
 	'intval' => array(
-		FOXWAY_DEFAULT_VALUES=>array( 1=>10 ),
+		PHPTAGS_DEFAULT_VALUES=>array( 1=>10 ),
 		2=>function($args) { return intval($args[0], $args[1]); },
 	),
 	'is_array' => array( 1=>function($args) { return is_array($args[0]); } ),
@@ -40,8 +40,8 @@ return array(
 	'is_string' => array( 1=>function($args) { return is_string($args[0]); } ),
 	// isset() in runtime.php
 	'print_r' => array(
-		FOXWAY_DEFAULT_VALUES=>array( 1=>false ),
-		2=>function($args) { $ret = print_r($args[0], true); return $args[1] ? $ret : new Foxway\outPrint(true, $ret); },
+		PHPTAGS_DEFAULT_VALUES=>array( 1=>false ),
+		2=>function($args) { $ret = print_r($args[0], true); return $args[1] ? $ret : new PHPphp\outPrint(true, $ret); },
 	),
 // @todo string serialize ( mixed $value )
 	'settype' => array( 2=>function($args) { return settype($args[0], $args[1]); } ),
@@ -49,11 +49,11 @@ return array(
 // @todo mixed unserialize ( string $str )
 	// unset() in runtime.php
 	'var_dump' => array(
-		FOXWAY_MIN_VALUES=>1,
-		''=>function($args) { ob_start(); call_user_func_array('var_dump', $args); return new Foxway\outPrint( null, ob_get_clean() ); },
+		PHPTAGS_MIN_VALUES=>1,
+		''=>function($args) { ob_start(); call_user_func_array('var_dump', $args); return new PHPphp\outPrint( null, ob_get_clean() ); },
 	),
 	'var_export' => array(
-		FOXWAY_DEFAULT_VALUES=>array( 1=>false ),
-		2=>function($args) { $ret = var_export($args[0], true); return $args[1] ? $ret : new Foxway\outPrint(null, $ret); },
+		PHPTAGS_DEFAULT_VALUES=>array( 1=>false ),
+		2=>function($args) { $ret = var_export($args[0], true); return $args[1] ? $ret : new PHPphp\outPrint(null, $ret); },
 	),
 );

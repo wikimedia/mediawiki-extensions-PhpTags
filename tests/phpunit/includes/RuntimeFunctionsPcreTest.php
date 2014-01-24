@@ -1,7 +1,7 @@
 <?php
-namespace Foxway;
+namespace PHPphp;
 
-class RuntimeFunctionsPcreTest extends \PHPUnit_Framework_TestCase {
+class RuntimeFunctionsPcreTest /*extends \PHPUnit_Framework_TestCase*/ {
 
 	public function testRun_function_pcre_preg_filter_1() {
 		$this->assertEquals(

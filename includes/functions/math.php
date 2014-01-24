@@ -41,15 +41,15 @@ return array(
 	'log10' => array( 1=>function($args) { return log10($args[0]); } ),
 	'log1p' => array( 1=>function($args) { return log1p($args[0]); } ),
 	'log' => array(
-		FOXWAY_DEFAULT_VALUES=>array( 1=>M_E ),
+		PHPTAGS_DEFAULT_VALUES=>array( 1=>M_E ),
 		2=>function($args) { return log($args[0], $args[1]); },
 	),
 	'max' => array(
-		FOXWAY_MIN_VALUES=>1,
+		PHPTAGS_MIN_VALUES=>1,
 		''=>function($args) { return call_user_func_array('max', $args); },
 	),
 	'min' => array(
-		FOXWAY_MIN_VALUES=>1,
+		PHPTAGS_MIN_VALUES=>1,
 		''=>function($args) { return call_user_func_array('min', $args); },
 	),
 	'mt_getrandmax' => array( 0=>function() { return mt_getrandmax(); } ),
@@ -70,7 +70,7 @@ return array(
 		2=>function($args) { return rand($args[0], $args[1]); },
 	),
 	'round' => array(
-		FOXWAY_DEFAULT_VALUES=>array( 1=>0, 2=>PHP_ROUND_HALF_UP ),
+		PHPTAGS_DEFAULT_VALUES=>array( 1=>0, 2=>PHP_ROUND_HALF_UP ),
 		3=>function($args) { return round($args[0], $args[1], $args[2]); },
 	),
 	'sin' => array( 1=>function($args) { return sin($args[0]); } ),

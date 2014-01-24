@@ -1,25 +1,26 @@
 <?php
-namespace Foxway;
+namespace PhpTags;
 
-define( 'FOXWAY_STACK_RESULT', 'r' );
-define( 'FOXWAY_STACK_COMMAND', 'c' );
-define( 'FOXWAY_STACK_PARAM', 'p' );
-define( 'FOXWAY_STACK_PARAM_2', 's' );
-define( 'FOXWAY_STACK_INC_AFTER', 'i' );
-define( 'FOXWAY_STACK_TOKEN_LINE', 'l' );
-define( 'FOXWAY_STACK_DO_TRUE', 't' );
-define( 'FOXWAY_STACK_DO_FALSE', 'f' );
-define( 'FOXWAY_STACK_ARRAY_INDEX', 'a' );
+define( 'PHPTAGS_STACK_RESULT', 'r' );
+define( 'PHPTAGS_STACK_COMMAND', 'c' );
+define( 'PHPTAGS_STACK_PARAM', 'p' );
+define( 'PHPTAGS_STACK_PARAM_2', 's' );
+define( 'PHPTAGS_STACK_INC_AFTER', 'i' );
+define( 'PHPTAGS_STACK_TOKEN_LINE', 'l' );
+define( 'PHPTAGS_STACK_DO_TRUE', 't' );
+define( 'PHPTAGS_STACK_DO_FALSE', 'f' );
+define( 'PHPTAGS_STACK_ARRAY_INDEX', 'a' );
+define( 'PHPTAGS_STACK_DEBUG', '#' );
 
 // definitions for Runtame::$functions
-define( 'FOXWAY_DEFAULT_VALUES', 'd' );
-define( 'FOXWAY_MIN_VALUES', '<' );
+define( 'PHPTAGS_DEFAULT_VALUES', 'd' );
+define( 'PHPTAGS_MIN_VALUES', '<' );
 
 /**
- * Runtime class of Foxway extension.
+ * The runtime class of the extension PHP Tags.
  *
  * @file Runtime.php
- * @ingroup Foxway
+ * @ingroup PhpTags
  * @author Pavel Astakhov <pastakhov@yandex.ru>
  * @licence GNU General Public Licence 2.0 or later
  */
@@ -58,10 +59,11 @@ class Runtime {
 	}*/
 
 	public static function runSource($code, array $args = array(), $scope = '', $transit = array() ) {
-		return self::run( Compiler::compile($code), $args, $scope, $transit );
+		$compiler = new Compiler();
+		return self::run( $compiler->compile($code), $args, $scope, $transit );
 	}
 
-	public static function run($code, array $args, $scope = '', $transit = array() ) {
+	public static function run( $code, array $args, $scope = '', $transit = array() ) {
 		if( !isset(self::$variables[$scope]) ) {
 			self::$variables[$scope] = array();
 		}
@@ -77,7 +79,7 @@ class Runtime {
 		$place = isset($args[0]) ? $args[0] : ''; // Page name for static variables and error messages
 
 		$c=count($code);
-		$i=-1;
+		$codeIndex=-1;
 		do {
 			if( $break ) {
 				if( $loopsOwner == T_WHILE ) {
@@ -87,265 +89,267 @@ class Runtime {
 				break;
 			}elseif( $continue ) {
 				if( $loopsOwner == T_WHILE ) {
-					$i = -1;
+					$codeIndex = -1;
 					$continue = false;
 				}else{
 					continue;
 				}
 			}
-			$i++;
-			for(; $i<$c; $i++ ) {
-				$value = &$code[$i];
-				switch ($value[FOXWAY_STACK_COMMAND]) {
+			$codeIndex++;
+			for(; $codeIndex<$c; $codeIndex++ ) {
+				$value = &$code[$codeIndex];
+				switch ($value[PHPTAGS_STACK_COMMAND]) {
 					case T_CONST:
 					case T_DOUBLE_ARROW:
 						break; // ignore it, @todo need remove it from $code in class Compiler
-					case T_ENCAPSED_AND_WHITESPACE:
-						$value[FOXWAY_STACK_RESULT] = implode($value[FOXWAY_STACK_PARAM]);
+					case '"': // Example: echo "abc$foo";
+						$value[PHPTAGS_STACK_RESULT] = implode( $value[PHPTAGS_STACK_PARAM] );
 						break;
 					case '.':
-						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] . $value[FOXWAY_STACK_PARAM_2];
+						$value[PHPTAGS_STACK_RESULT] = $value[PHPTAGS_STACK_PARAM] . $value[PHPTAGS_STACK_PARAM_2];
 						break;
 					case '+':
-						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] + $value[FOXWAY_STACK_PARAM_2];
+						$value[PHPTAGS_STACK_RESULT] = $value[PHPTAGS_STACK_PARAM] + $value[PHPTAGS_STACK_PARAM_2];
 						break;
 					case '-':
-						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] - $value[FOXWAY_STACK_PARAM_2];
+						$value[PHPTAGS_STACK_RESULT] = $value[PHPTAGS_STACK_PARAM] - $value[PHPTAGS_STACK_PARAM_2];
 						break;
 					case '*':
-						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] * $value[FOXWAY_STACK_PARAM_2];
+						$value[PHPTAGS_STACK_RESULT] = $value[PHPTAGS_STACK_PARAM] * $value[PHPTAGS_STACK_PARAM_2];
 						break;
 					case '/':
-						if ( (int)$value[FOXWAY_STACK_PARAM_2] == 0 ) {
-							$return[] = (string) new ExceptionFoxway( null, FOXWAY_PHP_WARNING_DIVISION_BY_ZERO, $value[FOXWAY_STACK_TOKEN_LINE], $place );
-							$value[FOXWAY_STACK_RESULT] = null;
+						if ( (int)$value[PHPTAGS_STACK_PARAM_2] == 0 ) {
+							$return[] = (string) new ExceptionPhpTags( PHPTAGS_EXCEPTION_WARNING_DIVISION_BY_ZERO, null, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
+							$value[PHPTAGS_STACK_RESULT] = null;
 							break; /**** EXIT ****/
 						}
-						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] / $value[FOXWAY_STACK_PARAM_2];
+						$value[PHPTAGS_STACK_RESULT] = $value[PHPTAGS_STACK_PARAM] / $value[PHPTAGS_STACK_PARAM_2];
 						break;
 					case '%':
-						if ( (int)$value[FOXWAY_STACK_PARAM_2] == 0 ) {
-							$return[] = (string) new ExceptionFoxway( null, FOXWAY_PHP_WARNING_DIVISION_BY_ZERO, $value[FOXWAY_STACK_TOKEN_LINE], $place );
-							$value[FOXWAY_STACK_RESULT] = null;
+						if ( (int)$value[PHPTAGS_STACK_PARAM_2] == 0 ) {
+							$return[] = (string) new ExceptionPhpTags( PHPTAGS_EXCEPTION_WARNING_DIVISION_BY_ZERO, null, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
+							$value[PHPTAGS_STACK_RESULT] = null;
 							break; /**** EXIT ****/
 						}
-						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] % $value[FOXWAY_STACK_PARAM_2];
+						$value[PHPTAGS_STACK_RESULT] = $value[PHPTAGS_STACK_PARAM] % $value[PHPTAGS_STACK_PARAM_2];
 						break;
 					case '&':
-						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] & $value[FOXWAY_STACK_PARAM_2];
+						$value[PHPTAGS_STACK_RESULT] = $value[PHPTAGS_STACK_PARAM] & $value[PHPTAGS_STACK_PARAM_2];
 						break;
 					case '|':
-						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] | $value[FOXWAY_STACK_PARAM_2];
+						$value[PHPTAGS_STACK_RESULT] = $value[PHPTAGS_STACK_PARAM] | $value[PHPTAGS_STACK_PARAM_2];
 						break;
 					case '^':
-						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] ^ $value[FOXWAY_STACK_PARAM_2];
+						$value[PHPTAGS_STACK_RESULT] = $value[PHPTAGS_STACK_PARAM] ^ $value[PHPTAGS_STACK_PARAM_2];
 						break;
 					case T_SL:			// <<
-						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] << $value[FOXWAY_STACK_PARAM_2];
+						$value[PHPTAGS_STACK_RESULT] = $value[PHPTAGS_STACK_PARAM] << $value[PHPTAGS_STACK_PARAM_2];
 						break;
 					case T_SR:			// >>
-						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] >> $value[FOXWAY_STACK_PARAM_2];
+						$value[PHPTAGS_STACK_RESULT] = $value[PHPTAGS_STACK_PARAM] >> $value[PHPTAGS_STACK_PARAM_2];
 						break;
-					case T_BOOLEAN_AND:	// &&
 					case T_LOGICAL_AND:	// and
-						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] && $value[FOXWAY_STACK_PARAM_2];
+						$value[PHPTAGS_STACK_RESULT] = $value[PHPTAGS_STACK_PARAM] && $value[PHPTAGS_STACK_PARAM_2];
 						break;
 					case T_LOGICAL_XOR:	// xor
-						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] xor $value[FOXWAY_STACK_PARAM_2];
+						$value[PHPTAGS_STACK_RESULT] = $value[PHPTAGS_STACK_PARAM] xor $value[PHPTAGS_STACK_PARAM_2];
 						break;
-					case T_BOOLEAN_OR:	// ||
 					case T_LOGICAL_OR:	// or
-						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] || $value[FOXWAY_STACK_PARAM_2];
+						$value[PHPTAGS_STACK_RESULT] = $value[PHPTAGS_STACK_PARAM] || $value[PHPTAGS_STACK_PARAM_2];
 						break;
 					case '<':
-						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] < $value[FOXWAY_STACK_PARAM_2];
+						$value[PHPTAGS_STACK_RESULT] = $value[PHPTAGS_STACK_PARAM] < $value[PHPTAGS_STACK_PARAM_2];
 						break;
 					case '>':
-						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] > $value[FOXWAY_STACK_PARAM_2];
+						$value[PHPTAGS_STACK_RESULT] = $value[PHPTAGS_STACK_PARAM] > $value[PHPTAGS_STACK_PARAM_2];
 						break;
 					case T_IS_SMALLER_OR_EQUAL:	// <=
-						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] <= $value[FOXWAY_STACK_PARAM_2];
+						$value[PHPTAGS_STACK_RESULT] = $value[PHPTAGS_STACK_PARAM] <= $value[PHPTAGS_STACK_PARAM_2];
 						break;
 					case T_IS_GREATER_OR_EQUAL:	// >=
-						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] >= $value[FOXWAY_STACK_PARAM_2];
+						$value[PHPTAGS_STACK_RESULT] = $value[PHPTAGS_STACK_PARAM] >= $value[PHPTAGS_STACK_PARAM_2];
 						break;
 					case T_IS_EQUAL:			// ==
-						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] == $value[FOXWAY_STACK_PARAM_2];
+						$value[PHPTAGS_STACK_RESULT] = $value[PHPTAGS_STACK_PARAM] == $value[PHPTAGS_STACK_PARAM_2];
 						break;
 					case T_IS_NOT_EQUAL:		// !=
-						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] != $value[FOXWAY_STACK_PARAM_2];
+						$value[PHPTAGS_STACK_RESULT] = $value[PHPTAGS_STACK_PARAM] != $value[PHPTAGS_STACK_PARAM_2];
 						break;
 					case T_IS_IDENTICAL:		// ===
-						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] === $value[FOXWAY_STACK_PARAM_2];
+						$value[PHPTAGS_STACK_RESULT] = $value[PHPTAGS_STACK_PARAM] === $value[PHPTAGS_STACK_PARAM_2];
 						break;
 					case T_IS_NOT_IDENTICAL:	// !==
-						$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM] !== $value[FOXWAY_STACK_PARAM_2];
+						$value[PHPTAGS_STACK_RESULT] = $value[PHPTAGS_STACK_PARAM] !== $value[PHPTAGS_STACK_PARAM_2];
 						break;
 					case T_ECHO:
-						foreach( $value[FOXWAY_STACK_PARAM] as $v ) {
-							$return[] = $v[FOXWAY_STACK_RESULT];
+						foreach( $value[PHPTAGS_STACK_PARAM] as $v ) {
+							$return[] = $v;
 						}
 						break;
-					case T_PRINT:
-						$return[] = $value[FOXWAY_STACK_PARAM];
-						break;
 					case '~':
-						$value[FOXWAY_STACK_RESULT] = ~$value[FOXWAY_STACK_PARAM_2];
+						$value[PHPTAGS_STACK_RESULT] = ~$value[PHPTAGS_STACK_PARAM_2];
 						break;
 					case '!':
-						$value[FOXWAY_STACK_RESULT] = !$value[FOXWAY_STACK_PARAM_2];
+						$value[PHPTAGS_STACK_RESULT] = !$value[PHPTAGS_STACK_PARAM_2];
 						break;
 					case T_INT_CAST:		// (int)
-						$value[FOXWAY_STACK_RESULT] = (int)$value[FOXWAY_STACK_PARAM_2];
+						$value[PHPTAGS_STACK_RESULT] = (int)$value[PHPTAGS_STACK_PARAM_2];
 						break;
 					case T_DOUBLE_CAST:		// (double)
-						$value[FOXWAY_STACK_RESULT] = (double)$value[FOXWAY_STACK_PARAM_2];
+						$value[PHPTAGS_STACK_RESULT] = (double)$value[PHPTAGS_STACK_PARAM_2];
 						break;
 					case T_STRING_CAST:		// (string)
-						$value[FOXWAY_STACK_RESULT] = (string)$value[FOXWAY_STACK_PARAM_2];
+						$value[PHPTAGS_STACK_RESULT] = (string)$value[PHPTAGS_STACK_PARAM_2];
 						break;
 					case T_ARRAY_CAST:		// (array)
-						$value[FOXWAY_STACK_RESULT] = (array)$value[FOXWAY_STACK_PARAM_2];
+						$value[PHPTAGS_STACK_RESULT] = (array)$value[PHPTAGS_STACK_PARAM_2];
 						break;
 					case T_BOOL_CAST:		// (bool)
-						$value[FOXWAY_STACK_RESULT] = (bool)$value[FOXWAY_STACK_PARAM_2];
+						$value[PHPTAGS_STACK_RESULT] = (bool)$value[PHPTAGS_STACK_PARAM_2];
 						break;
 					case T_UNSET_CAST:		// (unset)
-						$value[FOXWAY_STACK_RESULT] = (unset)$value[FOXWAY_STACK_PARAM_2];
+						$value[PHPTAGS_STACK_RESULT] = (unset)$value[PHPTAGS_STACK_PARAM_2];
+						break;
+					case T_VARIABLE:
+						if ( array_key_exists($value[PHPTAGS_STACK_PARAM], $thisVariables) ) {
+							$value[PHPTAGS_STACK_RESULT] = $thisVariables[ $value[PHPTAGS_STACK_PARAM] ];
+							if ( array_key_exists(PHPTAGS_STACK_ARRAY_INDEX, $value) ) { // Example: $foo[1]
+								foreach ( $value[PHPTAGS_STACK_ARRAY_INDEX] as $v ) {
+									if ( is_array($value[PHPTAGS_STACK_RESULT]) ) {
+										if ( array_key_exists($v[PHPTAGS_STACK_RESULT], $value[PHPTAGS_STACK_RESULT]) ) {
+											$value[PHPTAGS_STACK_RESULT] = $value[PHPTAGS_STACK_RESULT][ $v[PHPTAGS_STACK_RESULT] ];
+										} else {
+											// PHP Notice:  Undefined offset: $1
+											$return[] = (string) new ExceptionPhpTags( PHPTAGS_EXCEPTION_NOTICE_UNDEFINED_OFFSET, $v[PHPTAGS_STACK_RESULT], $value[PHPTAGS_STACK_TOKEN_LINE], $place );
+											$value[PHPTAGS_STACK_RESULT] = null;
+										}
+									} else {
+										if ( isset( $value[PHPTAGS_STACK_RESULT][ $v[PHPTAGS_STACK_RESULT] ]) ) {
+											$value[PHPTAGS_STACK_RESULT] = $value[PHPTAGS_STACK_RESULT][ $v[PHPTAGS_STACK_RESULT] ];
+										} else {
+											// PHP Notice:  Uninitialized string offset: $1
+											$return[] = (string) new ExceptionPhpTags( PHPTAGS_EXCEPTION_NOTICE_UNINIT_STRING_OFFSET, (int)$v[PHPTAGS_STACK_RESULT], $value[PHPTAGS_STACK_TOKEN_LINE], $place );
+											$value[PHPTAGS_STACK_RESULT] = null;
+										}
+									}
+								}
+							}
+						}else{
+							$value[PHPTAGS_STACK_RESULT] = null;
+							$return[] = (string) new ExceptionPhpTags( PHPTAGS_EXCEPTION_NOTICE_UNDEFINED_VARIABLE, $value[PHPTAGS_STACK_PARAM], $value[PHPTAGS_STACK_TOKEN_LINE], $place );
+						}
 						break;
 					case '?':
-						if( $value[FOXWAY_STACK_PARAM] ) { // true ?
-							if( $value[FOXWAY_STACK_PARAM_2][FOXWAY_STACK_DO_TRUE] ) { // true ? 1+2 :
-								$memory[] = array( &$value[FOXWAY_STACK_PARAM_2][FOXWAY_STACK_PARAM], $code, $i, $c, $loopsOwner );
-								$code = $value[FOXWAY_STACK_PARAM_2][FOXWAY_STACK_DO_TRUE];
-								$i = -1;
+						if( $value[PHPTAGS_STACK_PARAM] ) { // true ?
+							if( $value[PHPTAGS_STACK_PARAM_2][PHPTAGS_STACK_DO_TRUE] ) { // true ? 1+2 :
+								$memory[] = array( &$value[PHPTAGS_STACK_PARAM_2][PHPTAGS_STACK_PARAM], $code, $codeIndex, $c, $loopsOwner );
+								$code = $value[PHPTAGS_STACK_PARAM_2][PHPTAGS_STACK_DO_TRUE];
+								$codeIndex = -1;
 								$c = count($code);
 								$loopsOwner = '?';
 							}else{ // true ? 1 :
-								$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM_2][FOXWAY_STACK_PARAM];
+								$value[PHPTAGS_STACK_RESULT] = $value[PHPTAGS_STACK_PARAM_2][PHPTAGS_STACK_PARAM];
 							}
 						}else{ // false ?
-							if( $value[FOXWAY_STACK_PARAM_2][FOXWAY_STACK_DO_FALSE] ) { // false ? ... : 1+2
-								$memory[] = array( &$value[FOXWAY_STACK_PARAM_2][FOXWAY_STACK_PARAM_2], $code, $i, $c, $loopsOwner );
-								$code = $value[FOXWAY_STACK_PARAM_2][FOXWAY_STACK_DO_FALSE];
-								$i = -1;
+							if( $value[PHPTAGS_STACK_PARAM_2][PHPTAGS_STACK_DO_FALSE] ) { // false ? ... : 1+2
+								$memory[] = array( &$value[PHPTAGS_STACK_PARAM_2][PHPTAGS_STACK_PARAM_2], $code, $codeIndex, $c, $loopsOwner );
+								$code = $value[PHPTAGS_STACK_PARAM_2][PHPTAGS_STACK_DO_FALSE];
+								$codeIndex = -1;
 								$c = count($code);
 								$loopsOwner = '?';
 							}else{ // false ? ... : 1
-								$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_PARAM_2][FOXWAY_STACK_PARAM_2];
+								$value[PHPTAGS_STACK_RESULT] = $value[PHPTAGS_STACK_PARAM_2][PHPTAGS_STACK_PARAM_2];
 							}
 						}
 						break;
 					case T_IF:
-						if( $value[FOXWAY_STACK_PARAM] ) { // Example: if( true )
-							if( $value[FOXWAY_STACK_DO_TRUE] ) { // Stack not empty: if(true);
-								$memory[] = array( null, $code, $i, $c, $loopsOwner );
-								$code = $value[FOXWAY_STACK_DO_TRUE];
-								$i = -1;
+						if( $value[PHPTAGS_STACK_PARAM] ) { // Example: if( true )
+							if( $value[PHPTAGS_STACK_DO_TRUE] ) { // Stack not empty: if(true);
+								$memory[] = array( null, $code, $codeIndex, $c, $loopsOwner );
+								$code = $value[PHPTAGS_STACK_DO_TRUE];
+								$codeIndex = -1;
 								$c = count($code);
 								$loopsOwner = T_IF;
 							}
 						}else{ // Example: if( false )
-							if( isset($value[FOXWAY_STACK_DO_FALSE]) ) { // Stack not empty: if(false) ; else ;
-								$memory[] = array( null, $code, $i, $c, $loopsOwner );
-								$code = $value[FOXWAY_STACK_DO_FALSE];
-								$i = -1;
+							if( isset($value[PHPTAGS_STACK_DO_FALSE]) ) { // Stack not empty: if(false) ; else ;
+								$memory[] = array( null, $code, $codeIndex, $c, $loopsOwner );
+								$code = $value[PHPTAGS_STACK_DO_FALSE];
+								$codeIndex = -1;
 								$c = count($code);
 								$loopsOwner = T_IF;
 							}
 						}
 						break;
 					case T_FOREACH:
-						$vn = $value[FOXWAY_STACK_PARAM]; // Variable name
+						$vn = $value[PHPTAGS_STACK_PARAM]; // Variable name
 						if ( !array_key_exists($vn, $thisVariables) ) {
-							$return[] = (string) new ExceptionFoxway( $vn, FOXWAY_PHP_NOTICE_UNDEFINED_VARIABLE, $value[FOXWAY_STACK_TOKEN_LINE], $place );
-							$return[] = (string) new ExceptionFoxway( null, FOXWAY_PHP_WARNING_INVALID_ARGUMENT_FOR_FOREACH, $value[FOXWAY_STACK_TOKEN_LINE], $place );
+							$return[] = (string) new ExceptionPhpTags( $vn, PHPTAGS_NOTICE_UNDEFINED_VARIABLE, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
+							$return[] = (string) new ExceptionPhpTags( null, PHPTAGS_WARNING_INVALID_ARGUMENT_FOR_FOREACH, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
 							break; // **** EXIT ****
 						}
-						if ( !is_array($thisVariables[ $value[FOXWAY_STACK_PARAM] ]) ) {
-							$return[] = (string) new ExceptionFoxway( null, FOXWAY_PHP_WARNING_INVALID_ARGUMENT_FOR_FOREACH, $value[FOXWAY_STACK_TOKEN_LINE], $place );
+						if ( !is_array($thisVariables[ $value[PHPTAGS_STACK_PARAM] ]) ) {
+							$return[] = (string) new ExceptionPhpTags( null, PHPTAGS_WARNING_INVALID_ARGUMENT_FOR_FOREACH, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
 							break; // **** EXIT ****
 						}
-						reset( $thisVariables[ $value[FOXWAY_STACK_PARAM] ] );
+						reset( $thisVariables[ $value[PHPTAGS_STACK_PARAM] ] );
 						// break is not necessary here
 					case T_WHILE: // PHP code "while($foo) { ... }" doing as T_WHILE { T_DO($foo) ... }. If $foo == false, T_DO doing as T_BREAK
-						$memory[] = array( null, $code, $i, $c, $loopsOwner );
-						$code = $value[FOXWAY_STACK_DO_TRUE];
-						$i = -1;
+						$memory[] = array( null, $code, $codeIndex, $c, $loopsOwner );
+						$code = $value[PHPTAGS_STACK_DO_TRUE];
+						$codeIndex = -1;
 						$c = count($code);
 						$loopsOwner = T_WHILE;
 						break;
-					case T_DO:
-						if( $value[FOXWAY_STACK_PARAM] ) {
-							continue; // this is "while(true)", just go next
-						}// while(false) doing as T_BREAK;
-						break 2; // go to one level down
 					case T_AS:
-						if ( is_string($value[FOXWAY_STACK_PARAM_2]) ) { // T_VARIABLE. Example: while ( $foo as $value )
-							if ( !list(,$thisVariables[ $value[FOXWAY_STACK_PARAM_2] ]) = each($thisVariables[ $value[FOXWAY_STACK_PARAM] ]) ) {
+						if ( is_string($value[PHPTAGS_STACK_PARAM_2]) ) { // T_VARIABLE. Example: while ( $foo as $value )
+							if ( !list(,$thisVariables[ $value[PHPTAGS_STACK_PARAM_2] ]) = each($thisVariables[ $value[PHPTAGS_STACK_PARAM] ]) ) {
 								break 2; // go to one level down
 							}
 						} else { // T_DOUBLE_ARROW Example: while ( $foo as $key=>$value )
-							if ( !list($thisVariables[ $value[FOXWAY_STACK_PARAM_2][0] ], $thisVariables[ $value[FOXWAY_STACK_PARAM_2][1] ]) = each($thisVariables[ $value[FOXWAY_STACK_PARAM] ]) ) {
+							if ( !list($thisVariables[ $value[PHPTAGS_STACK_PARAM_2][0] ], $thisVariables[ $value[PHPTAGS_STACK_PARAM_2][1] ]) = each($thisVariables[ $value[PHPTAGS_STACK_PARAM] ]) ) {
 								break 2; // go to one level down
 							}
 						}
 						break;
 					case T_BREAK:
-						$break = $value[FOXWAY_STACK_RESULT];
+						$break = $value[PHPTAGS_STACK_RESULT];
 						if( $loopsOwner == T_WHILE ) {
 							$break--;
 						}
 						break 2; // go to one level down
 					case T_CONTINUE:
-						$break = $value[FOXWAY_STACK_RESULT]-1;
+						$break = $value[PHPTAGS_STACK_RESULT]-1;
 						if( $loopsOwner == T_WHILE && $break == 0 ) { // Example: while(true) continue;
-							$i = -1;
+							$codeIndex = -1;
 							break;
 						}
 						$continue = true;
 						break 2; // go to one level down
 					case T_ARRAY:			// array
-						$value[FOXWAY_STACK_RESULT] = array(); // init array
-						foreach ($value[FOXWAY_STACK_PARAM] as $v) {
-							if( $v[FOXWAY_STACK_COMMAND] == T_DOUBLE_ARROW ) {
-								$value[FOXWAY_STACK_RESULT][ $v[FOXWAY_STACK_RESULT] ] = $v[FOXWAY_STACK_PARAM_2];
-							}else{
-								$value[FOXWAY_STACK_RESULT][] = $v[FOXWAY_STACK_RESULT];
-							}
-						}
-						break;
-					case T_VARIABLE:
-						if ( array_key_exists($value[FOXWAY_STACK_PARAM], $thisVariables) ) {
-							$value[FOXWAY_STACK_RESULT] = $thisVariables[ $value[FOXWAY_STACK_PARAM] ];
-							if ( isset($value[FOXWAY_STACK_ARRAY_INDEX]) ) { // Example: $foo[1]
-								foreach ( $value[FOXWAY_STACK_ARRAY_INDEX] as $v ) {
-									if ( isset($value[FOXWAY_STACK_RESULT][ $v[FOXWAY_STACK_RESULT] ]) ) {
-										$value[FOXWAY_STACK_RESULT] = $value[FOXWAY_STACK_RESULT][ $v[FOXWAY_STACK_RESULT] ];
-									} else {
-										if ( is_string($value[FOXWAY_STACK_RESULT]) ) {
-											$return[] = (string) new ExceptionFoxway( (int)$v[FOXWAY_STACK_RESULT] , FOXWAY_PHP_NOTICE_UNINIT_STRING_OFFSET, $value[FOXWAY_STACK_TOKEN_LINE], $place );
-										}
-										$value[FOXWAY_STACK_RESULT] = null;
-									}
+						$tmp = $value[PHPTAGS_STACK_PARAM][0];
+						$i = 1;
+						foreach ( $value[PHPTAGS_STACK_PARAM_2] as $t ) {
+							list ( $k, $v ) = $t;
+							$tmp[$k] = $v;
+							if ( isset($value[PHPTAGS_STACK_PARAM][$i]) ) {
+								foreach ( $value[PHPTAGS_STACK_PARAM][$i] as $n ) {
+									$tmp[] = $n;
 								}
 							}
-						}else{
-							$value[FOXWAY_STACK_RESULT] = null;
-							if( !isset($value[FOXWAY_STACK_PARAM_2]) ) { // skip this E_NOTICE, becouse it is $foo++;  E_NOTICE will be show in ++ operator
-								$return[] = (string) new ExceptionFoxway( $value[FOXWAY_STACK_PARAM], FOXWAY_PHP_NOTICE_UNDEFINED_VARIABLE, $value[FOXWAY_STACK_TOKEN_LINE], $place );
-							}
+							$i++;
 						}
+						$value[PHPTAGS_STACK_RESULT] = $tmp;
 						break;
 					case T_STATIC:
-						$vn = $value[FOXWAY_STACK_PARAM_2]; // variable name
+						$vn = $value[PHPTAGS_STACK_PARAM]; // variable name
 						if( !isset(self::$staticVariables[$place]) || !array_key_exists($vn, self::$staticVariables[$place]) ) {
-							self::$staticVariables[$place][$vn] = &$value[FOXWAY_STACK_PARAM];
-							if( $value[FOXWAY_STACK_DO_FALSE] ) {
+							self::$staticVariables[$place][$vn] = &$value[PHPTAGS_STACK_RESULT];
+							if( $value[PHPTAGS_STACK_DO_TRUE] ) {
 								//self::$staticVariables[$p][$vn] = null;
-								$memory[] = array( null, $code, $i, $c, $loopsOwner );
-								$code = $value[FOXWAY_STACK_DO_FALSE];
-								$i = -1;
+								$memory[] = array( null, $code, $codeIndex, $c, $loopsOwner );
+								$code = $value[PHPTAGS_STACK_DO_TRUE];
+								$codeIndex = -1;
 								$c = count($code);
 								$loopsOwner = T_STATIC;
 							}
@@ -353,7 +357,7 @@ class Runtime {
 						$thisVariables[$vn] = &self::$staticVariables[$place][$vn];
 						break;
 					case T_GLOBAL:
-						foreach( $value[FOXWAY_STACK_PARAM] as $vn ) { // variable names
+						foreach( $value[PHPTAGS_STACK_PARAM] as $vn ) { // variable names
 							if( !array_key_exists($vn, self::$globalVariables) ) {
 								self::$globalVariables[$vn] = null;
 							}
@@ -361,31 +365,31 @@ class Runtime {
 						}
 						break;
 					case T_STRING:
-						$name = $value[FOXWAY_STACK_PARAM_2];
-						if ( isset($value[FOXWAY_STACK_PARAM]) ) { // This is function or object
-							if ( is_array($value[FOXWAY_STACK_PARAM]) ) { // This is function
+						$name = $value[PHPTAGS_STACK_PARAM_2];
+						if ( isset($value[PHPTAGS_STACK_PARAM]) ) { // This is function or object
+							if ( is_array($value[PHPTAGS_STACK_PARAM]) ) { // This is function
 								if ( isset(self::$functions[$name]) ) {
 									$function = &self::$functions[$name];
 									$param = array();
-									foreach ( $value[FOXWAY_STACK_PARAM] as $val ) {
-										if ( $val[FOXWAY_STACK_COMMAND] == T_VARIABLE ) { // Example $foo
-											$ref = &$thisVariables[ $val[FOXWAY_STACK_PARAM] ];
-											if ( isset($val[FOXWAY_STACK_ARRAY_INDEX]) ) { // Example: $foo[1]
-												foreach ( $val[FOXWAY_STACK_ARRAY_INDEX] as $v ) {
-													if ( !isset($ref[ $v[FOXWAY_STACK_RESULT] ]) ) {
-														$ref[ $v[FOXWAY_STACK_RESULT] ] = null;
+									foreach ( $value[PHPTAGS_STACK_PARAM] as $val ) {
+										if ( $val[PHPTAGS_STACK_COMMAND] == T_VARIABLE ) { // Example $foo
+											$ref = &$thisVariables[ $val[PHPTAGS_STACK_PARAM] ];
+											if ( isset($val[PHPTAGS_STACK_ARRAY_INDEX]) ) { // Example: $foo[1]
+												foreach ( $val[PHPTAGS_STACK_ARRAY_INDEX] as $v ) {
+													if ( !isset($ref[ $v[PHPTAGS_STACK_RESULT] ]) ) {
+														$ref[ $v[PHPTAGS_STACK_RESULT] ] = null;
 														// @todo PHP Fatal error:  Only variables can be passed by reference
 														if( is_string($ref) ) {
-															$return[] = (string) new ExceptionFoxway( (int)$v[FOXWAY_STACK_RESULT] , FOXWAY_PHP_NOTICE_UNINIT_STRING_OFFSET, $value[FOXWAY_STACK_TOKEN_LINE], $place );
+															//PHPTAGS_EXCEPTION_NOTICE_UNINIT_STRING_OFFSET $return[] = (string) new ExceptionPhpTags( (int)$v[PHPTAGS_STACK_RESULT] , PHPTAGS_NOTICE_UNINIT_STRING_OFFSET, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
 														}
 													}
-													$ref = &$ref[ $v[FOXWAY_STACK_RESULT] ];
+													$ref = &$ref[ $v[PHPTAGS_STACK_RESULT] ];
 												}
 											}
 											$param[] = &$ref;
 										} else {
 											// @todo PHP Fatal error:  Only variables can be passed by reference
-											$param[] = $val[FOXWAY_STACK_RESULT];
+											$param[] = $val[PHPTAGS_STACK_RESULT];
 										}
 									}
 									$count = count( $param );
@@ -394,24 +398,24 @@ class Runtime {
 											$function = &$function[$count];
 											break;
 										} else {
-											if ( isset($function[FOXWAY_DEFAULT_VALUES]) ) { // Has default values
-												$param += $function[FOXWAY_DEFAULT_VALUES];
+											if ( isset($function[PHPTAGS_DEFAULT_VALUES]) ) { // Has default values
+												$param += $function[PHPTAGS_DEFAULT_VALUES];
 												$count = count( $param );
 												if( isset($function[$count]) ) {
 													$function = &$function[$count];
 													break;
 												}
 											}
-											if ( isset($function[FOXWAY_MIN_VALUES]) ) {
-												if( $count >= $function[FOXWAY_MIN_VALUES] && isset($function['']) ) {
+											if ( isset($function[PHPTAGS_MIN_VALUES]) ) {
+												if( $count >= $function[PHPTAGS_MIN_VALUES] && isset($function['']) ) {
 													$function = &$function[''];
 													$count = "''"; // it for error message
 													break;
 												}
 											}
 										}
-										$return[] = (string) new ExceptionFoxway( $name, FOXWAY_PHP_WARNING_WRONG_PARAMETER_COUNT, $value[FOXWAY_STACK_TOKEN_LINE], $place );
-										$value[FOXWAY_STACK_RESULT] = null;
+										$return[] = (string) new ExceptionPhpTags( $name, PHPTAGS_WARNING_WRONG_PARAMETER_COUNT, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
+										$value[PHPTAGS_STACK_RESULT] = null;
 										break 2; /**** EXIT ****/
 									} while( false );
 
@@ -420,34 +424,34 @@ class Runtime {
 											wfSuppressWarnings();
 											$result = $function( $param, $transit );
 											if ( $result instanceof outPrint ) {
-												$value[FOXWAY_STACK_RESULT] = $result->returnValue;
+												$value[PHPTAGS_STACK_RESULT] = $result->returnValue;
 												$return[] = $result;
 											} else {
-												$value[FOXWAY_STACK_RESULT] = $result;
+												$value[PHPTAGS_STACK_RESULT] = $result;
 											}
 											wfRestoreWarnings();
-										} catch ( ExceptionFoxway $e ) {
-											$e->tokenLine = $value[FOXWAY_STACK_TOKEN_LINE];
+										} catch ( ExceptionPhpTags $e ) {
+											$e->tokenLine = $value[PHPTAGS_STACK_TOKEN_LINE];
 											$e->place = $place;
 											if ( is_array($e->params) ) {
 												array_unshift( $e->params, $name );
 											}
 											$return[] = $e;
-											$value[FOXWAY_STACK_RESULT] = null;
+											$value[PHPTAGS_STACK_RESULT] = null;
 											break; /**** EXIT ****/
 										} catch (Exception $e) {
-											$return[] = (string) new ExceptionFoxway( $name, FOXWAY_PHP_FATAL_ERROR_CALL_TO_FUNCTION, $value[FOXWAY_STACK_TOKEN_LINE], $place );
-											$value[FOXWAY_STACK_RESULT] = null;
+											$return[] = (string) new ExceptionPhpTags( $name, PHPTAGS_FATAL_ERROR_CALL_TO_FUNCTION, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
+											$value[PHPTAGS_STACK_RESULT] = null;
 											break; /**** EXIT ****/
 										}
 									} else {
-										$return[] = (string) new ExceptionFoxway( array($name, $count), FOXWAY_PHP_FATAL_UNABLE_CALL_TO_FUNCTION, $value[FOXWAY_STACK_TOKEN_LINE], $place );
-										$value[FOXWAY_STACK_RESULT] = null;
+										$return[] = (string) new ExceptionPhpTags( array($name, $count), PHPTAGS_FATAL_UNABLE_CALL_TO_FUNCTION, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
+										$value[PHPTAGS_STACK_RESULT] = null;
 										break; /**** EXIT ****/
 									}
 								} else {
-									$return[] = (string) new ExceptionFoxway( $name, FOXWAY_PHP_FATAL_CALL_TO_UNDEFINED_FUNCTION, $value[FOXWAY_STACK_TOKEN_LINE], $place );
-									$value[FOXWAY_STACK_RESULT] = null;
+									$return[] = (string) new ExceptionPhpTags( $name, PHPTAGS_FATAL_CALL_TO_UNDEFINED_FUNCTION, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
+									$value[PHPTAGS_STACK_RESULT] = null;
 									break; /**** EXIT ****/
 								}
 							} else { // This is object
@@ -456,213 +460,223 @@ class Runtime {
 						} else { // This is constant
 							if ( isset(self::$constants[$name]) ) {
 								$function = &self::$constants[$name];
-								$value[FOXWAY_STACK_RESULT] = is_callable($function) ? $function( $transit ) : $function;
+								$value[PHPTAGS_STACK_RESULT] = is_callable($function) ? $function( $transit ) : $function;
 							} else {
-								$value[FOXWAY_STACK_RESULT] = $name;
-								$return[] = (string) new ExceptionFoxway( $name, FOXWAY_PHP_NOTICE_UNDEFINED_CONSTANT, $value[FOXWAY_STACK_TOKEN_LINE], $place );
+								$value[PHPTAGS_STACK_RESULT] = $name;
+								$return[] = (string) new ExceptionPhpTags( $name, PHPTAGS_NOTICE_UNDEFINED_CONSTANT, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
 							}
 						}
 						break;
 					case T_UNSET:
-						foreach ( $value[FOXWAY_STACK_PARAM] as $val ) {
-							if ( $val[FOXWAY_STACK_COMMAND] != T_VARIABLE ) { // Example: isset($foo);
+						foreach ( $value[PHPTAGS_STACK_PARAM] as $val ) {
+							if ( $val[PHPTAGS_STACK_COMMAND] != T_VARIABLE ) { // Example: isset($foo);
 								throw new Exception; // @todo
 							}
-							$vn = $val[FOXWAY_STACK_PARAM]; // Variable Name
+							$vn = $val[PHPTAGS_STACK_PARAM]; // Variable Name
 							if ( array_key_exists($vn, $thisVariables) ) { // defined variable
-								if ( isset($val[FOXWAY_STACK_ARRAY_INDEX]) ) { // There is array index. Example: unset($foo[0])
+								if ( isset($val[PHPTAGS_STACK_ARRAY_INDEX]) ) { // There is array index. Example: unset($foo[0])
 									$ref = &$thisVariables[$vn];
-									$tmp = array_pop( $val[FOXWAY_STACK_ARRAY_INDEX] );
-									foreach ( $val[FOXWAY_STACK_ARRAY_INDEX] as $v ) {
+									$tmp = array_pop( $val[PHPTAGS_STACK_ARRAY_INDEX] );
+									foreach ( $val[PHPTAGS_STACK_ARRAY_INDEX] as $v ) {
 										if ( is_string($ref) ) {
-											throw new ExceptionFoxway( null, FOXWAY_PHP_FATAL_CANNOT_UNSET_STRING_OFFSETS, $value[FOXWAY_STACK_TOKEN_LINE], $place );
-										} elseif ( !isset($ref[ $v[FOXWAY_STACK_RESULT] ]) ) { // undefined array index not for string
+											throw new ExceptionPhpTags( null, PHPTAGS_FATAL_CANNOT_UNSET_STRING_OFFSETS, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
+										} elseif ( !isset($ref[ $v[PHPTAGS_STACK_RESULT] ]) ) { // undefined array index not for string
 											continue 2;
 										}
-										$ref = &$ref[ $v[FOXWAY_STACK_RESULT] ];
+										$ref = &$ref[ $v[PHPTAGS_STACK_RESULT] ];
 									}
 									if ( is_array($ref) ) {
-										unset( $ref[ $tmp[FOXWAY_STACK_RESULT] ] );
+										unset( $ref[ $tmp[PHPTAGS_STACK_RESULT] ] );
 									} else {
-										throw new ExceptionFoxway( null, FOXWAY_PHP_FATAL_CANNOT_UNSET_STRING_OFFSETS, $value[FOXWAY_STACK_TOKEN_LINE], $place );
+										throw new ExceptionPhpTags( null, PHPTAGS_FATAL_CANNOT_UNSET_STRING_OFFSETS, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
 									}
 								}else{ // There is no array index. Example: unset($foo)
 									unset( $thisVariables[$vn] );
 								}
-							} elseif ( isset($val[FOXWAY_STACK_ARRAY_INDEX]) ) { // undefined variable with array index. Example: unset($foo[1])
-								$return[] = (string) new ExceptionFoxway( $vn, FOXWAY_PHP_NOTICE_UNDEFINED_VARIABLE, $value[FOXWAY_STACK_TOKEN_LINE], $place );
+							} elseif ( isset($val[PHPTAGS_STACK_ARRAY_INDEX]) ) { // undefined variable with array index. Example: unset($foo[1])
+								$return[] = (string) new ExceptionPhpTags( $vn, PHPTAGS_NOTICE_UNDEFINED_VARIABLE, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
 							}
 						}
 						break;
 					case T_ISSET:
-						foreach($value[FOXWAY_STACK_PARAM] as $val) {
-							if( $val[FOXWAY_STACK_COMMAND] != T_VARIABLE ) { // Example: isset($foo);
+						foreach($value[PHPTAGS_STACK_PARAM] as $val) {
+							if( $val[PHPTAGS_STACK_COMMAND] != T_VARIABLE ) { // Example: isset($foo);
 								throw new Exception; // @todo
 							}
-							if( !isset($thisVariables[ $val[FOXWAY_STACK_PARAM] ]) ) { // undefined variable or variable is null
-								$value[FOXWAY_STACK_RESULT] = false;
+							if( !isset($thisVariables[ $val[PHPTAGS_STACK_PARAM] ]) ) { // undefined variable or variable is null
+								$value[PHPTAGS_STACK_RESULT] = false;
 								break 2;
 							} // true, variable is defined
-							if( isset($val[FOXWAY_STACK_ARRAY_INDEX]) ) { // Example: isset($foo[1])
-								$ref = &$thisVariables[ $val[FOXWAY_STACK_PARAM] ];
-								$tmp = array_pop( $val[FOXWAY_STACK_ARRAY_INDEX] );
-								foreach( $val[FOXWAY_STACK_ARRAY_INDEX] as $v ) {
-									if( !isset($ref[ $v[FOXWAY_STACK_RESULT] ]) ) { // undefined array index
-										$value[FOXWAY_STACK_RESULT] = false;
+							if( isset($val[PHPTAGS_STACK_ARRAY_INDEX]) ) { // Example: isset($foo[1])
+								$ref = &$thisVariables[ $val[PHPTAGS_STACK_PARAM] ];
+								$tmp = array_pop( $val[PHPTAGS_STACK_ARRAY_INDEX] );
+								foreach( $val[PHPTAGS_STACK_ARRAY_INDEX] as $v ) {
+									if( !isset($ref[ $v[PHPTAGS_STACK_RESULT] ]) ) { // undefined array index
+										$value[PHPTAGS_STACK_RESULT] = false;
 										break 3;
 									}
-									$ref = &$ref[ $v[FOXWAY_STACK_RESULT] ];
+									$ref = &$ref[ $v[PHPTAGS_STACK_RESULT] ];
 								}
 								// @todo ->>>>>>>>>>>> | ************************************************************* | <<<<< it only for compatible with PHP 5.4 if used PHP 5.3 @see http://www.php.net/manual/en/function.isset.php Example #2 isset() on String Offsets
-								if( !isset($ref[ $tmp[FOXWAY_STACK_RESULT] ]) || (is_string($ref) && is_string($tmp[FOXWAY_STACK_RESULT] ) && $tmp[FOXWAY_STACK_RESULT]  != (string)(int)$tmp[FOXWAY_STACK_RESULT] ) ) {
-									$value[FOXWAY_STACK_RESULT] = false;
+								if( !isset($ref[ $tmp[PHPTAGS_STACK_RESULT] ]) || (is_string($ref) && is_string($tmp[PHPTAGS_STACK_RESULT] ) && $tmp[PHPTAGS_STACK_RESULT]  != (string)(int)$tmp[PHPTAGS_STACK_RESULT] ) ) {
+									$value[PHPTAGS_STACK_RESULT] = false;
 									break 2;
 								}
 							} // true, variable is defined and have no array index
 						}
-						$value[FOXWAY_STACK_RESULT] = true;
+						$value[PHPTAGS_STACK_RESULT] = true;
 						break;
 					case T_EMPTY:
-						foreach($value[FOXWAY_STACK_PARAM] as $val) {
-							if( $val[FOXWAY_STACK_COMMAND] == T_VARIABLE ) { // Example: empty($foo);
-								if( !array_key_exists($val[FOXWAY_STACK_PARAM], $thisVariables) ) { // undefined variable
+						foreach($value[PHPTAGS_STACK_PARAM] as $val) {
+							if( $val[PHPTAGS_STACK_COMMAND] == T_VARIABLE ) { // Example: empty($foo);
+								if( !array_key_exists($val[PHPTAGS_STACK_PARAM], $thisVariables) ) { // undefined variable
 									continue;
 								}
-								$ref = &$thisVariables[ $val[FOXWAY_STACK_PARAM] ];
+								$ref = &$thisVariables[ $val[PHPTAGS_STACK_PARAM] ];
 							}else{
-								$ref = &$val[FOXWAY_STACK_RESULT];
+								$ref = &$val[PHPTAGS_STACK_RESULT];
 							}
-							if( isset($val[FOXWAY_STACK_ARRAY_INDEX]) ) { // Example: empty($foo[1])
-								$tmp = array_pop( $val[FOXWAY_STACK_ARRAY_INDEX] );
-								foreach( $val[FOXWAY_STACK_ARRAY_INDEX] as $v ) {
-									if( !isset($ref[ $v[FOXWAY_STACK_RESULT] ]) ) { // undefined array index
+							if( isset($val[PHPTAGS_STACK_ARRAY_INDEX]) ) { // Example: empty($foo[1])
+								$tmp = array_pop( $val[PHPTAGS_STACK_ARRAY_INDEX] );
+								foreach( $val[PHPTAGS_STACK_ARRAY_INDEX] as $v ) {
+									if( !isset($ref[ $v[PHPTAGS_STACK_RESULT] ]) ) { // undefined array index
 										continue 2;
 									}
-									$ref = &$ref[ $v[FOXWAY_STACK_RESULT] ];
+									$ref = &$ref[ $v[PHPTAGS_STACK_RESULT] ];
 								}
 								// @todo ->>>>>>>>>>>> | ************************************************************* | <<<<< it only for compatible with PHP 5.4 if used PHP 5.3 @see http://www.php.net/manual/en/function.empty.php Example #2 empty() on String Offsets
-								if( !empty($ref[ $tmp[FOXWAY_STACK_RESULT] ]) && (is_array($ref) || !is_string( $tmp[FOXWAY_STACK_RESULT] ) || $tmp[FOXWAY_STACK_RESULT]  == (string)(int)$tmp[FOXWAY_STACK_RESULT] ) ) {
-									$value[FOXWAY_STACK_RESULT] = false;
+								if( !empty($ref[ $tmp[PHPTAGS_STACK_RESULT] ]) && (is_array($ref) || !is_string( $tmp[PHPTAGS_STACK_RESULT] ) || $tmp[PHPTAGS_STACK_RESULT]  == (string)(int)$tmp[PHPTAGS_STACK_RESULT] ) ) {
+									$value[PHPTAGS_STACK_RESULT] = false;
 									break 2;
 								}
 							}elseif( !empty($ref) ) { // there is no array index and empty() returns false (PHP 5.5.0 supports expressions)
-								$value[FOXWAY_STACK_RESULT] = false;
+								$value[PHPTAGS_STACK_RESULT] = false;
 								break 2;
 							}
 						}
-						$value[FOXWAY_STACK_RESULT] = true;
+						$value[PHPTAGS_STACK_RESULT] = true;
+						break;
+					case T_RETURN:
+						return $value[PHPTAGS_STACK_PARAM];
 						break;
 					default: // ++, --, =, +=, -=, *=, etc...
-						$param = &$value[FOXWAY_STACK_PARAM];
-						if ( $param[FOXWAY_STACK_COMMAND] == T_LIST ) { // this is T_LIST. Example: list($foo, $bar) = $array;
-							self::fillList( $value[FOXWAY_STACK_PARAM_2], $param, $thisVariables );
-							unset( $param );
-							break; /**** EXIT ****/
-						}
-						if( !array_key_exists($param[FOXWAY_STACK_PARAM], $thisVariables) ) { // Use undefined variable
-							if( isset($value[FOXWAY_STACK_ARRAY_INDEX]) ) { // Example: $foo[1]++
-								$thisVariables[ $param[FOXWAY_STACK_PARAM] ] = array();
+						$variable = &$value[PHPTAGS_STACK_PARAM];
+						if( !array_key_exists($variable[PHPTAGS_STACK_PARAM], $thisVariables) ) { // Use undefined variable
+							if( array_key_exists(PHPTAGS_STACK_ARRAY_INDEX, $value) ) { // Example: $foo[1]++
+								$thisVariables[ $variable[PHPTAGS_STACK_PARAM] ] = array();
 							}else{
-								$thisVariables[ $param[FOXWAY_STACK_PARAM] ] = null;
+								$thisVariables[ $variable[PHPTAGS_STACK_PARAM] ] = null;
 							}
-							if( $value[FOXWAY_STACK_COMMAND] != '=' ) {
-								$return[] = (string) new ExceptionFoxway( $param[FOXWAY_STACK_PARAM], FOXWAY_PHP_NOTICE_UNDEFINED_VARIABLE, $param[FOXWAY_STACK_TOKEN_LINE], $place );
+							if( $value[PHPTAGS_STACK_COMMAND] != '=' ) {
+								$return[] = (string) new ExceptionPhpTags( PHPTAGS_EXCEPTION_NOTICE_UNDEFINED_VARIABLE, $variable[PHPTAGS_STACK_PARAM], $variable[PHPTAGS_STACK_TOKEN_LINE], $place );
 							}
 						}
-						$ref = &$thisVariables[ $param[FOXWAY_STACK_PARAM] ];
-						if ( isset($param[FOXWAY_STACK_ARRAY_INDEX]) ) { // Example: $foo[1]++
-							foreach ( $param[FOXWAY_STACK_ARRAY_INDEX] as $v ) {
-								if( $v === null ) { // Example: $foo[]
+						$ref = &$thisVariables[ $variable[PHPTAGS_STACK_PARAM] ];
+						if ( array_key_exists(PHPTAGS_STACK_ARRAY_INDEX, $variable) ) { // Example: $foo[1]++
+							foreach ( $variable[PHPTAGS_STACK_ARRAY_INDEX] as $v ) {
+								if ( $v === null ) { // Example: $foo[]
 									$t = null;
 									$ref[] = &$t;
 									$ref = &$t;
-									unset($t);
-								}else{
-									if( !isset($ref[ $v[FOXWAY_STACK_RESULT] ]) ) {
-										$ref[ $v[FOXWAY_STACK_RESULT] ] = null;
-										// @todo E_NOTICE
+									unset( $t );
+								} else {
+									if ( $ref === null || is_array($ref) ) {
+										if ( !array_key_exists($v[PHPTAGS_STACK_RESULT], $ref) ) {
+											$ref[ $v[PHPTAGS_STACK_RESULT] ] = null;
+											if( $value[PHPTAGS_STACK_COMMAND] != '=' ) {
+												// PHP Notice:  Undefined offset: $1
+												$return[] = (string) new ExceptionPhpTags( PHPTAGS_EXCEPTION_NOTICE_UNDEFINED_OFFSET, $v[PHPTAGS_STACK_RESULT], $value[PHPTAGS_STACK_TOKEN_LINE], $place );
+											}
+										}
+										$ref = &$ref[ $v[PHPTAGS_STACK_RESULT] ];
+									} elseif ( is_string($ref) ) {
+										// PHP Fatal error:  Cannot use string offset as an array
+										throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_NOTICE_UNDEFINED_OFFSET, $v[PHPTAGS_STACK_RESULT], $value[PHPTAGS_STACK_TOKEN_LINE], $place );
+									} else {
+										$return[] = (string) new ExceptionPhpTags( PHPTAGS_EXCEPTION_FATAL_STRING_OFFSET_AS_ARRAY, $v[PHPTAGS_STACK_RESULT], $value[PHPTAGS_STACK_TOKEN_LINE], $place );
+										unset( $variable );
+										break 2;
+										// PHP Warning:  Cannot use a scalar value as an array
 									}
-									$ref = &$ref[ $v[FOXWAY_STACK_RESULT] ];
 								}
 							}
 						}
-						switch ( $value[FOXWAY_STACK_COMMAND] ) {
+						switch ( $value[PHPTAGS_STACK_COMMAND] ) {
 							case T_INC:
-								if ( $value[FOXWAY_STACK_PARAM_2] ) { // $foo++
-									$param[FOXWAY_STACK_RESULT] = $ref++;
+								if ( $value[PHPTAGS_STACK_PARAM_2] ) { // $foo++
+									$value[PHPTAGS_STACK_RESULT] = $ref++;
 								}else{ // ++$foo
-									$param[FOXWAY_STACK_RESULT] = ++$ref;
+									$value[PHPTAGS_STACK_RESULT] = ++$ref;
 								}
 								break;
 							case T_DEC:
-								if ( $value[FOXWAY_STACK_PARAM_2] ) { // $foo--
-									$param[FOXWAY_STACK_RESULT] = $ref--;
+								if ( $value[PHPTAGS_STACK_PARAM_2] ) { // $foo--
+									$value[PHPTAGS_STACK_RESULT] = $ref--;
 								}else{ // --$foo
-									$param[FOXWAY_STACK_RESULT] = --$ref;
+									$value[PHPTAGS_STACK_RESULT] = --$ref;
 								}
 								break;
 							case '=':
-								// Save result in T_VARIABLE FOXWAY_STACK_RESULT, Save result in $thisVariables[variable name]
-								$param[FOXWAY_STACK_RESULT] = $ref = $value[FOXWAY_STACK_PARAM_2];
-								break;
-							case T_PLUS_EQUAL:		// +=
-								$param[FOXWAY_STACK_RESULT] = $ref += $value[FOXWAY_STACK_PARAM_2];
-								break;
-							case T_MINUS_EQUAL:		// -=
-								$param[FOXWAY_STACK_RESULT] = $ref -= $value[FOXWAY_STACK_PARAM_2];
-								break;
-							case T_MUL_EQUAL:		// *=
-								$param[FOXWAY_STACK_RESULT] = $ref *= $value[FOXWAY_STACK_PARAM_2];
-								break;
-							case T_DIV_EQUAL:		// /=
-								if ( (int)$value[FOXWAY_STACK_PARAM_2] == 0 ) {
-									$return[] = (string) new ExceptionFoxway( null, FOXWAY_PHP_WARNING_DIVISION_BY_ZERO, $value[FOXWAY_STACK_TOKEN_LINE], $place );
-									$param[FOXWAY_STACK_RESULT] = $ref = null;
-									break; /**** EXIT ****/
-								}
-								$param[FOXWAY_STACK_RESULT] = $ref /= $value[FOXWAY_STACK_PARAM_2];
+								$value[PHPTAGS_STACK_RESULT] = $ref = $value[PHPTAGS_STACK_PARAM_2];
 								break;
 							case T_CONCAT_EQUAL:	// .=
-								$param[FOXWAY_STACK_RESULT] = $ref .= $value[FOXWAY_STACK_PARAM_2];
+								$value[PHPTAGS_STACK_RESULT] = $ref .= $value[PHPTAGS_STACK_PARAM_2];
+								break;
+							case T_PLUS_EQUAL:		// +=
+								$value[PHPTAGS_STACK_RESULT] = $ref += $value[PHPTAGS_STACK_PARAM_2];
+								break;
+							case T_MINUS_EQUAL:		// -=
+								$value[PHPTAGS_STACK_RESULT] = $ref -= $value[PHPTAGS_STACK_PARAM_2];
+								break;
+							case T_MUL_EQUAL:		// *=
+								$value[PHPTAGS_STACK_RESULT] = $ref *= $value[PHPTAGS_STACK_PARAM_2];
+								break;
+							case T_DIV_EQUAL:		// /=
+								if ( (int)$value[PHPTAGS_STACK_PARAM_2] == 0 ) {
+									$return[] = (string) new ExceptionPhpTags( PHPTAGS_EXCEPTION_WARNING_DIVISION_BY_ZERO, null, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
+									$value[PHPTAGS_STACK_RESULT] = $ref = null;
+									break; // **** EXIT ****
+								}
+								$value[PHPTAGS_STACK_RESULT] = $ref /= $value[PHPTAGS_STACK_PARAM_2];
 								break;
 							case T_MOD_EQUAL:		// %=
-								if ( (int)$value[FOXWAY_STACK_PARAM_2] == 0 ) {
-									$return[] = (string) new ExceptionFoxway( null, FOXWAY_PHP_WARNING_DIVISION_BY_ZERO, $value[FOXWAY_STACK_TOKEN_LINE], $place );
-									$param[FOXWAY_STACK_RESULT] = $ref = null;
-									break; /**** EXIT ****/
+								if ( (int)$value[PHPTAGS_STACK_PARAM_2] == 0 ) {
+									$return[] = (string) new ExceptionPhpTags( PHPTAGS_EXCEPTION_WARNING_DIVISION_BY_ZERO, null, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
+									$value[PHPTAGS_STACK_RESULT] = $ref = null;
+									break; // **** EXIT ****
 								}
-								$param[FOXWAY_STACK_RESULT] = $ref %= $value[FOXWAY_STACK_PARAM_2];
+								$value[PHPTAGS_STACK_RESULT] = $ref %= $value[PHPTAGS_STACK_PARAM_2];
 								break;
 							case T_AND_EQUAL:		// &=
-								$param[FOXWAY_STACK_RESULT] = $ref &= $value[FOXWAY_STACK_PARAM_2];
+								$value[PHPTAGS_STACK_RESULT] = $ref &= $value[PHPTAGS_STACK_PARAM_2];
 								break;
 							case T_OR_EQUAL:		// |=
-								$param[FOXWAY_STACK_RESULT] = $ref |= $value[FOXWAY_STACK_PARAM_2];
+								$value[PHPTAGS_STACK_RESULT] = $ref |= $value[PHPTAGS_STACK_PARAM_2];
 								break;
 							case T_XOR_EQUAL:		// ^=
-								$param[FOXWAY_STACK_RESULT] = $ref ^= $value[FOXWAY_STACK_PARAM_2];
+								$value[PHPTAGS_STACK_RESULT] = $ref ^= $value[PHPTAGS_STACK_PARAM_2];
 								break;
 							case T_SL_EQUAL:		// <<=
-								$param[FOXWAY_STACK_RESULT] = $ref <<= $value[FOXWAY_STACK_PARAM_2];
+								$value[PHPTAGS_STACK_RESULT] = $ref <<= $value[PHPTAGS_STACK_PARAM_2];
 								break;
 							case T_SR_EQUAL:		// >>=
-								$param[FOXWAY_STACK_RESULT] = $ref >>= $value[FOXWAY_STACK_PARAM_2];
+								$value[PHPTAGS_STACK_RESULT] = $ref >>= $value[PHPTAGS_STACK_PARAM_2];
 								break;
 						}
-						unset($param);
+						unset( $value );
 						break;
 				}
 			}
-		} while( list($code[$i][FOXWAY_STACK_RESULT], $code, $i, $c, $loopsOwner) = array_pop($memory) );
+		} while( list($code[$codeIndex][PHPTAGS_STACK_RESULT], $code, $codeIndex, $c, $loopsOwner) = array_pop($memory) );
 
 		return $return;
 	}
 
 	private static function fillList( &$values, &$param, &$thisVariables ) {
 		$return = array();
-		foreach ( $param[FOXWAY_STACK_PARAM] as $key => $val ) {
+		foreach ( $param[PHPTAGS_STACK_PARAM] as $key => $val ) {
 			if( $val !== null ) { // skip emty params. Example: list(, $bar) = $array;
-				if( $val[FOXWAY_STACK_COMMAND] == T_LIST ) { // T_LIST inside other T_LIST. Example: list($a, list($b, $c)) = array(1, array(2, 3));
+				if( $val[PHPTAGS_STACK_COMMAND] == T_LIST ) { // T_LIST inside other T_LIST. Example: list($a, list($b, $c)) = array(1, array(2, 3));
 					if ( is_array($values) && isset($values[$key]) ) {
 						$return[$key] = self::fillList($values[$key], $val, $thisVariables);
 					} else {
@@ -671,19 +685,19 @@ class Runtime {
 					}
 					continue;
 				}
-				$ref = &$thisVariables[ $val[FOXWAY_STACK_PARAM] ];
-				if ( isset($val[FOXWAY_STACK_ARRAY_INDEX]) ) { // Example: list($foo[0], $foo[1]) = $array;
-					foreach ( $val[FOXWAY_STACK_ARRAY_INDEX] as $v ) {
+				$ref = &$thisVariables[ $val[PHPTAGS_STACK_PARAM] ];
+				if ( isset($val[PHPTAGS_STACK_ARRAY_INDEX]) ) { // Example: list($foo[0], $foo[1]) = $array;
+					foreach ( $val[PHPTAGS_STACK_ARRAY_INDEX] as $v ) {
 						if (  $v === null ) { // Example: $foo[]
 							$t = null;
 							$ref[] = &$t;
 							$ref = &$t;
 							unset( $t );
 						} else {
-							if ( !isset($ref[ $v[FOXWAY_STACK_RESULT] ]) ) {
-								$ref[ $v[FOXWAY_STACK_RESULT] ] = null;
+							if ( !isset($ref[ $v[PHPTAGS_STACK_RESULT] ]) ) {
+								$ref[ $v[PHPTAGS_STACK_RESULT] ] = null;
 							}
-							$ref = &$ref[ $v[FOXWAY_STACK_RESULT] ];
+							$ref = &$ref[ $v[PHPTAGS_STACK_RESULT] ];
 						}
 					}
 				}

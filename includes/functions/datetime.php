@@ -25,7 +25,7 @@ return array(
 		1=>function($args) { return getdate($args[0]); },
 	),
 	'gettimeofday' => array(
-		FOXWAY_DEFAULT_VALUES=>array( 0=>false ),
+		PHPTAGS_DEFAULT_VALUES=>array( 0=>false ),
 		1=>function($args) { return gettimeofday($args[0]); },
 	),
 	'gmdate' => array(
@@ -42,7 +42,7 @@ return array(
 		2=>function($args) { return localtime($args[0], $args[1]); },
 	),
 	'microtime' => array(
-		FOXWAY_DEFAULT_VALUES=>array( 0=>false ),
+		PHPTAGS_DEFAULT_VALUES=>array( 0=>false ),
 		1=>function($args) { return microtime($args[0]); },
 	),
 	'mktime' => array(

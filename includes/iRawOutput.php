@@ -1,10 +1,10 @@
 <?php
-namespace Foxway;
+namespace PhpTags;
 /**
- * iRawOutput class of Foxway extension.
+ * The iRawOutput class of the extension PHP Tags.
  *
  * @file iRawOutput.php
- * @ingroup Foxway
+ * @ingroup PhpTags
  * @author Pavel Astakhov <pastakhov@yandex.ru>
  * @licence GNU General Public Licence 2.0 or later
  */

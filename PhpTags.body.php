@@ -1,16 +1,15 @@
 <?php
-
 require_once __DIR__ . '/Settings.php';
 
 /**
- * Main class of Foxway extension.
+ * The main class of the extension PHP Tags.
  *
- * @file Foxway.body.php
- * @ingroup Foxway
+ * @file PhpTags.body.php
+ * @ingroup PhpTags
  * @author Pavel Astakhov <pastakhov@yandex.ru>
  * @licence GNU General Public Licence 2.0 or later
  */
-class Foxway {
+class PhpTags {
 
 	static $DebugLoops = false;
 	static $startTime = false;
@@ -38,26 +37,26 @@ class Foxway {
 			}
 			$command = "echo $command (" . implode(',', $args) . ');';
 		}
-		/*$result = Foxway\Interpreter::run(
+		/*$result = \PhpTags\Interpreter::run(
 				$command,
 				array($frame->getTitle()->getPrefixedText()),
 				self::getScope($frame)
 				);*/
 		try {
-			$result = Foxway\Runtime::runSource(
+			$result = \PhpTags\Runtime::runSource(
 					$command,
 					array_merge( (array)$frame->getTitle()->getPrefixedText(), $frame->getArguments() ),
 					self::getScope( $frame ),
 					array( 'Parser'=>&$parser, 'PPFrame'=>&$frame )
 					);
 			$return = implode( $result );
-		} catch (\Foxway\ExceptionFoxway $exc) {
+		} catch (\PhpTags\ExceptionPHPphp $exc) {
 			$return = (string) $exc;
 		} catch (Exception $exc) {
 			$return = $exc->getTraceAsString();
 		}
 
-		\Foxway\Runtime::$time += microtime(true) - self::$startTime;
+		\PhpTags\Runtime::$time += microtime(true) - self::$startTime;
 		return \UtfNormal::cleanUp($return);
 	}
 
@@ -73,7 +72,7 @@ class Foxway {
 		$return = false;
 
 		/*
-		$result = Foxway\Interpreter::run(
+		$result = \PhpTags\Interpreter::run(
 				$input,
 				array_merge((array)$frame->getTitle()->getPrefixedText(),$frame->getArguments()),
 				self::getScope($frame),
@@ -81,24 +80,24 @@ class Foxway {
 			);*/
 
 		try {
-			$result = Foxway\Runtime::runSource(
+			$result = \PhpTags\Runtime::runSource(
 					$input,
 					array_merge( (array)$frame->getTitle()->getPrefixedText(), $frame->getArguments() ),
 					self::getScope( $frame ),
 					array( 'Parser'=>&$parser, 'PPFrame'=>&$frame )
 					);
-		} catch ( \Foxway\ExceptionFoxway $exc ) {
-			\Foxway\Runtime::$time += microtime(true) - self::$startTime;
+		} catch ( \PhpTags\ExceptionPHPphp $exc ) {
+			\PhpTags\Runtime::$time += microtime(true) - self::$startTime;
 			return (string) $exc;
 		} catch ( Exception $exc ) {
-			\Foxway\Runtime::$time += microtime(true) - self::$startTime;
+			\PhpTags\Runtime::$time += microtime(true) - self::$startTime;
 			return $exc->getTraceAsString();
 		}
 
 		if( $is_debug ) {
-			$parser->getOutput()->addModules('ext.Foxway.Debug');
+			$parser->getOutput()->addModules('ext.php.Debug');
 			if( self::$DebugLoops ) {
-				$parser->getOutput()->addModules('ext.Foxway.DebugLoops');
+				$parser->getOutput()->addModules('ext.php.DebugLoops');
 			}
 			$return .= self::insertNoWiki( $parser, array_shift($result) ) . "\n";
 		}
@@ -108,18 +107,18 @@ class Foxway {
 			$return .= self::insertGeneral( $parser, $parser->recursiveTagParse(implode($result),$frame) );
 		}
 
-		\Foxway\Runtime::$time += microtime(true) - self::$startTime;
+		\PhpTags\Runtime::$time += microtime(true) - self::$startTime;
 		return \UtfNormal::cleanUp($return);
 	}
 
 	public static function isBanned(PPFrame $frame) {
-		if( \Foxway\Runtime::$allowedNamespaces !== true && empty(\Foxway\Runtime::$allowedNamespaces[$frame->getTitle()->getNamespace()]) ) {
-			return Html::element( 'span', array('class'=>'error'), wfMessage('foxway-disabled-for-namespace', $frame->getTitle()->getNsText())->escaped() );
+		if( \PhpTags\Runtime::$allowedNamespaces !== true && empty(\PhpTags\Runtime::$allowedNamespaces[$frame->getTitle()->getNamespace()]) ) {
+			return Html::element( 'span', array('class'=>'error'), wfMessage('phpphp-disabled-for-namespace', $frame->getTitle()->getNsText())->escaped() );
 		}
-		if(\Foxway\Runtime::$permittedTime !== true && \Foxway\Runtime::$time >= \Foxway\Runtime::$permittedTime ) {
+		if(\PhpTags\Runtime::$permittedTime !== true && \PhpTags\Runtime::$time >= \PhpTags\Runtime::$permittedTime ) {
 			return Html::element( 'span', array('class'=>'error'),
-				wfMessage( 'foxway-php-fatal-error-max-execution-time' )
-					->numParams( \Foxway\Runtime::$permittedTime )
+				wfMessage( 'phpphp-fatal-error-max-execution-time' )
+					->numParams( \PhpTags\Runtime::$permittedTime )
 					->params( $frame->getTitle()->getPrefixedText() )
 					->text()
 			);
