@@ -2,7 +2,7 @@
 require_once __DIR__ . '/Settings.php';
 
 /**
- * The main class of the extension PHP Tags.
+ * The main class of the extension PhpTags.
  *
  * @file PhpTags.body.php
  * @ingroup PhpTags

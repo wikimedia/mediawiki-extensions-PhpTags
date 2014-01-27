@@ -1,11 +1,17 @@
 <?php
 /**
- * Internationalization file for the messages of the extension PHP Tags.
+ * Internationalization file for the messages of the extension PhpTags.
  *
  * @file PhpTags.i18n.php
  * @ingroup PhpTags
  * @author Pavel Astakhov <pastakhov@yandex.ru>
  */
+
+###########################################################################
+######################### WARNING #########################################
+#################### I'm not ready for translation ########################
+############################ ATTENTION ####################################
+###########################################################################
 
 $messages = array();
 

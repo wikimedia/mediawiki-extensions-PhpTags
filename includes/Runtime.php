@@ -365,13 +365,13 @@ class Runtime {
 						}
 						break;
 					case T_STRING:
-						$name = $value[PHPTAGS_STACK_PARAM_2];
-						if ( isset($value[PHPTAGS_STACK_PARAM]) ) { // This is function or object
-							if ( is_array($value[PHPTAGS_STACK_PARAM]) ) { // This is function
+						$name = $value[PHPTAGS_STACK_PARAM];
+						if ( isset($value[PHPTAGS_STACK_PARAM_2]) ) { // This is function or object
+							if ( is_array($value[PHPTAGS_STACK_PARAM_2]) ) { // This is function
 								if ( isset(self::$functions[$name]) ) {
 									$function = &self::$functions[$name];
 									$param = array();
-									foreach ( $value[PHPTAGS_STACK_PARAM] as $val ) {
+									foreach ( $value[PHPTAGS_STACK_PARAM_2] as $val ) {
 										if ( $val[PHPTAGS_STACK_COMMAND] == T_VARIABLE ) { // Example $foo
 											$ref = &$thisVariables[ $val[PHPTAGS_STACK_PARAM] ];
 											if ( isset($val[PHPTAGS_STACK_ARRAY_INDEX]) ) { // Example: $foo[1]
@@ -469,9 +469,6 @@ class Runtime {
 						break;
 					case T_UNSET:
 						foreach ( $value[PHPTAGS_STACK_PARAM] as $val ) {
-							if ( $val[PHPTAGS_STACK_COMMAND] != T_VARIABLE ) { // Example: isset($foo);
-								throw new Exception; // @todo
-							}
 							$vn = $val[PHPTAGS_STACK_PARAM]; // Variable Name
 							if ( array_key_exists($vn, $thisVariables) ) { // defined variable
 								if ( isset($val[PHPTAGS_STACK_ARRAY_INDEX]) ) { // There is array index. Example: unset($foo[0])
@@ -500,9 +497,6 @@ class Runtime {
 						break;
 					case T_ISSET:
 						foreach($value[PHPTAGS_STACK_PARAM] as $val) {
-							if( $val[PHPTAGS_STACK_COMMAND] != T_VARIABLE ) { // Example: isset($foo);
-								throw new Exception; // @todo
-							}
 							if( !isset($thisVariables[ $val[PHPTAGS_STACK_PARAM] ]) ) { // undefined variable or variable is null
 								$value[PHPTAGS_STACK_RESULT] = false;
 								break 2;
@@ -528,14 +522,10 @@ class Runtime {
 						break;
 					case T_EMPTY:
 						foreach($value[PHPTAGS_STACK_PARAM] as $val) {
-							if( $val[PHPTAGS_STACK_COMMAND] == T_VARIABLE ) { // Example: empty($foo);
-								if( !array_key_exists($val[PHPTAGS_STACK_PARAM], $thisVariables) ) { // undefined variable
-									continue;
-								}
-								$ref = &$thisVariables[ $val[PHPTAGS_STACK_PARAM] ];
-							}else{
-								$ref = &$val[PHPTAGS_STACK_RESULT];
+							if( !array_key_exists($val[PHPTAGS_STACK_PARAM], $thisVariables) ) { // undefined variable
+								continue;
 							}
+							$ref = &$thisVariables[ $val[PHPTAGS_STACK_PARAM] ];
 							if( isset($val[PHPTAGS_STACK_ARRAY_INDEX]) ) { // Example: empty($foo[1])
 								$tmp = array_pop( $val[PHPTAGS_STACK_ARRAY_INDEX] );
 								foreach( $val[PHPTAGS_STACK_ARRAY_INDEX] as $v ) {
@@ -561,6 +551,11 @@ class Runtime {
 						break;
 					default: // ++, --, =, +=, -=, *=, etc...
 						$variable = &$value[PHPTAGS_STACK_PARAM];
+						if ( $variable[PHPTAGS_STACK_COMMAND] == T_LIST ) { // this is T_LIST. Example: list($foo, $bar) = $array;
+							self::fillList( $value[PHPTAGS_STACK_PARAM_2], $variable, $thisVariables );
+							unset( $variable );
+							break; /**** EXIT ****/
+						}
 						if( !array_key_exists($variable[PHPTAGS_STACK_PARAM], $thisVariables) ) { // Use undefined variable
 							if( array_key_exists(PHPTAGS_STACK_ARRAY_INDEX, $value) ) { // Example: $foo[1]++
 								$thisVariables[ $variable[PHPTAGS_STACK_PARAM] ] = array();

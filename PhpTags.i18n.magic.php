@@ -1,6 +1,6 @@
 <?php
 /**
- * Internationalization file for the magic word of the PHP Tags extension.
+ * Internationalization file for the magic word of the PhpTags extension.
  *
  * @file PhpTags.i18n.magic.php
  * @ingroup PhpTags

@@ -1,11 +1,11 @@
 <?php
 /**
- * File defining the settings for the extension PHP Tags.
- * More info can be found at https://www.mediawiki.org/wiki/Extension:PHP_Tags
+ * File defining the settings for the extension PhpTags.
+ * More info can be found at https://www.mediawiki.org/wiki/Extension:PhpTags
  *
  *						  NOTICE:
  * Changing one of these settings can be done by copieng or cutting it,
- * and placing it in LocalSettings.php, AFTER inclusion of the extension PHP.
+ * and placing it in LocalSettings.php, AFTER inclusion of the extension PhpTags.
  *
  * @file Settings.php
  * @ingroup PhpTags

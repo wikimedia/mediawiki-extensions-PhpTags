@@ -41,7 +41,7 @@ return array(
 	// isset() in runtime.php
 	'print_r' => array(
 		PHPTAGS_DEFAULT_VALUES=>array( 1=>false ),
-		2=>function($args) { $ret = print_r($args[0], true); return $args[1] ? $ret : new PHPphp\outPrint(true, $ret); },
+		2=>function($args) { $ret = print_r($args[0], true); return $args[1] ? $ret : new PhpTags\outPrint(true, $ret); },
 	),
 // @todo string serialize ( mixed $value )
 	'settype' => array( 2=>function($args) { return settype($args[0], $args[1]); } ),
@@ -50,10 +50,10 @@ return array(
 	// unset() in runtime.php
 	'var_dump' => array(
 		PHPTAGS_MIN_VALUES=>1,
-		''=>function($args) { ob_start(); call_user_func_array('var_dump', $args); return new PHPphp\outPrint( null, ob_get_clean() ); },
+		''=>function($args) { ob_start(); call_user_func_array('var_dump', $args); return new PhpTags\outPrint( null, ob_get_clean() ); },
 	),
 	'var_export' => array(
 		PHPTAGS_DEFAULT_VALUES=>array( 1=>false ),
-		2=>function($args) { $ret = var_export($args[0], true); return $args[1] ? $ret : new PHPphp\outPrint(null, $ret); },
+		2=>function($args) { $ret = var_export($args[0], true); return $args[1] ? $ret : new PhpTags\outPrint(null, $ret); },
 	),
 );

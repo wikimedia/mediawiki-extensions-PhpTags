@@ -10,6 +10,11 @@ define( 'PHPTAGS_EXCEPTION_NOTICE_UNDEFINED_OFFSET', 1006 ); // PHP Notice:  Und
 define( 'PHPTAGS_EXCEPTION_FATAL_STRING_OFFSET_AS_ARRAY', 1007 ); // PHP Fatal error:  Cannot use string offset as an array
 define( 'PHPTAGS_EXCEPTION_WARNING_SCALAR_VALUE_AS_ARRAY', 1008 ); // PHP Warning:  Cannot use a scalar value as an array
 
+// pcre
+define( 'PHPTAGS_EXCEPTION_WARNING_WRONG_DELIMITER', 2009 ); // PHP Warning:  preg_replace(): Delimiter must not be alphanumeric or backslash
+define( 'PHPTAGS_EXCEPTION_WARNING_NO_ENDING_DELIMITER', 2010 ); // PHP Warning:  preg_replace(): No ending delimiter '/' found
+define( 'PHPTAGS_EXCEPTION_WARNING_UNKNOWN_MODIFIER', 111 ); // PHP Warning:  preg_replace(): Unknown modifier 'z'
+
 define( 'PHPTAGS_SYNTAX_ERROR_UNEXPECTED', 100 ); // PHP Parse error:  syntax error, unexpected $1
 define( 'PHPTAGS_FATAL_ERROR_UNSUPPORTED_OPERAND_TYPES', 101 );
 define( 'PHPTAGS_WARNING_EXPECTS_N_PARAMETER_N_GIVEN', 103 );
@@ -18,9 +23,6 @@ define( 'PHPTAGS_FATAL_UNABLE_CALL_TO_FUNCTION', 105 ); // $foxwayFunctions[$1][
 define( 'PHPTAGS_FATAL_ERROR_CALL_TO_FUNCTION', 106 ); // Error in $foxwayFunctions[$1]
 define( 'PHPTAGS_WARNING_WRONG_PARAMETER_COUNT', 107 ); // PHP Warning:  Wrong parameter count for $1()
 define( 'PHPTAGS_FATAL_VALUE_PASSED_BY_REFERENCE', 108 ); // PHP Fatal error:  Only variables can be passed by reference
-define( 'PHPTAGS_WARNING_WRONG_DELIMITER', 109 ); // PHP Warning:  preg_replace(): Delimiter must not be alphanumeric or backslash
-define( 'PHPTAGS_WARNING_NO_ENDING_DELIMITER', 110 ); // PHP Warning:  preg_replace(): No ending delimiter '/' found
-define( 'PHPTAGS_WARNING_UNKNOWN_MODIFIER', 111 ); // PHP Warning:  preg_replace(): Unknown modifier 'z'
 define( 'PHPTAGS_NOTICE_UNDEFINED_CONSTANT', 114 ); // PHP Notice:  Use of undefined constant $1 - assumed '$1'
 define( 'PHPTAGS_FATAL_CANNOT_UNSET_STRING_OFFSETS', 115 ); // PHP Fatal error:  Cannot unset string offsets
 define( 'PHPTAGS_WARNING_INVALID_ARGUMENT_FOR_FOREACH', 116 ); // PHP Warning:  Invalid argument supplied for foreach()
@@ -85,7 +87,17 @@ class ExceptionPhpTags extends \Exception {
 			case PHPTAGS_EXCEPTION_FATAL_STRING_OFFSET_AS_ARRAY:
 				$message = "PHP Warning:  Cannot use a scalar value as an array";
 				break;
-
+			
+			// pcre
+			case PHPTAGS_EXCEPTION_WARNING_WRONG_DELIMITER:
+				$message = "PHP Warning:  preg_replace(): Delimiter must not be alphanumeric or backslash";
+				break;
+			case PHPTAGS_EXCEPTION_WARNING_NO_ENDING_DELIMITER:
+				$message = "PHP Warning:  preg_replace(): No ending delimiter '{$params[0]}' found";
+				break;
+			case PHPTAGS_EXCEPTION_WARNING_UNKNOWN_MODIFIER:
+				$message = "PHP Warning:  preg_replace(): Unknown modifier '{$params[0]}'";
+				break;
 
 
 			case PHPTAGS_FATAL_CALL_TO_UNDEFINED_FUNCTION:

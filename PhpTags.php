@@ -2,7 +2,7 @@
 /**
  * @todo description
  *
- * @link https://www.mediawiki.org/wiki/Extension:PHP_Tags Documentation
+ * @link https://www.mediawiki.org/wiki/Extension:PhpTags Documentation
  * @file PhpTags.php
  * @defgroup PhpTags
  * @ingroup Extensions
@@ -31,7 +31,7 @@ $wgExtensionCredits['parserhook'][] = array(
 $dir = __DIR__;
 
 // Allow translations for this extension
-$wgExtensionMessagesFiles['PhpTags'] =		$dir . '/PhpTags.i18n.php';
+$wgExtensionMessagesFiles['PhpTags'] =		$dir . '/PhpTags.i18n.notready.php';
 $wgExtensionMessagesFiles['PhpTagsMagic'] =	$dir . '/PhpTags.i18n.magic.php';
 
 // Include the settings file.

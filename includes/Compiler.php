@@ -2,7 +2,7 @@
 namespace PhpTags;
 
 /**
- * The compiler class of the extension PHP Tags.
+ * The compiler class of the extension PhpTags.
  * This class converts a php code as data for the class Runtime
  *
  * @file Compiler.php
@@ -181,7 +181,8 @@ class Compiler {
 						throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $tmp_id, ',', ';' ), $this->tokenLine, $this->place );
 					}
 					if ( $value === false ) { // Example: global;
-						throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $tmp_id, token_name($id) ), $this->tokenLine, $this->place );
+						// PHP Parse error:  syntax error, unexpected $id,
+						throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $tmp_id ), $this->tokenLine, $this->place );
 					}
 					if ( $value[PHPTAGS_STACK_COMMAND] != T_VARIABLE ) { // Example global $foo=5;
 						throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $value[PHPTAGS_STACK_COMMAND], 'T_VARIABLE' ), $this->tokenLine, $this->place );
@@ -268,6 +269,22 @@ class Compiler {
 		return $result;
 	}
 
+	private function getLinksValues() {
+		$result = array();
+		while ( $value = $this->getNextValue() ) {
+			$result[] = &$value;
+			if ( $value[PHPTAGS_STACK_COMMAND] ) {
+				$this->stack[] = &$value; // Add the command for receive value into the stack
+			}
+			if ( current($this->tokens) != ',' ) {
+				break;
+			}
+			unset( $value );
+			$this->stepUP();
+		}
+		return $result;
+	}
+
 	private function getNextValue( $operator = ',' ) {
 		$oper = false;
 		$val = $this->stepValue(); // Get a value
@@ -335,7 +352,7 @@ class Compiler {
 		return array( $id, $text );
 	}
 
-	private function stepValue() {
+	private function stepValue( $owner = false ) {
 		$result = false;
 		list( $id, $text ) = $this->currentToken();
 
@@ -397,9 +414,35 @@ class Compiler {
 				} elseif( strcasecmp($text, 'null') == 0 ) {
 					$tmp = null;
 				} else { // constant, function, etc...
-					// by default it is constant, if not then it will be changed
-					$result = array( PHPTAGS_STACK_COMMAND=>T_CONST, PHPTAGS_STACK_PARAM=>$tmp, PHPTAGS_STACK_RESULT=>null, PHPTAGS_STACK_TOKEN_LINE=>$this->tokenLine, PHPTAGS_STACK_DEBUG=>$text );
+
+					$this->stepUP();
+					list( $tmp_id ) = $this->currentToken();
+					if ( $tmp_id == '(' ) { // it is function
+						$this->stepUP();
+						$linksValues = $this->getLinksValues();
+						list( $tmp_id ) = $this->currentToken();
+						if ( $tmp_id != ')' ) {
+							// PHP Parse error:  syntax error, unexpected $tmp_id, expecting ')'
+							throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $tmp_id, ')' ), $this->tokenLine, $this->place );
+						}
+						$this->stepUP();
+						return array( PHPTAGS_STACK_COMMAND => T_STRING,
+							PHPTAGS_STACK_PARAM => $text,
+							PHPTAGS_STACK_PARAM_2 => $linksValues,
+							PHPTAGS_STACK_RESULT => null,
+							PHPTAGS_STACK_TOKEN_LINE => $this->tokenLine,
+							PHPTAGS_STACK_DEBUG => $text,
+						);
+					} else { // it is constant
+						return array( PHPTAGS_STACK_COMMAND => T_STRING,
+							PHPTAGS_STACK_PARAM => $text,
+							PHPTAGS_STACK_RESULT => null,
+							PHPTAGS_STACK_TOKEN_LINE => $this->tokenLine,
+							PHPTAGS_STACK_DEBUG => $text,
+						);
+					}
 					break;
+
 				}
 				$result = array( PHPTAGS_STACK_COMMAND=>null, PHPTAGS_STACK_RESULT=>$tmp, PHPTAGS_STACK_TOKEN_LINE=>$this->tokenLine, PHPTAGS_STACK_DEBUG=>$text );
 				break;
@@ -495,20 +538,16 @@ class Compiler {
 					// PHP Fatal error:  Cannot use [] for reading
 					throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_FATAL_CANNOT_USE_FOR_READING, null, $this->tokenLine, $this->place );
 				}
-//				if ( $stack ) { // Example: echo $foo[1];
-//					$this->stack = array_merge( $this->stack, $stack );
-//				} // There is not assignment operator
 				return $variable; // *********** EXIT ***********
 				break;
 			case T_INC:
 			case T_DEC:
 				$this->stepUP();
-				$tmp = $id;
-				list( $id, $text ) = $this->currentToken();
-				if ( $id == T_VARIABLE ) {
+				list( $tmp_id, $text ) = $this->currentToken();
+				if ( $tmp_id == T_VARIABLE ) {
 					$variable = $this->stepValue();
 					$result = array(
-						PHPTAGS_STACK_COMMAND => $tmp,
+						PHPTAGS_STACK_COMMAND => $id,
 						PHPTAGS_STACK_PARAM => $variable,
 						PHPTAGS_STACK_PARAM_2 => false, // Example: ++$foo
 						PHPTAGS_STACK_RESULT => null,
@@ -517,16 +556,17 @@ class Compiler {
 					);
 				} else {
 					// PHP Parse error:  syntax error, unexpected $id, expecting 'T_VARIABLE'
-					throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $id, 'T_VARIABLE' ), $this->tokenLine, $this->place );
+					throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $tmp_id, 'T_VARIABLE' ), $this->tokenLine, $this->place );
 				}
 				return $result; // *********** EXIT ***********
 				break;
 			case '(':
 				$this->stepUP();
 				$result = $this->getNextValue();
-				if ( current($this->tokens) != ')' ) {
-					// PHP Parse error:  syntax error, unexpected $id, expecting ')'
-					throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $id, ')' ), $this->tokenLine, $this->place );
+				list( $tmp_id ) = $this->currentToken();
+				if ( $tmp_id != ')' ) {
+					// PHP Parse error:  syntax error, unexpected $tmp_id, expecting ')'
+					throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $tmp_id, ')' ), $this->tokenLine, $this->place );
 				}
 				break;
 			case '+': // The left operators
@@ -561,6 +601,69 @@ class Compiler {
 				$this->stepUP();
 				$result = $this->stepArrayConstruct( $id );
 				break;
+			case T_LIST:
+				$this->stepUP();
+				list( $tmp_id ) = $this->currentToken();
+				if ( $tmp_id != '(' ) {
+					// PHP Parse error:  syntax error, unexpected $id, expecting '('
+					throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $tmp_id, '(' ), $this->tokenLine, $this->place );
+				}
+				$param = array();
+				do {
+					$this->stepUP();
+					list( $tmp_id ) = $this->currentToken();
+					if ( $tmp_id == T_LIST ) { // T_LIST inside T_LIST. Example: list( $foo, list
+						$value = $this->stepValue( T_LIST );
+					} else {
+						$value = $this->getNextValue();
+						if ( $value === false ) { // Example: list($foo, ,
+							$value = null;
+						}elseif ( $value[PHPTAGS_STACK_COMMAND] != T_VARIABLE && $value[PHPTAGS_STACK_COMMAND] != T_LIST ) { // Example: unset( $foo+1 );
+							throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $value[PHPTAGS_STACK_COMMAND], 'T_VARIABLE' ), $this->tokenLine, $this->place );
+						}
+					}
+					$param[] = $value;
+					list( $tmp_id ) = $this->currentToken();
+				} while ( $tmp_id == ',' );
+				if ( $tmp_id != ')' ) {
+					// PHP Parse error:  syntax error, unexpected $id, expecting ')'
+					throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $tmp_id, ')' ), $this->tokenLine, $this->place );
+				}
+				$result = array(
+					PHPTAGS_STACK_COMMAND => T_LIST,
+					PHPTAGS_STACK_PARAM => $param,
+					PHPTAGS_STACK_TOKEN_LINE => $this->tokenLine,
+					PHPTAGS_STACK_DEBUG => $text,
+				);
+				if ( $owner != T_LIST ) {
+					$this->stepUP();
+					list( $id ) = $this->currentToken();
+					if ( $id != '=' ) { // It is not assignment operator
+						// PHP Parse error:  syntax error, unexpected $id, expecting '='
+						throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $tmp_id, '=' ), $this->tokenLine, $this->place );
+					}
+					$this->stepUP();
+					$val = $this->getNextValue( '=' );
+					if ( $val ) {
+						$return = array(
+							PHPTAGS_STACK_COMMAND => '=',
+							PHPTAGS_STACK_PARAM => $result,
+							PHPTAGS_STACK_PARAM_2 => &$val[PHPTAGS_STACK_RESULT],
+							PHPTAGS_STACK_RESULT => null,
+							PHPTAGS_STACK_TOKEN_LINE => $this->tokenLine,
+							PHPTAGS_STACK_DEBUG => $text,
+						);
+						if ( $val[PHPTAGS_STACK_COMMAND] ) {
+							$this->stack[] = $val;
+						}
+						return $return; // *********** EXIT ***********
+					} else { // Example: $foo=;
+						list( $id ) = $this->currentToken();
+						// PHP Parse error:  syntax error, unexpected $id
+						throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $id ), $this->tokenLine, $this->place );
+					}
+				}
+				break;
 			case T_PRINT:
 				$this->stepUP();
 				$value = $this->getNextValue();
@@ -584,6 +687,41 @@ class Compiler {
 					$this->stack[] = $value;
 				}
 				return $result;
+				break;
+			case T_EMPTY:
+			case T_ISSET:
+			case T_UNSET:
+				$this->stepUP();
+				list( $tmp_id ) = $this->currentToken();
+				if ( $tmp_id != '(' ) {
+					// PHP Parse error:  syntax error, unexpected $id, expecting '('
+					throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $tmp_id, '(' ), $this->tokenLine, $this->place );
+				}
+				$param = array();
+				do {
+					$this->stepUP();
+					$value = $this->getNextValue();
+					if ( $value === false ) { // Example: unset();
+						// PHP Parse error:  syntax error, unexpected $id,
+						list( $tmp_id ) = $this->currentToken();
+						throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $tmp_id ), $this->tokenLine, $this->place );
+					}
+					if ( $value[PHPTAGS_STACK_COMMAND] != T_VARIABLE ) { // Example: unset( $foo+1 );
+						throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $value[PHPTAGS_STACK_COMMAND], 'T_VARIABLE' ), $this->tokenLine, $this->place );
+					}
+					$param[] = $value;
+					list( $tmp_id ) = $this->currentToken();
+				} while ( $tmp_id == ',' );
+				if ( $tmp_id != ')' ) {
+					// PHP Parse error:  syntax error, unexpected $id, expecting ')'
+					throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $tmp_id, ')' ), $this->tokenLine, $this->place );
+				}
+				$result = array(
+					PHPTAGS_STACK_COMMAND => $id,
+					PHPTAGS_STACK_PARAM => $param,
+					PHPTAGS_STACK_TOKEN_LINE => $this->tokenLine,
+					PHPTAGS_STACK_DEBUG => $text,
+				);
 				break;
 		}
 		if ( $result !== false ) {
@@ -803,6 +941,7 @@ class Compiler {
 						PHPTAGS_STACK_DO_FALSE => $stack_false,
 					);
 				}
+				unset( $stack_result );
 				$result = array(
 					PHPTAGS_STACK_COMMAND => '?',
 					PHPTAGS_STACK_PARAM => &$value[PHPTAGS_STACK_RESULT],
