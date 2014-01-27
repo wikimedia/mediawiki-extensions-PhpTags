@@ -3230,10 +3230,10 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 				array(1, 2, 3)
 				);
 	}
-/*
+
 	public function testRun_foreach_1() {
 		$this->assertEquals(
-				Runtime::runSource('$arr = array("one", "two", "three"); foreach ($arr as $value) echo "* Value: $value\n";'),
+				Runtime::runSource('$arr = ["one", "two", "three"]; foreach ($arr as $value) echo "* Value: $value\n";'),
 				array("* Value: one\n", "* Value: two\n", "* Value: three\n")
 				);
 	}
@@ -3275,7 +3275,7 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 	}
 	public function testRun_foreach_8() {
 		$this->assertEquals(
-				Runtime::runSource('$a = array("one" => 1,"two" => 2,"three" => 3,"seventeen" => 17); foreach ($a as $k => $v) {echo "\$a[$k] => $v.";}'),
+				Runtime::runSource('$a = ["one" => 1,"two" => 2,"three" => 3,"seventeen" => 17]; foreach ($a as $k => $v) {echo "\$a[$k] => $v.";}'),
 				array('$a[one] => 1.', '$a[two] => 2.', '$a[three] => 3.', '$a[seventeen] => 17.')
 				);
 	}
@@ -3296,6 +3296,6 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 				Runtime::runSource('foreach ($a as $v1) foreach ($v1 as $v2) echo $v2;'),
 				array('a', 'b', 'y', 'z')
 				);
-	}*/
+	}
 
 }

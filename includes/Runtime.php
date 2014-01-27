@@ -17,7 +17,7 @@ define( 'PHPTAGS_DEFAULT_VALUES', 'd' );
 define( 'PHPTAGS_MIN_VALUES', '<' );
 
 /**
- * The runtime class of the extension PHP Tags.
+ * The runtime class of the extension PhpTags.
  *
  * @file Runtime.php
  * @ingroup PhpTags
@@ -282,17 +282,11 @@ class Runtime {
 						}
 						break;
 					case T_FOREACH:
-						$vn = $value[PHPTAGS_STACK_PARAM]; // Variable name
-						if ( !array_key_exists($vn, $thisVariables) ) {
-							$return[] = (string) new ExceptionPhpTags( $vn, PHPTAGS_NOTICE_UNDEFINED_VARIABLE, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
-							$return[] = (string) new ExceptionPhpTags( null, PHPTAGS_WARNING_INVALID_ARGUMENT_FOR_FOREACH, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
+						if ( !is_array($value[PHPTAGS_STACK_PARAM]) ) {
+							$return[] = (string) new ExceptionPhpTags( PHPTAGS_EXCEPTION_WARNING_INVALID_ARGUMENT_FOR_FOREACH, null, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
 							break; // **** EXIT ****
 						}
-						if ( !is_array($thisVariables[ $value[PHPTAGS_STACK_PARAM] ]) ) {
-							$return[] = (string) new ExceptionPhpTags( null, PHPTAGS_WARNING_INVALID_ARGUMENT_FOR_FOREACH, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
-							break; // **** EXIT ****
-						}
-						reset( $thisVariables[ $value[PHPTAGS_STACK_PARAM] ] );
+						reset( $value[PHPTAGS_STACK_PARAM] );
 						// break is not necessary here
 					case T_WHILE: // PHP code "while($foo) { ... }" doing as T_WHILE { T_DO($foo) ... }. If $foo == false, T_DO doing as T_BREAK
 						$memory[] = array( null, $code, $codeIndex, $c, $loopsOwner );
@@ -302,12 +296,16 @@ class Runtime {
 						$loopsOwner = T_WHILE;
 						break;
 					case T_AS:
-						if ( is_string($value[PHPTAGS_STACK_PARAM_2]) ) { // T_VARIABLE. Example: while ( $foo as $value )
-							if ( !list(,$thisVariables[ $value[PHPTAGS_STACK_PARAM_2] ]) = each($thisVariables[ $value[PHPTAGS_STACK_PARAM] ]) ) {
+						if ( !is_array($value[PHPTAGS_STACK_RESULT]) ) {
+							$return[] = (string) new ExceptionPhpTags( PHPTAGS_EXCEPTION_WARNING_INVALID_ARGUMENT_FOR_FOREACH, null, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
+							break; // **** EXIT ****
+						}
+						if ( isset($value[PHPTAGS_STACK_PARAM_2]) ) { // T_DOUBLE_ARROW Example: while ( $foo as $key=>$value )
+							if ( !list($thisVariables[ $value[PHPTAGS_STACK_PARAM] ], $thisVariables[ $value[PHPTAGS_STACK_PARAM_2] ]) = each($value[PHPTAGS_STACK_RESULT]) ) {
 								break 2; // go to one level down
 							}
-						} else { // T_DOUBLE_ARROW Example: while ( $foo as $key=>$value )
-							if ( !list($thisVariables[ $value[PHPTAGS_STACK_PARAM_2][0] ], $thisVariables[ $value[PHPTAGS_STACK_PARAM_2][1] ]) = each($thisVariables[ $value[PHPTAGS_STACK_PARAM] ]) ) {
+						} else { // Example: while ( $foo as $value )
+							if ( !list(,$thisVariables[ $value[PHPTAGS_STACK_PARAM] ]) = each($value[PHPTAGS_STACK_RESULT]) ) {
 								break 2; // go to one level down
 							}
 						}
@@ -575,7 +573,14 @@ class Runtime {
 									$ref = &$t;
 									unset( $t );
 								} else {
-									if ( $ref === null || is_array($ref) ) {
+									if ( $ref === null ) {
+										if( $value[PHPTAGS_STACK_COMMAND] != '=' ) {
+											// PHP Notice:  Undefined offset: $1
+											$return[] = (string) new ExceptionPhpTags( PHPTAGS_EXCEPTION_NOTICE_UNDEFINED_OFFSET, $v[PHPTAGS_STACK_RESULT], $value[PHPTAGS_STACK_TOKEN_LINE], $place );
+										}
+										$ref[ $v[PHPTAGS_STACK_RESULT] ] = null;
+										$ref = &$ref[ $v[PHPTAGS_STACK_RESULT] ];
+									} elseif ( is_array($ref) ) {
 										if ( !array_key_exists($v[PHPTAGS_STACK_RESULT], $ref) ) {
 											$ref[ $v[PHPTAGS_STACK_RESULT] ] = null;
 											if( $value[PHPTAGS_STACK_COMMAND] != '=' ) {

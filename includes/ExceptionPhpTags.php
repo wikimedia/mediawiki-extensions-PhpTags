@@ -9,7 +9,8 @@ define( 'PHPTAGS_EXCEPTION_NOTICE_UNINIT_STRING_OFFSET', 1005 ); // PHP Notice: 
 define( 'PHPTAGS_EXCEPTION_NOTICE_UNDEFINED_OFFSET', 1006 ); // PHP Notice:  Undefined offset: 4 in Command line code on line 1
 define( 'PHPTAGS_EXCEPTION_FATAL_STRING_OFFSET_AS_ARRAY', 1007 ); // PHP Fatal error:  Cannot use string offset as an array
 define( 'PHPTAGS_EXCEPTION_WARNING_SCALAR_VALUE_AS_ARRAY', 1008 ); // PHP Warning:  Cannot use a scalar value as an array
-
+define( 'PHPTAGS_EXCEPTION_WARNING_INVALID_ARGUMENT_FOR_FOREACH', 1009 ); // PHP Warning:  Invalid argument supplied for foreach()
+//
 // pcre
 define( 'PHPTAGS_EXCEPTION_WARNING_WRONG_DELIMITER', 2009 ); // PHP Warning:  preg_replace(): Delimiter must not be alphanumeric or backslash
 define( 'PHPTAGS_EXCEPTION_WARNING_NO_ENDING_DELIMITER', 2010 ); // PHP Warning:  preg_replace(): No ending delimiter '/' found
@@ -25,7 +26,7 @@ define( 'PHPTAGS_WARNING_WRONG_PARAMETER_COUNT', 107 ); // PHP Warning:  Wrong p
 define( 'PHPTAGS_FATAL_VALUE_PASSED_BY_REFERENCE', 108 ); // PHP Fatal error:  Only variables can be passed by reference
 define( 'PHPTAGS_NOTICE_UNDEFINED_CONSTANT', 114 ); // PHP Notice:  Use of undefined constant $1 - assumed '$1'
 define( 'PHPTAGS_FATAL_CANNOT_UNSET_STRING_OFFSETS', 115 ); // PHP Fatal error:  Cannot unset string offsets
-define( 'PHPTAGS_WARNING_INVALID_ARGUMENT_FOR_FOREACH', 116 ); // PHP Warning:  Invalid argument supplied for foreach()
+
 // PHP Fatal error:  Allowed memory size of 134217728 bytes exhausted (tried to allocate 73 bytes)
 // PHP Fatal error:  Maximum execution time of 30 seconds exceeded
 // PHP Warning:  Variable passed to each() is not an array or object
@@ -63,7 +64,7 @@ class ExceptionPhpTags extends \Exception {
 				$message = 'HP Parse error:  syntax error, unexpected \'' . ( is_string($params[0]) ? $params[0] : token_name($params[0]) ) . '\'';
 				array_shift( $params );
 				if ( $params ) {
-					$message .= ", expecting '" . implode( "', '", $params ) . "'";
+					$message .= ", expecting " . implode( ", ", $params );
 				}
 				break;
 			case PHPTAGS_EXCEPTION_NOTICE_UNDEFINED_VARIABLE:
@@ -86,6 +87,9 @@ class ExceptionPhpTags extends \Exception {
 				break;
 			case PHPTAGS_EXCEPTION_FATAL_STRING_OFFSET_AS_ARRAY:
 				$message = "PHP Warning:  Cannot use a scalar value as an array";
+				break;
+			case PHPTAGS_EXCEPTION_WARNING_INVALID_ARGUMENT_FOR_FOREACH:
+				$message = 'PHP Warning:  Invalid argument supplied for foreach()';
 				break;
 			
 			// pcre
@@ -117,9 +121,6 @@ class ExceptionPhpTags extends \Exception {
 				break;
 			case PHPTAGS_FATAL_CANNOT_UNSET_STRING_OFFSETS:
 				$message = 'PHP Fatal error:  Cannot unset string offsets';
-				break;
-			case PHPTAGS_WARNING_INVALID_ARGUMENT_FOR_FOREACH:
-				$message = 'PHP Warning:  Invalid argument supplied for foreach()';
 				break;
 			default:
 				$message = "PHP Fatal error:  Undefined error, code {$this->code}";
