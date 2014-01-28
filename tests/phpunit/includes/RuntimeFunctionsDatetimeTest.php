@@ -1,7 +1,7 @@
 <?php
-namespace PHPphp;
+namespace PhpTags;
 
-class RuntimeFunctionsDatetime /*extends \PHPUnit_Framework_TestCase*/ {
+class RuntimeFunctionsDatetime extends \PHPUnit_Framework_TestCase {
 
 	public function testRun_checkdate_1() {
 		$this->assertEquals(

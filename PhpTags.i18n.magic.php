@@ -13,5 +13,5 @@ $magicWords = array();
  * @author pastakhov
  */
 $magicWords['en'] = array(
-	'php' => array( 0, 'php' ),
+	'phptag' => array( 0, 'phptag' ),
 );

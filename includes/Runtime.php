@@ -28,7 +28,6 @@ class Runtime {
 
 	static public $functions=array();
 	static public $constants=array();
-	static public $allowedNamespaces = true;
 	static public $time = 0;
 	static public $permittedTime = true;
 	protected static $startTime = array();
@@ -99,9 +98,6 @@ class Runtime {
 			for(; $codeIndex<$c; $codeIndex++ ) {
 				$value = &$code[$codeIndex];
 				switch ($value[PHPTAGS_STACK_COMMAND]) {
-					case T_CONST:
-					case T_DOUBLE_ARROW:
-						break; // ignore it, @todo need remove it from $code in class Compiler
 					case '"': // Example: echo "abc$foo";
 						$value[PHPTAGS_STACK_RESULT] = implode( $value[PHPTAGS_STACK_PARAM] );
 						break;

@@ -1,7 +1,7 @@
 <?php
-namespace PHPphp;
+namespace PhpTags;
 
-class RuntimeFunctionsPcreTest /*extends \PHPUnit_Framework_TestCase*/ {
+class RuntimeFunctionsPcreTest extends \PHPUnit_Framework_TestCase {
 
 	public function testRun_function_pcre_preg_filter_1() {
 		$this->assertEquals(
@@ -86,7 +86,7 @@ if (preg_last_error() == PREG_BACKTRACK_LIMIT_ERROR) {
 	}
 	public function testRun_function_pcre_preg_match_all_1() {
 		$this->assertEquals(
-				Runtime::runSource('preg_match_all("|<[^>]+>(.*)</[^>]+>|U",
+				Runtime::runSource('$out=null; preg_match_all("|<[^>]+>(.*)</[^>]+>|U",
     "<b>example: </b><div align=left>this is a test</div>",
     $out, PREG_PATTERN_ORDER);
 echo $out[0][0] . ", " . $out[0][1];
@@ -107,6 +107,7 @@ echo $out[1][0] . ", " . $out[1][1];'),
 	public function testRun_function_pcre_preg_match_1() {
 		$this->assertEquals(
 				Runtime::runSource('// get host name from URL
+$matches = null;
 preg_match("@^(?:http://)?([^/]+)@i",
     "http://www.php.net/index.html", $matches);
 $host = $matches[1];

@@ -26,7 +26,7 @@ class PhpTags {
 		self::$startTime = microtime(true);
 
 		$is_banned = self::isBanned($frame);
-		if( $is_banned ) {
+		if ( $is_banned ) {
 			return $is_banned;
 		}
 
@@ -64,7 +64,7 @@ class PhpTags {
 		self::$startTime = microtime(true);
 
 		$is_banned = self::isBanned($frame);
-		if( $is_banned ) {
+		if ( $is_banned ) {
 			return $is_banned;
 		}
 
@@ -112,12 +112,16 @@ class PhpTags {
 	}
 
 	public static function isBanned(PPFrame $frame) {
-		if( \PhpTags\Runtime::$allowedNamespaces !== true && empty(\PhpTags\Runtime::$allowedNamespaces[$frame->getTitle()->getNamespace()]) ) {
-			return Html::element( 'span', array('class'=>'error'), wfMessage('phpphp-disabled-for-namespace', $frame->getTitle()->getNsText())->escaped() );
+		global $wgPhpTagsNamespaces;
+		if ( $wgPhpTagsNamespaces !== true && !in_array($frame->getTitle()->getNamespace(), $wgPhpTagsNamespaces) ) {
+			return Html::element(
+					'span', array( 'class'=>'error' ),
+					wfMessage( 'phptags-disabled-for-namespace', $frame->getTitle()->getNsText() )->text()
+				);
 		}
 		if(\PhpTags\Runtime::$permittedTime !== true && \PhpTags\Runtime::$time >= \PhpTags\Runtime::$permittedTime ) {
 			return Html::element( 'span', array('class'=>'error'),
-				wfMessage( 'phpphp-fatal-error-max-execution-time' )
+				wfMessage( 'phptags-fatal-error-max-execution-time' )
 					->numParams( \PhpTags\Runtime::$permittedTime )
 					->params( $frame->getTitle()->getPrefixedText() )
 					->text()
