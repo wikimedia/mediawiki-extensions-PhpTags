@@ -26,9 +26,11 @@ define( 'PHPTAGS_MIN_VALUES', '<' );
  */
 class Runtime {
 
-	static private $constants = array();
-	static private $functions = array();
-	static private $objects = array();
+	static private $constantsValue = array();
+	static private $constantsHook = array();
+	static private $functionsHook = array();
+	static private $objectsHook = array();
+
 	static public $time = 0;
 	static public $permittedTime = true;
 	protected static $startTime = array();
@@ -363,8 +365,8 @@ class Runtime {
 						$name = $value[PHPTAGS_STACK_PARAM];
 						if ( isset($value[PHPTAGS_STACK_PARAM_2]) ) { // This is function or object
 							if ( is_array($value[PHPTAGS_STACK_PARAM_2]) ) { // This is function
-								if ( isset(self::$functions[$name]) ) {
-									$function = &self::$functions[$name];
+								if ( isset(self::$functionsHook[$name]) ) {
+									$function = &self::$functionsHook[$name];
 									$param = array();
 									foreach ( $value[PHPTAGS_STACK_PARAM_2] as $val ) {
 										if ( $val[PHPTAGS_STACK_COMMAND] == T_VARIABLE ) { // Example $foo
@@ -453,13 +455,22 @@ class Runtime {
 								// @todo
 							}
 						} else { // This is constant
-							if ( isset(self::$constants[$name]) ) {
-								$function = &self::$constants[$name];
+							if ( isset(self::$constantsValue[$name]) ) {
+								$value[PHPTAGS_STACK_RESULT] = self::$constantsValue[$name];
+							} elseif ( isset(self::$constantsHook[$name]) ) {
+								$function = &self::$constantsHook[$name];
 								$value[PHPTAGS_STACK_RESULT] = is_callable($function) ? $function( $transit ) : $function;
+							} elseif ( array_key_exists($name, self::$constantsValue) ) {
+								$value[PHPTAGS_STACK_RESULT] = self::$constantsValue[$name];
 							} else {
 								$value[PHPTAGS_STACK_RESULT] = $name;
-								$return[] = (string) new ExceptionPhpTags( $name, PHPTAGS_NOTICE_UNDEFINED_CONSTANT, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
+								$return[] = (string) new ExceptionPhpTags( PHPTAGS_EXCEPTION_NOTICE_UNDEFINED_CONSTANT, $name, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
 							}
+						}
+						if ( is_object($value[PHPTAGS_STACK_RESULT]) && !($value[PHPTAGS_STACK_RESULT] instanceof iRawOutput) ) {
+							// @todo
+							$value[PHPTAGS_STACK_RESULT] = null;
+							$return[] = (string) new ExceptionPhpTags( PHPTAGS_EXCEPTION_WARNING_RETURNED_INVALID_VALUE, $name, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
 						}
 						break;
 					case T_UNSET:
@@ -713,14 +724,17 @@ class Runtime {
 		}
 	}
 
+	public static function setConstantsValue( array $constantsValue ) {
+		self::$constantsValue += $constantsValue;
+	}
 	public static function setConstantsHook( $className, array $constantsName ) {
-		self::$constants += array_fill_keys( $constantsName, $className );
+		self::$constantsHook += array_fill_keys( $constantsName, $className );
 	}
 	public static function setFunctionsHook( $className, array $functionsName ) {
-		self::$functions += array_fill_keys( $functionsName, $className );
+		self::$functionsHook += array_fill_keys( $functionsName, $className );
 	}
 	public static function setObjectsHook( $className, array $objectsName ) {
-		self::$objects += array_fill_keys( $objectsName, $className );
+		self::$objectsHook += array_fill_keys( $objectsName, $className );
 	}
 
 }

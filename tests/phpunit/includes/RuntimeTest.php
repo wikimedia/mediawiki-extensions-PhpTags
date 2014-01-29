@@ -1,6 +1,8 @@
 <?php
 namespace PhpTags;
 
+\wfRunHooks( 'PhpTagsRuntimeFirstInit' );
+
 class RuntimeTest extends \PHPUnit_Framework_TestCase {
 
 	public function testRun_echo_apostrophe_1() {
@@ -2464,5 +2466,13 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 				array('a', 'b', 'y', 'z')
 				);
 	}
+
+	public function testRun_constant_version() {
+		$this->assertEquals(
+				Runtime::runSource('echo PHPTAGS_VERSION;'),
+				array(PHPTAGS_VERSION)
+				);
+	}
+
 
 }

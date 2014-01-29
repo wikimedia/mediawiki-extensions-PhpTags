@@ -13,7 +13,8 @@ class PhpTags {
 	static $DebugLoops = false;
 	static $startTime = false;
 
-	static $frames=array();
+	private static $frames=array();
+	private static $needInitRuntime = true;
 
 	/**
 	 *
@@ -27,6 +28,11 @@ class PhpTags {
 		$is_banned = self::isBanned($frame);
 		if ( $is_banned ) {
 			return $is_banned;
+		}
+
+		if ( self::$needInitRuntime ) {
+			\wfRunHooks( 'PhpTagsRuntimeFirstInit' );
+			self::$needInitRuntime = false;
 		}
 
 		$command = array_shift($args);
@@ -65,6 +71,11 @@ class PhpTags {
 		$is_banned = self::isBanned($frame);
 		if ( $is_banned ) {
 			return $is_banned;
+		}
+
+		if ( self::$needInitRuntime ) {
+			\wfRunHooks( 'PhpTagsRuntimeFirstInit' );
+			self::$needInitRuntime = false;
 		}
 
 		$is_debug = isset($args['debug']);

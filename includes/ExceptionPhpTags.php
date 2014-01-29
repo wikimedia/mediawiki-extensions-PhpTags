@@ -2,15 +2,20 @@
 namespace PhpTags;
 
 define( 'PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED', 1001 ); // PHP Parse error:  syntax error, unexpected $end, expecting ',' or ';' in Command line code on line 1
-define( 'PHPTAGS_EXCEPTION_NOTICE_UNDEFINED_VARIABLE', 1002 ); // PHP Notice:  Undefined variable: $1 in Command line code on line 1
-define( 'PHPTAGS_EXCEPTION_FATAL_CANNOT_USE_FOR_READING', 1003 ); // PHP Fatal error:  Cannot use [] for reading in Command line code on line 1
-define( 'PHPTAGS_EXCEPTION_WARNING_DIVISION_BY_ZERO', 1004 ); // PHP Warning:  Division by zero
-define( 'PHPTAGS_EXCEPTION_NOTICE_UNINIT_STRING_OFFSET', 1005 ); // PHP Notice:  Uninitialized string offset: $1
-define( 'PHPTAGS_EXCEPTION_NOTICE_UNDEFINED_OFFSET', 1006 ); // PHP Notice:  Undefined offset: 4 in Command line code on line 1
-define( 'PHPTAGS_EXCEPTION_FATAL_STRING_OFFSET_AS_ARRAY', 1007 ); // PHP Fatal error:  Cannot use string offset as an array
-define( 'PHPTAGS_EXCEPTION_WARNING_SCALAR_VALUE_AS_ARRAY', 1008 ); // PHP Warning:  Cannot use a scalar value as an array
-define( 'PHPTAGS_EXCEPTION_WARNING_INVALID_ARGUMENT_FOR_FOREACH', 1009 ); // PHP Warning:  Invalid argument supplied for foreach()
-//
+
+define( 'PHPTAGS_EXCEPTION_NOTICE_UNDEFINED_VARIABLE', 2001 ); // PHP Notice:  Undefined variable: $1 in Command line code on line 1
+define( 'PHPTAGS_EXCEPTION_NOTICE_UNINIT_STRING_OFFSET', 2002 ); // PHP Notice:  Uninitialized string offset: $1
+define( 'PHPTAGS_EXCEPTION_NOTICE_UNDEFINED_OFFSET', 2003 ); // PHP Notice:  Undefined offset: 4 in Command line code on line 1
+define( 'PHPTAGS_EXCEPTION_NOTICE_UNDEFINED_CONSTANT', 2004 ); // PHP Notice:  Use of undefined constant $1 - assumed '$1'
+
+define( 'PHPTAGS_EXCEPTION_WARNING_DIVISION_BY_ZERO', 3001 ); // PHP Warning:  Division by zero
+define( 'PHPTAGS_EXCEPTION_WARNING_SCALAR_VALUE_AS_ARRAY', 3002 ); // PHP Warning:  Cannot use a scalar value as an array
+define( 'PHPTAGS_EXCEPTION_WARNING_INVALID_ARGUMENT_FOR_FOREACH', 3003 ); // PHP Warning:  Invalid argument supplied for foreach()
+define( 'PHPTAGS_EXCEPTION_WARNING_RETURNED_INVALID_VALUE', 3004 );
+
+define( 'PHPTAGS_EXCEPTION_FATAL_CANNOT_USE_FOR_READING', 4001 ); // PHP Fatal error:  Cannot use [] for reading in Command line code on line 1
+define( 'PHPTAGS_EXCEPTION_FATAL_STRING_OFFSET_AS_ARRAY', 4002 ); // PHP Fatal error:  Cannot use string offset as an array
+
 // pcre
 define( 'PHPTAGS_EXCEPTION_WARNING_WRONG_DELIMITER', 2009 ); // PHP Warning:  preg_replace(): Delimiter must not be alphanumeric or backslash
 define( 'PHPTAGS_EXCEPTION_WARNING_NO_ENDING_DELIMITER', 2010 ); // PHP Warning:  preg_replace(): No ending delimiter '/' found
@@ -24,7 +29,6 @@ define( 'PHPTAGS_FATAL_UNABLE_CALL_TO_FUNCTION', 105 ); // $foxwayFunctions[$1][
 define( 'PHPTAGS_FATAL_ERROR_CALL_TO_FUNCTION', 106 ); // Error in $foxwayFunctions[$1]
 define( 'PHPTAGS_WARNING_WRONG_PARAMETER_COUNT', 107 ); // PHP Warning:  Wrong parameter count for $1()
 define( 'PHPTAGS_FATAL_VALUE_PASSED_BY_REFERENCE', 108 ); // PHP Fatal error:  Only variables can be passed by reference
-define( 'PHPTAGS_NOTICE_UNDEFINED_CONSTANT', 114 ); // PHP Notice:  Use of undefined constant $1 - assumed '$1'
 define( 'PHPTAGS_FATAL_CANNOT_UNSET_STRING_OFFSETS', 115 ); // PHP Fatal error:  Cannot unset string offsets
 
 // PHP Fatal error:  Allowed memory size of 134217728 bytes exhausted (tried to allocate 73 bytes)
@@ -91,6 +95,13 @@ class ExceptionPhpTags extends \Exception {
 			case PHPTAGS_EXCEPTION_WARNING_INVALID_ARGUMENT_FOR_FOREACH:
 				$message = 'PHP Warning:  Invalid argument supplied for foreach()';
 				break;
+			case PHPTAGS_EXCEPTION_NOTICE_UNDEFINED_CONSTANT:
+				$message = "PHP Notice:  Use of undefined constant $params - assumed '$params'";
+				break;
+			case PHPTAGS_EXCEPTION_WARNING_RETURNED_INVALID_VALUE:
+				// @todo
+				$message = "PHP Warning: constant, function or object '$params' returns an invalid value";
+				break;
 			
 			// pcre
 			case PHPTAGS_EXCEPTION_WARNING_WRONG_DELIMITER:
@@ -115,9 +126,6 @@ class ExceptionPhpTags extends \Exception {
 				break;
 			case PHPTAGS_WARNING_WRONG_PARAMETER_COUNT:
 				$message = "PHP Warning:  Wrong parameter count for $params()";
-				break;
-			case PHPTAGS_NOTICE_UNDEFINED_CONSTANT:
-				$message = "PHP Notice:  Use of undefined constant $params - assumed '$params'";
 				break;
 			case PHPTAGS_FATAL_CANNOT_UNSET_STRING_OFFSETS:
 				$message = 'PHP Fatal error:  Cannot unset string offsets';

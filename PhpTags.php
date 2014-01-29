@@ -15,7 +15,10 @@ if ( !defined( 'MEDIAWIKI' ) ) {
 	die( 'This file is an extension to MediaWiki and thus not a valid entry point.' );
 }
 
-define( 'PHPTAGS_VERSION' , '1.0.0' );
+define( 'PHPTAGS_MAJOR_VERSION' , 1 );
+define( 'PHPTAGS_MINOR_VERSION' , 0 );
+define( 'PHPTAGS_RELEASE_VERSION' , 1 );
+define( 'PHPTAGS_VERSION' , PHPTAGS_MAJOR_VERSION . '.' . PHPTAGS_MINOR_VERSION . '.' . PHPTAGS_RELEASE_VERSION );
 
 // Register this extension on Special:Version
 $wgExtensionCredits['parserhook'][] = array(
@@ -38,6 +41,17 @@ $wgExtensionMessagesFiles['PhpTagsMagic'] =	__DIR__ . '/PhpTags.i18n.magic.php';
 $wgHooks['ParserFirstCallInit'][] = function( Parser &$parser ) {
 	$parser->setFunctionHook( 'phptag', 'PhpTags::renderFunction', SFH_OBJECT_ARGS );
 	$parser->setHook( 'phptag', 'PhpTags::render' );
+	return true;
+};
+$wgHooks['PhpTagsRuntimeFirstInit'][] = function() {
+	\PhpTags\Runtime::setConstantsValue(
+			array(
+				'PHPTAGS_MAJOR_VERSION' => PHPTAGS_MAJOR_VERSION,
+				'PHPTAGS_MINOR_VERSION' => PHPTAGS_MINOR_VERSION,
+				'PHPTAGS_RELEASE_VERSION' => PHPTAGS_RELEASE_VERSION,
+				'PHPTAGS_VERSION' => PHPTAGS_VERSION,
+			)
+		);
 	return true;
 };
 
