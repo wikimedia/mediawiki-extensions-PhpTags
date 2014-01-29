@@ -26,8 +26,9 @@ define( 'PHPTAGS_MIN_VALUES', '<' );
  */
 class Runtime {
 
-	static public $functions=array();
-	static public $constants=array();
+	static private $constants = array();
+	static private $functions = array();
+	static private $objects = array();
 	static public $time = 0;
 	static public $permittedTime = true;
 	protected static $startTime = array();
@@ -710,6 +711,16 @@ class Runtime {
 				$return[$key] = $ref;
 			}
 		}
+	}
+
+	public static function setConstantsHook( $className, array $constantsName ) {
+		self::$constants += array_fill_keys( $constantsName, $className );
+	}
+	public static function setFunctionsHook( $className, array $functionsName ) {
+		self::$functions += array_fill_keys( $functionsName, $className );
+	}
+	public static function setObjectsHook( $className, array $objectsName ) {
+		self::$objects += array_fill_keys( $objectsName, $className );
 	}
 
 }

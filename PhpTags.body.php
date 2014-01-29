@@ -1,5 +1,4 @@
 <?php
-require_once __DIR__ . '/Settings.php';
 
 /**
  * The main class of the extension PhpTags.
@@ -119,7 +118,7 @@ class PhpTags {
 					wfMessage( 'phptags-disabled-for-namespace', $frame->getTitle()->getNsText() )->text()
 				);
 		}
-		if(\PhpTags\Runtime::$permittedTime !== true && \PhpTags\Runtime::$time >= \PhpTags\Runtime::$permittedTime ) {
+		if ( \PhpTags\Runtime::$permittedTime !== true && \PhpTags\Runtime::$time >= \PhpTags\Runtime::$permittedTime ) {
 			return Html::element( 'span', array('class'=>'error'),
 				wfMessage( 'phptags-fatal-error-max-execution-time' )
 					->numParams( \PhpTags\Runtime::$permittedTime )

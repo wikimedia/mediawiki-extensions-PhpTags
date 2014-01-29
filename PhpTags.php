@@ -1,6 +1,6 @@
 <?php
 /**
- * @todo description
+ * Main entry point for the PhpTags extension.
  *
  * @link https://www.mediawiki.org/wiki/Extension:PhpTags Documentation
  * @file PhpTags.php
@@ -27,50 +27,62 @@ $wgExtensionCredits['parserhook'][] = array(
 	'descriptionmsg'	=> 'phptags-desc'
 );
 
-// Tell the whereabouts of files
-$dir = __DIR__;
-
 // Allow translations for this extension
-$wgExtensionMessagesFiles['PhpTags'] =		$dir . '/PhpTags.i18n.php';
-$wgExtensionMessagesFiles['PhpTagsMagic'] =	$dir . '/PhpTags.i18n.magic.php';
+$wgExtensionMessagesFiles['PhpTags'] =		__DIR__ . '/PhpTags.i18n.php';
+$wgExtensionMessagesFiles['PhpTagsMagic'] =	__DIR__ . '/PhpTags.i18n.magic.php';
 
 // Specify the function that will initialize the parser function.
 /**
  * @codeCoverageIgnore
  */
 $wgHooks['ParserFirstCallInit'][] = function( Parser &$parser ) {
-   $parser->setFunctionHook( 'phptag', 'PhpTags::renderFunction', SFH_OBJECT_ARGS );
-   $parser->setHook( 'phptag', 'PhpTags::render' );
-   return true;
+	$parser->setFunctionHook( 'phptag', 'PhpTags::renderFunction', SFH_OBJECT_ARGS );
+	$parser->setHook( 'phptag', 'PhpTags::render' );
+	return true;
 };
 
 /**
  * @codeCoverageIgnore
  */
 $wgHooks['ParserLimitReport'][] = function( $parser, &$limitReport ) {
-	if( \PhpTags\Runtime::$time > 0 ) {
+	if ( \PhpTags\Runtime::$time > 0 ) {
 		$limitReport .= sprintf( "PhpTags time usage: %.3f secs\n", \PhpTags\Runtime::$time );
 	}
 	return true;
 };
 
 // Preparing classes for autoloading
-$wgAutoloadClasses['PhpTags']					= $dir . '/PhpTags.body.php';
+$wgAutoloadClasses['PhpTags']					= __DIR__ . '/PhpTags.body.php';
 
-$wgAutoloadClasses['PhpTags\\iRawOutput']		= $dir . '/includes/iRawOutput.php';
-$wgAutoloadClasses['PhpTags\\outPrint']			= $dir . '/includes/outPrint.php';
-$wgAutoloadClasses['PhpTags\\ExceptionPhpTags']	= $dir . '/includes/ExceptionPhpTags.php';
-$wgAutoloadClasses['PhpTags\\Compiler']			= $dir . '/includes/Compiler.php';
-$wgAutoloadClasses['PhpTags\\Runtime']			= $dir . '/includes/Runtime.php';
+$wgAutoloadClasses['PhpTags\\iRawOutput']		= __DIR__ . '/includes/iRawOutput.php';
+$wgAutoloadClasses['PhpTags\\outPrint']			= __DIR__ . '/includes/outPrint.php';
+$wgAutoloadClasses['PhpTags\\ExceptionPhpTags']	= __DIR__ . '/includes/ExceptionPhpTags.php';
+$wgAutoloadClasses['PhpTags\\Compiler']			= __DIR__ . '/includes/Compiler.php';
+$wgAutoloadClasses['PhpTags\\Runtime']			= __DIR__ . '/includes/Runtime.php';
 
 /**
  * Add files to phpunit test
  * @codeCoverageIgnore
  */
 $wgHooks['UnitTestsList'][] = function ( &$files ) {
-		$testDir = __DIR__ . '/tests/phpunit';
-		$files = array_merge( $files, glob( "$testDir/includes/*Test.php" ) );
-		return true;
+	$testDir = __DIR__ . '/tests/phpunit';
+	$files = array_merge( $files, glob( "$testDir/includes/*Test.php" ) );
+	return true;
 };
 
-$wgPhpTagsNamespaces = true;
+/**
+ * You can specify the namespaces in which allowed to use this extension.
+ *
+ * Thus it is possible to give permission to use this extension only for a special user group, example:
+ * define("NS_PHPTAGS", 1000);
+ * define("NS_PHPTAGS_TALK", 1001);
+ * $wgExtraNamespaces[NS_PHPTAGS] = "PhpTags";
+ * $wgExtraNamespaces[NS_PHPTAGS_TALK] = "PhpTags_Talk";
+ *
+ * $wgPhpTagsNamespaces = array( NS_PHPTAGS );
+ * $wgNamespaceProtection[NS_PHPTAGS] = array( 'phptags_editor' );
+ * $wgGroupPermissions['sysop']['phptags_editor'] = true;
+ *
+ * @var mixed Namespaces Array of namespaces in which allowed to use the extension PhpTags, and if boolean 'true' then it is unlimited namespaces
+ */
+$wgPhpTagsNamespaces = true; // By default, this is unlimited namespaces
