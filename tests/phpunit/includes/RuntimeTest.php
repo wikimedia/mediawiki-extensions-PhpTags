@@ -2474,5 +2474,4 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 				);
 	}
 
-
 }

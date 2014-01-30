@@ -73,6 +73,7 @@ $wgAutoloadClasses['PhpTags\\outPrint']			= __DIR__ . '/includes/outPrint.php';
 $wgAutoloadClasses['PhpTags\\ExceptionPhpTags']	= __DIR__ . '/includes/ExceptionPhpTags.php';
 $wgAutoloadClasses['PhpTags\\Compiler']			= __DIR__ . '/includes/Compiler.php';
 $wgAutoloadClasses['PhpTags\\Runtime']			= __DIR__ . '/includes/Runtime.php';
+$wgAutoloadClasses['PhpTags\\BaseHooks']		= __DIR__ . '/includes/BaseHooks.php';
 
 /**
  * Add files to phpunit test

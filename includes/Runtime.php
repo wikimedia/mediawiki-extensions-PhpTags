@@ -26,18 +26,19 @@ define( 'PHPTAGS_MIN_VALUES', '<' );
  */
 class Runtime {
 
-	static private $constantsValue = array();
-	static private $constantsHook = array();
-	static private $functionsHook = array();
-	static private $objectsHook = array();
+	private static $constantsValue = array();
+	private static $constantsHook = array();
+	private static $functionsHook = array();
+	private static $objectsHook = array();
 
 	static public $time = 0;
 	static public $permittedTime = true;
 	protected static $startTime = array();
 
-	protected static $variables = array();
-	protected static $staticVariables = array();
-	protected static $globalVariables = array();
+	private static $variables = array();
+	private static $staticVariables = array();
+	private static $globalVariables = array();
+	private static $tmpException = array();
 
 	/*public function startTime($scope) {
 		self::$startTime[$scope] = microtime(true);
@@ -365,89 +366,38 @@ class Runtime {
 						$name = $value[PHPTAGS_STACK_PARAM];
 						if ( isset($value[PHPTAGS_STACK_PARAM_2]) ) { // This is function or object
 							if ( is_array($value[PHPTAGS_STACK_PARAM_2]) ) { // This is function
-								if ( isset(self::$functionsHook[$name]) ) {
-									$function = &self::$functionsHook[$name];
-									$param = array();
-									foreach ( $value[PHPTAGS_STACK_PARAM_2] as $val ) {
-										if ( $val[PHPTAGS_STACK_COMMAND] == T_VARIABLE ) { // Example $foo
-											$ref = &$thisVariables[ $val[PHPTAGS_STACK_PARAM] ];
-											if ( isset($val[PHPTAGS_STACK_ARRAY_INDEX]) ) { // Example: $foo[1]
-												foreach ( $val[PHPTAGS_STACK_ARRAY_INDEX] as $v ) {
-													if ( !isset($ref[ $v[PHPTAGS_STACK_RESULT] ]) ) {
-														$ref[ $v[PHPTAGS_STACK_RESULT] ] = null;
-														// @todo PHP Fatal error:  Only variables can be passed by reference
-														if( is_string($ref) ) {
-															//PHPTAGS_EXCEPTION_NOTICE_UNINIT_STRING_OFFSET $return[] = (string) new ExceptionPhpTags( (int)$v[PHPTAGS_STACK_RESULT] , PHPTAGS_NOTICE_UNINIT_STRING_OFFSET, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
-														}
-													}
-													$ref = &$ref[ $v[PHPTAGS_STACK_RESULT] ];
-												}
-											}
-											$param[] = &$ref;
-										} else {
-											// @todo PHP Fatal error:  Only variables can be passed by reference
-											$param[] = $val[PHPTAGS_STACK_RESULT];
-										}
-									}
-									$count = count( $param );
-									do {
-										if( isset($function[$count]) ) {
-											$function = &$function[$count];
-											break;
-										} else {
-											if ( isset($function[PHPTAGS_DEFAULT_VALUES]) ) { // Has default values
-												$param += $function[PHPTAGS_DEFAULT_VALUES];
-												$count = count( $param );
-												if( isset($function[$count]) ) {
-													$function = &$function[$count];
-													break;
-												}
-											}
-											if ( isset($function[PHPTAGS_MIN_VALUES]) ) {
-												if( $count >= $function[PHPTAGS_MIN_VALUES] && isset($function['']) ) {
-													$function = &$function[''];
-													$count = "''"; // it for error message
-													break;
-												}
-											}
-										}
-										$return[] = (string) new ExceptionPhpTags( $name, PHPTAGS_WARNING_WRONG_PARAMETER_COUNT, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
-										$value[PHPTAGS_STACK_RESULT] = null;
-										break 2; /**** EXIT ****/
-									} while( false );
+								if ( !isset(self::$functionsHook[$name]) ) {
+									$return[] = new ExceptionPhpTags( PHPTAGS_EXCEPTION_FATAL_CALL_TO_UNDEFINED_FUNCTION, $name, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
+									return $return;
+								}
+								$hookClassName = self::$functionsHook[$name];
+								if( !class_exists($hookClassName) ) {
+									$return[] = new ExceptionPhpTags( PHPTAGS_EXCEPTION_FATAL_NONEXISTENT_HOOK_CLASS, array($name, $hookClassName), $value[PHPTAGS_STACK_TOKEN_LINE], $place );
+									return $return;
+								}
+								$classParens = class_parents( $hookClassName );
+								if ( !isset($classParens['PhpTags\\BaseHooks']) ) {
+									$return[] = new ExceptionPhpTags( PHPTAGS_EXCEPTION_FATAL_INVALID_HOOK_CLASS, array($name, $hookClassName), $value[PHPTAGS_STACK_TOKEN_LINE], $place );
+									return $return;
+								}
 
-									if ( is_callable($function) ) {
-										try {
-											wfSuppressWarnings();
-											$result = $function( $param, $transit );
-											if ( $result instanceof outPrint ) {
-												$value[PHPTAGS_STACK_RESULT] = $result->returnValue;
-												$return[] = $result;
-											} else {
-												$value[PHPTAGS_STACK_RESULT] = $result;
-											}
-											wfRestoreWarnings();
-										} catch ( ExceptionPhpTags $e ) {
-											$e->tokenLine = $value[PHPTAGS_STACK_TOKEN_LINE];
-											$e->place = $place;
-											if ( is_array($e->params) ) {
-												array_unshift( $e->params, $name );
-											}
-											$return[] = $e;
-											$value[PHPTAGS_STACK_RESULT] = null;
-											break; /**** EXIT ****/
-										} catch (Exception $e) {
-											$return[] = (string) new ExceptionPhpTags( $name, PHPTAGS_FATAL_ERROR_CALL_TO_FUNCTION, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
-											$value[PHPTAGS_STACK_RESULT] = null;
-											break; /**** EXIT ****/
-										}
-									} else {
-										$return[] = (string) new ExceptionPhpTags( array($name, $count), PHPTAGS_FATAL_UNABLE_CALL_TO_FUNCTION, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
-										$value[PHPTAGS_STACK_RESULT] = null;
-										break; /**** EXIT ****/
+								try {
+									wfSuppressWarnings();
+
+									$value[PHPTAGS_STACK_RESULT] = $hookClassName::onFunctionHook( $name, $value[PHPTAGS_STACK_PARAM_2] );
+
+									wfRestoreWarnings();
+								} catch ( ExceptionPhpTags $e ) {
+									$e->tokenLine = $value[PHPTAGS_STACK_TOKEN_LINE];
+									$e->place = $place;
+									if ( is_array($e->params) ) {
+										array_unshift( $e->params, $name );
 									}
-								} else {
-									$return[] = (string) new ExceptionPhpTags( $name, PHPTAGS_FATAL_CALL_TO_UNDEFINED_FUNCTION, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
+									$return[] = $e;
+									$value[PHPTAGS_STACK_RESULT] = null;
+									break; /**** EXIT ****/
+								} catch (Exception $e) {
+									$return[] = (string) new ExceptionPhpTags( $name, PHPTAGS_FATAL_ERROR_CALL_TO_FUNCTION, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
 									$value[PHPTAGS_STACK_RESULT] = null;
 									break; /**** EXIT ****/
 								}
@@ -735,6 +685,9 @@ class Runtime {
 	}
 	public static function setObjectsHook( $className, array $objectsName ) {
 		self::$objectsHook += array_fill_keys( $objectsName, $className );
+	}
+	public static function addException( ExceptionPhpTags $exception ) {
+		self::$tmpException[] = $exception;
 	}
 
 }
