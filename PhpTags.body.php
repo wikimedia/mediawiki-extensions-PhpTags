@@ -52,10 +52,10 @@ class PhpTags {
 					$command,
 					array_merge( (array)$frame->getTitle()->getPrefixedText(), $frame->getArguments() ),
 					self::getScope( $frame ),
-					array( 'Parser'=>&$parser, 'PPFrame'=>&$frame )
+					array( PHPTAGS_TRANSIT_PARSER=>&$parser, PHPTAGS_TRANSIT_PPFRAME=>&$frame )
 					);
 			$return = implode( $result );
-		} catch (\PhpTags\ExceptionPHPphp $exc) {
+		} catch (\PhpTags\ExceptionPhpTags $exc) {
 			$return = (string) $exc;
 		} catch (Exception $exc) {
 			$return = $exc->getTraceAsString();
@@ -96,7 +96,7 @@ class PhpTags {
 					self::getScope( $frame ),
 					array( 'Parser'=>&$parser, 'PPFrame'=>&$frame )
 					);
-		} catch ( \PhpTags\ExceptionPHPphp $exc ) {
+		} catch ( \PhpTags\ExceptionPhpTags $exc ) {
 			\PhpTags\Runtime::$time += microtime(true) - self::$startTime;
 			return (string) $exc;
 		} catch ( Exception $exc ) {

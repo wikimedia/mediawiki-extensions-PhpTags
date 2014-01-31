@@ -16,6 +16,11 @@ define( 'PHPTAGS_STACK_DEBUG', '#' );
 define( 'PHPTAGS_DEFAULT_VALUES', 'd' );
 define( 'PHPTAGS_MIN_VALUES', '<' );
 
+define( 'PHPTAGS_TRANSIT_VARIABLES', 'v' );
+define( 'PHPTAGS_TRANSIT_PARSER', 'p' );
+define( 'PHPTAGS_TRANSIT_PPFRAME', 'f' );
+define( 'PHPTAGS_TRANSIT_EXCEPTION', '@' );
+
 /**
  * The runtime class of the extension PhpTags.
  *
@@ -38,7 +43,6 @@ class Runtime {
 	private static $variables = array();
 	private static $staticVariables = array();
 	private static $globalVariables = array();
-	private static $tmpException = array();
 
 	/*public function startTime($scope) {
 		self::$startTime[$scope] = microtime(true);
@@ -213,7 +217,7 @@ class Runtime {
 					case T_VARIABLE:
 						if ( array_key_exists($value[PHPTAGS_STACK_PARAM], $thisVariables) ) {
 							$value[PHPTAGS_STACK_RESULT] = $thisVariables[ $value[PHPTAGS_STACK_PARAM] ];
-							if ( array_key_exists(PHPTAGS_STACK_ARRAY_INDEX, $value) ) { // Example: $foo[1]
+							if ( isset($value[PHPTAGS_STACK_ARRAY_INDEX]) ) { // Example: $foo[1]
 								foreach ( $value[PHPTAGS_STACK_ARRAY_INDEX] as $v ) {
 									if ( is_array($value[PHPTAGS_STACK_RESULT]) ) {
 										if ( array_key_exists($v[PHPTAGS_STACK_RESULT], $value[PHPTAGS_STACK_RESULT]) ) {
@@ -364,6 +368,8 @@ class Runtime {
 						break;
 					case T_STRING:
 						$name = $value[PHPTAGS_STACK_PARAM];
+						$transit[PHPTAGS_TRANSIT_VARIABLES] = &$thisVariables;
+						$transit[PHPTAGS_TRANSIT_EXCEPTION] = array();
 						if ( isset($value[PHPTAGS_STACK_PARAM_2]) ) { // This is function or object
 							if ( is_array($value[PHPTAGS_STACK_PARAM_2]) ) { // This is function
 								if ( !isset(self::$functionsHook[$name]) ) {
@@ -384,7 +390,13 @@ class Runtime {
 								try {
 									wfSuppressWarnings();
 
-									$value[PHPTAGS_STACK_RESULT] = $hookClassName::onFunctionHook( $name, $value[PHPTAGS_STACK_PARAM_2] );
+									$result = $hookClassName::onFunctionHook( $name, $value[PHPTAGS_STACK_PARAM_2], $transit );
+									if ( $result instanceof outPrint ) {
+										$value[PHPTAGS_STACK_RESULT] = $result->returnValue;
+										$return[] = $result;
+									} else {
+										$value[PHPTAGS_STACK_RESULT] = $result;
+									}
 
 									wfRestoreWarnings();
 								} catch ( ExceptionPhpTags $e ) {
@@ -415,6 +427,11 @@ class Runtime {
 							} else {
 								$value[PHPTAGS_STACK_RESULT] = $name;
 								$return[] = (string) new ExceptionPhpTags( PHPTAGS_EXCEPTION_NOTICE_UNDEFINED_CONSTANT, $name, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
+							}
+						}
+						foreach ( $transit[PHPTAGS_TRANSIT_EXCEPTION] as $exc ) {
+							if ( $exc instanceof ExceptionPhpTags ) {
+								$return[] = (string) $exc;
 							}
 						}
 						if ( is_object($value[PHPTAGS_STACK_RESULT]) && !($value[PHPTAGS_STACK_RESULT] instanceof iRawOutput) ) {
@@ -685,9 +702,6 @@ class Runtime {
 	}
 	public static function setObjectsHook( $className, array $objectsName ) {
 		self::$objectsHook += array_fill_keys( $objectsName, $className );
-	}
-	public static function addException( ExceptionPhpTags $exception ) {
-		self::$tmpException[] = $exception;
 	}
 
 }
