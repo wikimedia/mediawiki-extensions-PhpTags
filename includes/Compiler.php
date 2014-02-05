@@ -479,10 +479,11 @@ class Compiler {
 							throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $this->id, "']'" ), $this->tokenLine, $this->place );
 						}
 						if ( $indexVal ) { // Example: $foo[1]
-							$variable[PHPTAGS_STACK_ARRAY_INDEX][] = $indexVal;
+							$variable[PHPTAGS_STACK_ARRAY_INDEX][] = &$indexVal;
 							if ( $indexVal[PHPTAGS_STACK_COMMAND] ) {
-								$this->stack[] = $indexVal;
+								$this->stack[] = &$indexVal;
 							}
+							unset( $indexVal );
 						} else { // Example: $foo[]
 							$variable[PHPTAGS_STACK_ARRAY_INDEX][] = null;
 							$cannotRead = true;
@@ -1071,6 +1072,7 @@ class Compiler {
 							$result[PHPTAGS_STACK_PARAM_2][] = array( &$key[PHPTAGS_STACK_RESULT], &$value[PHPTAGS_STACK_RESULT] );
 							$array = array();
 						}
+						unset( $key );
 						$key = false;
 					}
 					if ( $value[PHPTAGS_STACK_COMMAND] ) {
@@ -1081,13 +1083,22 @@ class Compiler {
 					}
 					break;
 				case T_DOUBLE_ARROW:
-					$key = $value;
-					if ( $value[PHPTAGS_STACK_COMMAND] ) {
-						$this->stack[] = $value; // Add the command for receive value into the stack
+					if ( $key !== false ) {
+						// PHP Parse error:  syntax error, unexpected $id, expecting ',' or ')'
+						throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $this->id, "','", "'$endToken'" ), $this->tokenLine, $this->place );
+					}
+					$key = &$value;
+					unset( $value );
+					if ( $key[PHPTAGS_STACK_COMMAND] ) {
+						$this->stack[] = &$key; // Add the command for receive value into the stack
 					}
 					break;
 			}
 			$this->stepUP();
+		}
+		if ( $key !== false ) {
+			// PHP Parse error:  syntax error, unexpected $id
+			throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $this->id ), $this->tokenLine, $this->place );
 		}
 		if ( $result === false ) {
 			return array( PHPTAGS_STACK_COMMAND=>false, PHPTAGS_STACK_RESULT=>$array );

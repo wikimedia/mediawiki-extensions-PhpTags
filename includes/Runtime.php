@@ -12,15 +12,6 @@ define( 'PHPTAGS_STACK_DO_FALSE', 'f' );
 define( 'PHPTAGS_STACK_ARRAY_INDEX', 'a' );
 define( 'PHPTAGS_STACK_DEBUG', '#' );
 
-// definitions for Runtame::$functions
-define( 'PHPTAGS_DEFAULT_VALUES', 'd' );
-define( 'PHPTAGS_MIN_VALUES', '<' );
-
-define( 'PHPTAGS_TRANSIT_VARIABLES', 'v' );
-define( 'PHPTAGS_TRANSIT_PARSER', 'p' );
-define( 'PHPTAGS_TRANSIT_PPFRAME', 'f' );
-define( 'PHPTAGS_TRANSIT_EXCEPTION', '@' );
-
 /**
  * The runtime class of the extension PhpTags.
  *

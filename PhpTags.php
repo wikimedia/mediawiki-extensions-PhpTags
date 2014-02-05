@@ -17,7 +17,7 @@ if ( !defined( 'MEDIAWIKI' ) ) {
 
 define( 'PHPTAGS_MAJOR_VERSION' , 1 );
 define( 'PHPTAGS_MINOR_VERSION' , 0 );
-define( 'PHPTAGS_RELEASE_VERSION' , 2 );
+define( 'PHPTAGS_RELEASE_VERSION' , 3 );
 define( 'PHPTAGS_VERSION' , PHPTAGS_MAJOR_VERSION . '.' . PHPTAGS_MINOR_VERSION . '.' . PHPTAGS_RELEASE_VERSION );
 
 // Register this extension on Special:Version
@@ -85,7 +85,12 @@ $wgHooks['UnitTestsList'][] = function ( &$files ) {
 	return true;
 };
 
-define( 'PHPTAGS_GROUP_EXPENSIVE', 1 );
+define( 'PHPTAGS_TRANSIT_VARIABLES', 'v' );
+define( 'PHPTAGS_TRANSIT_PARSER', 'p' );
+define( 'PHPTAGS_TRANSIT_PPFRAME', 'f' );
+define( 'PHPTAGS_TRANSIT_EXCEPTION', '@' );
+
+define( 'PHPTAGS_GROUP_UNLIMITED_MEMORY', 1 );
 
 /**
  * You can specify the namespaces in which allowed to use this extension.

@@ -7,10 +7,13 @@ define( 'PHPTAGS_HOOK_VALUE_N', 'N' );
 define( 'PHPTAGS_HOOK_VALUE_TYPE', 0 );
 define( 'PHPTAGS_HOOK_NEED_LINK', 1 );
 define( 'PHPTAGS_HOOK_DEFAULT_VALUE', 2 );
-define( 'PHPTAGS_HOOK_RETURNS_ON_FAIL', 1 );
+define( 'PHPTAGS_HOOK_RETURNS_ON_FAIL', 2 );
 
 define( 'PHPTAGS_TYPE_ARRAY', 'a' );
+define( 'PHPTAGS_TYPE_BOOL', 'b' );
 define( 'PHPTAGS_TYPE_INT', 'i' );
+define( 'PHPTAGS_TYPE_NUMBER', 'n' );
+define( 'PHPTAGS_TYPE_VOID', 'v' );
 define( 'PHPTAGS_TYPE_MIXED', 'm' );
 
 /**
@@ -36,7 +39,7 @@ abstract class BaseHooks {
 			$d = $i + 1;
 			if ( !isset($definition[$d]) ) {
 				if ( isset($definition[PHPTAGS_HOOK_VALUE_N]) ) {
-					$d = PHPTAGS_HOOK_LAST_VALUE;
+					$d = PHPTAGS_HOOK_VALUE_N;
 				} else {
 					$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new ExceptionPhpTags( PHPTAGS_EXCEPTION_WARNING_WRONG_PARAMETER_COUNT, $name );
 					return;
@@ -45,21 +48,26 @@ abstract class BaseHooks {
 
 			if ( $definition[$d][PHPTAGS_HOOK_NEED_LINK] ) {
 				if ( $params[$i][PHPTAGS_STACK_COMMAND] != T_VARIABLE ) {
-					return new ExceptionPhpTags( PHPTAGS_EXCEPTION_FATAL_VALUE_PASSED_BY_REFERENCE );
-				}
-				if ( !array_key_exists($params[$i][PHPTAGS_STACK_PARAM], $transit[PHPTAGS_TRANSIT_VARIABLES]) ) {
-					$transit[PHPTAGS_TRANSIT_VARIABLES][ $params[$i][PHPTAGS_STACK_PARAM] ] = null;
-				}
-				$args[$i] = &$transit[PHPTAGS_TRANSIT_VARIABLES][ $params[$i][PHPTAGS_STACK_PARAM] ];
-				if ( isset($params[$i][PHPTAGS_STACK_ARRAY_INDEX]) ) { // Example: $foo[1]
-					foreach ( $params[$i][PHPTAGS_STACK_ARRAY_INDEX] as $v ) {
-						if ( is_array($args[$i]) ) {
-							if ( !array_key_exists($v[PHPTAGS_STACK_RESULT], $args[$i]) ) {
-								$args[$i][ $v[PHPTAGS_STACK_RESULT] ] = null;
+					if ( $definition[$d][PHPTAGS_HOOK_NEED_LINK] === true ) {
+						return new ExceptionPhpTags( PHPTAGS_EXCEPTION_FATAL_VALUE_PASSED_BY_REFERENCE );
+					} else {
+						$args[$i] = $params[$i][PHPTAGS_STACK_RESULT];
+					}
+				} else {
+					if ( !array_key_exists($params[$i][PHPTAGS_STACK_PARAM], $transit[PHPTAGS_TRANSIT_VARIABLES]) ) {
+						$transit[PHPTAGS_TRANSIT_VARIABLES][ $params[$i][PHPTAGS_STACK_PARAM] ] = null;
+					}
+					$args[$i] = &$transit[PHPTAGS_TRANSIT_VARIABLES][ $params[$i][PHPTAGS_STACK_PARAM] ];
+					if ( isset($params[$i][PHPTAGS_STACK_ARRAY_INDEX]) ) { // Example: $foo[1]
+						foreach ( $params[$i][PHPTAGS_STACK_ARRAY_INDEX] as $v ) {
+							if ( is_array($args[$i]) ) {
+								if ( !array_key_exists($v[PHPTAGS_STACK_RESULT], $args[$i]) ) {
+									$args[$i][ $v[PHPTAGS_STACK_RESULT] ] = null;
+								}
+								$args[$i] = &$args[$i][ $v[PHPTAGS_STACK_RESULT] ];
+							} else {
+								return new ExceptionPhpTags( PHPTAGS_EXCEPTION_FATAL_VALUE_PASSED_BY_REFERENCE );
 							}
-							$args[$i] = &$args[$i][ $v[PHPTAGS_STACK_RESULT] ];
-						} else {
-							return new ExceptionPhpTags( PHPTAGS_EXCEPTION_FATAL_VALUE_PASSED_BY_REFERENCE );
 						}
 					}
 				}
@@ -92,8 +100,8 @@ abstract class BaseHooks {
 
 		while ( !isset($definition[PHPTAGS_HOOK_INVOKE][$i]) ) {
 			$d = $i + 1;
-			if ( !isset($definition[$d][PHPTAGS_HOOK_DEFAULT_VALUE]) ) {
-				if ( isset($definition[PHPTAGS_HOOK_INVOKE][PHPTAGS_HOOK_VALUE_N]) ) {
+			if ( !isset($definition[$d]) || !array_key_exists(PHPTAGS_HOOK_DEFAULT_VALUE, $definition[$d]) ) {
+				if ( !isset($definition[$d]) && isset($definition[PHPTAGS_HOOK_INVOKE][PHPTAGS_HOOK_VALUE_N]) ) {
 					$d = PHPTAGS_HOOK_VALUE_N;
 					break;
 				}

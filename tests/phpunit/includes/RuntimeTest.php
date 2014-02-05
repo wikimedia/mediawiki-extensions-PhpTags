@@ -1652,6 +1652,12 @@ if ( $foo + $bar ) echo "\$foo + \$bar";'),
 				array('this is string')
 				);
 	}
+	public function testRun_echo_array_11() {
+		$this->assertEquals(
+				Runtime::runSource('$a = array(8=>7); $b = array(7=>3); echo $b[$a[8]];'),
+				array('3')
+				);
+	}
 
 	public function testRun_echo_array_double_arrow_1() {
 		$this->assertEquals(
