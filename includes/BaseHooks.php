@@ -37,6 +37,7 @@ abstract class BaseHooks {
 		}
 		$definition = static::$functions_definition[$name];
 		$args = array();
+		$d = 0;
 		for ( $i=0, $c=count($params); $i < $c; $i++ ) {
 			$d = $i + 1;
 			if ( !isset($definition[$d]) ) {
