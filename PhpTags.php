@@ -15,10 +15,10 @@ if ( !defined( 'MEDIAWIKI' ) ) {
 	die( 'This file is an extension to MediaWiki and thus not a valid entry point.' );
 }
 
-define( 'PHPTAGS_MAJOR_VERSION' , 1 );
-define( 'PHPTAGS_MINOR_VERSION' , 0 );
-define( 'PHPTAGS_RELEASE_VERSION' , 3 );
-define( 'PHPTAGS_VERSION' , PHPTAGS_MAJOR_VERSION . '.' . PHPTAGS_MINOR_VERSION . '.' . PHPTAGS_RELEASE_VERSION );
+define( 'PHPTAGS_MAJOR_VERSION', 1 );
+define( 'PHPTAGS_MINOR_VERSION', 0 );
+define( 'PHPTAGS_RELEASE_VERSION', 4 );
+define( 'PHPTAGS_VERSION', PHPTAGS_MAJOR_VERSION . '.' . PHPTAGS_MINOR_VERSION . '.' . PHPTAGS_RELEASE_VERSION );
 
 // Register this extension on Special:Version
 $wgExtensionCredits['parserhook'][] = array(

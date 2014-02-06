@@ -2018,7 +2018,7 @@ $bar++; $stat++;
 echo $foo, $argv[0], $argc, $bar, $stat, $argv["test"];', array('testTemplate', 'HELLO!'), 1),
 				array(
 					(string) new ExceptionPhpTags( PHPTAGS_EXCEPTION_NOTICE_UNDEFINED_VARIABLE, 'bar', 4, 'testTemplate' ),
-					(string) new ExceptionPhpTags( PHPTAGS_EXCEPTION_NOTICE_UNDEFINED_OFFSET, 'test', 5, 'testTemplate' ),
+					(string) new ExceptionPhpTags( PHPTAGS_EXCEPTION_NOTICE_UNDEFINED_INDEX, 'test', 5, 'testTemplate' ),
 					'HELLO!', 'testTemplate', 2, 1, 1, null)
 				);
 	}
@@ -2045,7 +2045,7 @@ $bar++; $stat++;
 echo $foo, $argv[0], $argc, $bar, $stat, $argv["test"];', array('testTemplate', 'HELLO!'), 3),
 				array(
 					(string) new ExceptionPhpTags( PHPTAGS_EXCEPTION_NOTICE_UNDEFINED_VARIABLE, 'bar', 4, 'testTemplate' ),
-					(string) new ExceptionPhpTags( PHPTAGS_EXCEPTION_NOTICE_UNDEFINED_OFFSET, 'test', 5, 'testTemplate' ),
+					(string) new ExceptionPhpTags( PHPTAGS_EXCEPTION_NOTICE_UNDEFINED_INDEX, 'test', 5, 'testTemplate' ),
 					'HELLO!', 'testTemplate', 2, 1, 3, null)
 				);
 	}

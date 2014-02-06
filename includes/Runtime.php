@@ -206,16 +206,16 @@ class Runtime {
 						$value[PHPTAGS_STACK_RESULT] = (unset)$value[PHPTAGS_STACK_PARAM_2];
 						break;
 					case T_VARIABLE:
-						if ( array_key_exists($value[PHPTAGS_STACK_PARAM], $thisVariables) ) {
+						if ( isset($thisVariables[ $value[PHPTAGS_STACK_PARAM] ]) || array_key_exists($value[PHPTAGS_STACK_PARAM], $thisVariables) ) {
 							$value[PHPTAGS_STACK_RESULT] = $thisVariables[ $value[PHPTAGS_STACK_PARAM] ];
 							if ( isset($value[PHPTAGS_STACK_ARRAY_INDEX]) ) { // Example: $foo[1]
 								foreach ( $value[PHPTAGS_STACK_ARRAY_INDEX] as $v ) {
 									if ( is_array($value[PHPTAGS_STACK_RESULT]) ) {
-										if ( array_key_exists($v[PHPTAGS_STACK_RESULT], $value[PHPTAGS_STACK_RESULT]) ) {
+										if ( isset($value[PHPTAGS_STACK_RESULT][ $v[PHPTAGS_STACK_RESULT] ]) || array_key_exists($v[PHPTAGS_STACK_RESULT], $value[PHPTAGS_STACK_RESULT]) ) {
 											$value[PHPTAGS_STACK_RESULT] = $value[PHPTAGS_STACK_RESULT][ $v[PHPTAGS_STACK_RESULT] ];
 										} else {
 											// PHP Notice:  Undefined offset: $1
-											$return[] = (string) new ExceptionPhpTags( PHPTAGS_EXCEPTION_NOTICE_UNDEFINED_OFFSET, $v[PHPTAGS_STACK_RESULT], $value[PHPTAGS_STACK_TOKEN_LINE], $place );
+											$return[] = (string) new ExceptionPhpTags( PHPTAGS_EXCEPTION_NOTICE_UNDEFINED_INDEX, $v[PHPTAGS_STACK_RESULT], $value[PHPTAGS_STACK_TOKEN_LINE], $place );
 											$value[PHPTAGS_STACK_RESULT] = null;
 										}
 									} else {
@@ -229,7 +229,7 @@ class Runtime {
 									}
 								}
 							}
-						}else{
+						} else {
 							$value[PHPTAGS_STACK_RESULT] = null;
 							$return[] = (string) new ExceptionPhpTags( PHPTAGS_EXCEPTION_NOTICE_UNDEFINED_VARIABLE, $value[PHPTAGS_STACK_PARAM], $value[PHPTAGS_STACK_TOKEN_LINE], $place );
 						}
@@ -434,7 +434,7 @@ class Runtime {
 					case T_UNSET:
 						foreach ( $value[PHPTAGS_STACK_PARAM] as $val ) {
 							$vn = $val[PHPTAGS_STACK_PARAM]; // Variable Name
-							if ( array_key_exists($vn, $thisVariables) ) { // defined variable
+							if ( isset($thisVariables[$vn]) || array_key_exists($vn, $thisVariables) ) { // defined variable
 								if ( isset($val[PHPTAGS_STACK_ARRAY_INDEX]) ) { // There is array index. Example: unset($foo[0])
 									$ref = &$thisVariables[$vn];
 									$tmp = array_pop( $val[PHPTAGS_STACK_ARRAY_INDEX] );
@@ -551,7 +551,7 @@ class Runtime {
 											$ref[ $v[PHPTAGS_STACK_RESULT] ] = null;
 											if( $value[PHPTAGS_STACK_COMMAND] != '=' ) {
 												// PHP Notice:  Undefined offset: $1
-												$return[] = (string) new ExceptionPhpTags( PHPTAGS_EXCEPTION_NOTICE_UNDEFINED_OFFSET, $v[PHPTAGS_STACK_RESULT], $value[PHPTAGS_STACK_TOKEN_LINE], $place );
+												$return[] = (string) new ExceptionPhpTags( PHPTAGS_EXCEPTION_NOTICE_UNDEFINED_INDEX, $v[PHPTAGS_STACK_RESULT], $value[PHPTAGS_STACK_TOKEN_LINE], $place );
 											}
 										}
 										$ref = &$ref[ $v[PHPTAGS_STACK_RESULT] ];
