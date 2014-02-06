@@ -27,11 +27,13 @@ define( 'PHPTAGS_TYPE_MIXED', 'm' );
 abstract class BaseHooks {
 	protected static $functions_definition = array();
 
-	abstract static function getClassName();
+	protected static function getClassName() {
+		return get_called_class();
+	}
 
 	public static function onFunctionHook( $name, $params, &$transit ) {
 		if ( !isset(static::$functions_definition[$name]) ) {
-			return new ExceptionPhpTags( PHPTAGS_EXCEPTION_WARNING_INVALID_HOOK, array($name, static::getClassName()) );
+			throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_WARNING_INVALID_HOOK, array(static::getClassName(), $name) );
 		}
 		$definition = static::$functions_definition[$name];
 		$args = array();
@@ -49,7 +51,7 @@ abstract class BaseHooks {
 			if ( $definition[$d][PHPTAGS_HOOK_NEED_LINK] ) {
 				if ( $params[$i][PHPTAGS_STACK_COMMAND] != T_VARIABLE ) {
 					if ( $definition[$d][PHPTAGS_HOOK_NEED_LINK] === true ) {
-						return new ExceptionPhpTags( PHPTAGS_EXCEPTION_FATAL_VALUE_PASSED_BY_REFERENCE );
+						throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_FATAL_VALUE_PASSED_BY_REFERENCE );
 					} else {
 						$args[$i] = $params[$i][PHPTAGS_STACK_RESULT];
 					}
@@ -66,7 +68,7 @@ abstract class BaseHooks {
 								}
 								$args[$i] = &$args[$i][ $v[PHPTAGS_STACK_RESULT] ];
 							} else {
-								return new ExceptionPhpTags( PHPTAGS_EXCEPTION_FATAL_VALUE_PASSED_BY_REFERENCE );
+								throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_FATAL_VALUE_PASSED_BY_REFERENCE );
 							}
 						}
 					}

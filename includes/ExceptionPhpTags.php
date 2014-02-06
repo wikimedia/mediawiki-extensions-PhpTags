@@ -140,7 +140,9 @@ class ExceptionPhpTags extends \Exception {
 			case PHPTAGS_EXCEPTION_FATAL_INVALID_HOOK_CLASS:
 				$message = "For the function {$params[0]} was registered invalid hook class {$params[1]}";
 				break;
-
+			case PHPTAGS_EXCEPTION_WARNING_INVALID_HOOK:
+				$message = "The hook '{$params[0]}' was registered for the class '{$params[1]}', but one does not contain information about how to handle it";
+				break;
 			case PHPTAGS_FATAL_CANNOT_UNSET_STRING_OFFSETS:
 				$message = 'PHP Fatal error:  Cannot unset string offsets';
 				break;
