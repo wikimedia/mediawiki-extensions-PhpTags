@@ -15,6 +15,7 @@ define( 'PHPTAGS_TYPE_INT', 'i' );
 define( 'PHPTAGS_TYPE_NUMBER', 'n' );
 define( 'PHPTAGS_TYPE_VOID', 'v' );
 define( 'PHPTAGS_TYPE_MIXED', 'm' );
+define( 'PHPTAGS_TYPE_FLOAT', 'f' );
 
 /**
  * This class is base for all constants, functions and objects hooks in the extension PhpTags
@@ -86,6 +87,7 @@ abstract class BaseHooks {
 					}
 					break;
 				case PHPTAGS_TYPE_INT:
+				case PHPTAGS_TYPE_FLOAT:
 					if ( is_object($args[$i]) ) {
 						// @todo object name
 						$transit[PHPTAGS_TRANSIT_EXCEPTION][] =	new ExceptionPhpTags( PHPTAGS_EXCEPTION_NOTICE_OBJECT_CONVERTED, array('unknown', 'int') );
