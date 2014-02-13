@@ -18,7 +18,7 @@ $messages = array();
  * @author pastakhov
  */
 $messages['en'] = array(
-	'phptags-desc' => 'Allows users to use other extensions by means of PHP syntax',
+	'phptags-desc' => 'Enhances parser with magic expressions that has syntax of PHP language',
 	'phptags-disabled-for-namespace' => 'Extension PhpTags disabled for namespace "$1"',
 );
 

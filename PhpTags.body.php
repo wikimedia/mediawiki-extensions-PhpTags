@@ -11,7 +11,7 @@
 class PhpTags {
 
 	static $DebugLoops = false;
-	static $startTime = false;
+	static $compileTime = 0;
 
 	private static $frames=array();
 	private static $needInitRuntime = true;
@@ -23,7 +23,8 @@ class PhpTags {
 	 * @param array $args
 	 */
 	public static function renderFunction( $parser, $frame, $args ) {
-		self::$startTime = microtime(true);
+		global $wgPhpTagsTime, $wgPhpTagsMaxLoops;
+		$time = microtime(true);
 
 		$is_banned = self::isBanned($frame);
 		if ( $is_banned ) {
@@ -32,6 +33,7 @@ class PhpTags {
 
 		if ( self::$needInitRuntime ) {
 			\wfRunHooks( 'PhpTagsRuntimeFirstInit' );
+			\PhpTags\Runtime::$loopsLimit = $wgPhpTagsMaxLoops;
 			self::$needInitRuntime = false;
 		}
 
@@ -42,15 +44,17 @@ class PhpTags {
 			}
 			$command = "echo $command (" . implode(',', $args) . ');';
 		}
-		/*$result = \PhpTags\Interpreter::run(
-				$command,
-				array($frame->getTitle()->getPrefixedText()),
-				self::getScope($frame)
-				);*/
+
 		try {
-			$result = \PhpTags\Runtime::runSource(
-					$command,
-					array_merge( (array)$frame->getTitle()->getPrefixedText(), $frame->getArguments() ),
+			$titleText = $frame->getTitle()->getPrefixedText();
+			$compiler = new PhpTags\Compiler();
+			$bytecode = $compiler->compile($command, $titleText);
+
+			self::$compileTime += microtime(true) - $time;
+
+			$result = \PhpTags\Runtime::run(
+					$bytecode,
+					array_merge( (array)$titleText, $frame->getArguments() ),
 					self::getScope( $frame ),
 					array( PHPTAGS_TRANSIT_PARSER=>&$parser, PHPTAGS_TRANSIT_PPFRAME=>&$frame )
 					);
@@ -61,12 +65,13 @@ class PhpTags {
 			$return = $exc->getTraceAsString();
 		}
 
-		\PhpTags\Runtime::$time += microtime(true) - self::$startTime;
+		$wgPhpTagsTime += microtime(true) - $time;
 		return \UtfNormal::cleanUp($return);
 	}
 
 	public static function render($input, array $args, Parser $parser, PPFrame $frame) {
-		self::$startTime = microtime(true);
+		global $wgPhpTagsTime, $wgPhpTagsMaxLoops;
+		$time = microtime(true);
 
 		$is_banned = self::isBanned($frame);
 		if ( $is_banned ) {
@@ -75,32 +80,31 @@ class PhpTags {
 
 		if ( self::$needInitRuntime ) {
 			\wfRunHooks( 'PhpTagsRuntimeFirstInit' );
+			\PhpTags\Runtime::$loopsLimit = $wgPhpTagsMaxLoops;
 			self::$needInitRuntime = false;
 		}
 
 		$is_debug = isset($args['debug']);
 		$return = false;
 
-		/*
-		$result = \PhpTags\Interpreter::run(
-				$input,
-				array_merge((array)$frame->getTitle()->getPrefixedText(),$frame->getArguments()),
-				self::getScope($frame),
-				$is_debug
-			);*/
-
 		try {
-			$result = \PhpTags\Runtime::runSource(
-					$input,
-					array_merge( (array)$frame->getTitle()->getPrefixedText(), $frame->getArguments() ),
+			$titleText = $frame->getTitle()->getPrefixedText();
+			$compiler = new PhpTags\Compiler();
+			$bytecode = $compiler->compile($input, $titleText);
+
+			self::$compileTime += microtime(true) - $time;
+
+			$result = \PhpTags\Runtime::run(
+					$bytecode,
+					array_merge( (array)$titleText, $frame->getArguments() ),
 					self::getScope( $frame ),
-					array( 'Parser'=>&$parser, 'PPFrame'=>&$frame )
+					array( PHPTAGS_TRANSIT_PARSER=>&$parser, PHPTAGS_TRANSIT_PPFRAME=>&$frame )
 					);
 		} catch ( \PhpTags\ExceptionPhpTags $exc ) {
-			\PhpTags\Runtime::$time += microtime(true) - self::$startTime;
+			$wgPhpTagsTime += microtime(true) - $time;
 			return (string) $exc;
 		} catch ( Exception $exc ) {
-			\PhpTags\Runtime::$time += microtime(true) - self::$startTime;
+			$wgPhpTagsTime += microtime(true) - $time;
 			return $exc->getTraceAsString();
 		}
 
@@ -117,7 +121,7 @@ class PhpTags {
 			$return .= self::insertGeneral( $parser, $parser->recursiveTagParse(implode($result),$frame) );
 		}
 
-		\PhpTags\Runtime::$time += microtime(true) - self::$startTime;
+		$wgPhpTagsTime += microtime(true) - $time;
 		return \UtfNormal::cleanUp($return);
 	}
 
@@ -129,14 +133,14 @@ class PhpTags {
 					wfMessage( 'phptags-disabled-for-namespace', $frame->getTitle()->getNsText() )->text()
 				);
 		}
-		if ( \PhpTags\Runtime::$permittedTime !== true && \PhpTags\Runtime::$time >= \PhpTags\Runtime::$permittedTime ) {
-			return Html::element( 'span', array('class'=>'error'),
-				wfMessage( 'phptags-fatal-error-max-execution-time' )
-					->numParams( \PhpTags\Runtime::$permittedTime )
-					->params( $frame->getTitle()->getPrefixedText() )
-					->text()
-			);
-		}
+//		if ( $wgPhpTagsPermittedTime !== true && self::$time >= \PhpTags\Runtime::$permittedTime ) {
+//			return Html::element( 'span', array('class'=>'error'),
+//				wfMessage( 'phptags-fatal-error-max-execution-time' )
+//					->numParams( \PhpTags\Runtime::$permittedTime )
+//					->params( $frame->getTitle()->getPrefixedText() )
+//					->text()
+//			);
+//		}
 		return false;
 	}
 

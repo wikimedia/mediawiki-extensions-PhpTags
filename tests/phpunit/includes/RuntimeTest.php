@@ -2,6 +2,7 @@
 namespace PhpTags;
 
 \wfRunHooks( 'PhpTagsRuntimeFirstInit' );
+\PhpTags\Runtime::$loopsLimit = 1000;
 
 class RuntimeTest extends \PHPUnit_Framework_TestCase {
 

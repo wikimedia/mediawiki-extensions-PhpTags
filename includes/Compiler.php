@@ -1111,6 +1111,7 @@ class Compiler {
 
 	private function stepWhileConstruct( $throwEndTag = true ) {
 		$this->stack_push_memory();
+		$tokenLine = $this->tokenLine;
 		$operator = $this->stepIfConstruct( false, $throwEndTag );
 		$stack = $this->stack;
 		$this->stack_pop_memory();
@@ -1124,7 +1125,7 @@ class Compiler {
 				);
 				$stack = array_merge( $stack, $operator[PHPTAGS_STACK_DO_TRUE] );
 			}
-			$stack[] = array( PHPTAGS_STACK_COMMAND=>T_CONTINUE, PHPTAGS_STACK_RESULT=>1 ); // Add operator T_CONTINUE to the end of the cycle
+			$stack[] = array( PHPTAGS_STACK_COMMAND=>T_CONTINUE, PHPTAGS_STACK_RESULT=>1, PHPTAGS_STACK_TOKEN_LINE=>$tokenLine ); // Add operator T_CONTINUE to the end of the cycle
 
 			$this->stack[] = array( PHPTAGS_STACK_COMMAND=>T_WHILE, PHPTAGS_STACK_DO_TRUE=>$stack );
 		}
@@ -1215,7 +1216,7 @@ class Compiler {
 			$this->stepFirstOperator( $throwEndTag );
 		}
 
-		$this->stack[] = array( PHPTAGS_STACK_COMMAND=>T_CONTINUE, PHPTAGS_STACK_RESULT=>1 ); // Add operator T_CONTINUE to the end of the cycle
+		$this->stack[] = array( PHPTAGS_STACK_COMMAND=>T_CONTINUE, PHPTAGS_STACK_RESULT=>1, PHPTAGS_STACK_TOKEN_LINE=>$tokenLine ); // Add operator T_CONTINUE to the end of the cycle
 		$foreach = array(
 			PHPTAGS_STACK_COMMAND => T_FOREACH,
 			PHPTAGS_STACK_PARAM => &$arrayExpression[PHPTAGS_STACK_RESULT],

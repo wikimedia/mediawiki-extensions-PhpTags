@@ -27,9 +27,10 @@ class Runtime {
 	private static $functionsHook = array();
 	private static $objectsHook = array();
 
-	static public $time = 0;
-	static public $permittedTime = true;
-	protected static $startTime = array();
+	public static $loopsLimit = 0;
+//	static public $time = 0;
+//	static public $permittedTime = true;
+//	protected static $startTime = array();
 
 	private static $variables = array();
 	private static $staticVariables = array();
@@ -312,6 +313,10 @@ class Runtime {
 						}
 						break 2; // go to one level down
 					case T_CONTINUE:
+						if( self::$loopsLimit-- <= 0 ) {
+							$return[] = (string) new ExceptionPhpTags( PHPTAGS_EXCEPTION_FATAL_LOOPS_LIMIT_REACHED, null, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
+							return $return;
+						}
 						$break = $value[PHPTAGS_STACK_RESULT]-1;
 						if( $loopsOwner == T_WHILE && $break == 0 ) { // Example: while(true) continue;
 							$codeIndex = -1;

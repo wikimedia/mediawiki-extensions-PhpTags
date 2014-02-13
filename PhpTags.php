@@ -17,7 +17,7 @@ if ( !defined( 'MEDIAWIKI' ) ) {
 
 define( 'PHPTAGS_MAJOR_VERSION', 1 );
 define( 'PHPTAGS_MINOR_VERSION', 0 );
-define( 'PHPTAGS_RELEASE_VERSION', 7 );
+define( 'PHPTAGS_RELEASE_VERSION', 8 );
 define( 'PHPTAGS_VERSION', PHPTAGS_MAJOR_VERSION . '.' . PHPTAGS_MINOR_VERSION . '.' . PHPTAGS_RELEASE_VERSION );
 
 // Register this extension on Special:Version
@@ -55,12 +55,14 @@ $wgHooks['PhpTagsRuntimeFirstInit'][] = function() {
 	return true;
 };
 
+$wgPhpTagsTime = 0;
 /**
  * @codeCoverageIgnore
  */
 $wgHooks['ParserLimitReport'][] = function( $parser, &$limitReport ) {
-	if ( \PhpTags\Runtime::$time > 0 ) {
-		$limitReport .= sprintf( "PhpTags time usage: %.3f secs\n", \PhpTags\Runtime::$time );
+	global $wgPhpTagsTime;
+			if ( $wgPhpTagsTime != 0 ) {
+		$limitReport .= sprintf( "PhpTags time usage: %.3f sec\n          Compiler: %.3f sec\n           Runtime: %.3f sec\n", $wgPhpTagsTime, PhpTags::$compileTime, $wgPhpTagsTime-PhpTags::$compileTime );
 	}
 	return true;
 };
@@ -108,3 +110,8 @@ define( 'PHPTAGS_GROUP_UNLIMITED_MEMORY', 1 );
  * @var mixed Namespaces Array of namespaces in which allowed to use the extension PhpTags, and if boolean 'true' then it is unlimited namespaces
  */
 $wgPhpTagsNamespaces = true; // By default, this is unlimited namespaces
+
+/**
+ * Maximum number of allowed loops
+ */
+$wgPhpTagsMaxLoops = 1000;

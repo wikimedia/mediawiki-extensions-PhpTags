@@ -27,6 +27,7 @@ define( 'PHPTAGS_EXCEPTION_FATAL_VALUE_PASSED_BY_REFERENCE', 4003 ); // PHP Fata
 define( 'PHPTAGS_EXCEPTION_FATAL_CALL_TO_UNDEFINED_FUNCTION', 4004 ); // PHP Fatal error:  Call to undefined function $1()
 define( 'PHPTAGS_EXCEPTION_FATAL_NONEXISTENT_HOOK_CLASS', 4005 );
 define( 'PHPTAGS_EXCEPTION_FATAL_INVALID_HOOK_CLASS', 4006 );
+define( 'PHPTAGS_EXCEPTION_FATAL_LOOPS_LIMIT_REACHED', 4007 );
 
 define( 'PHPTAGS_EXCEPTION_PARSE', 5 );
 define( 'PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED', 5001 ); // PHP Parse error:  syntax error, unexpected $end, expecting ',' or ';' in Command line code on line 1
@@ -79,7 +80,7 @@ class ExceptionPhpTags extends \Exception {
 
 		switch ( $this->code ) {
 			case PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED:
-				$message = 'HP Parse error:  syntax error, unexpected \'' . ( is_string($params[0]) ? $params[0] : token_name($params[0]) ) . '\'';
+				$message = 'syntax error, unexpected \'' . ( is_string($params[0]) ? $params[0] : token_name($params[0]) ) . '\'';
 				array_shift( $params );
 				if ( $params ) {
 					$message .= ", expecting " . implode( ", ", $params );
@@ -144,11 +145,15 @@ class ExceptionPhpTags extends \Exception {
 				$message = "The hook '{$params[0]}' was registered for the class '{$params[1]}', but one does not contain information about how to handle it";
 				break;
 			case PHPTAGS_FATAL_CANNOT_UNSET_STRING_OFFSETS:
-				$message = 'PHP Fatal error:  Cannot unset string offsets';
+				$message = 'Cannot unset string offsets';
 				break;
 			case PHPTAGS_EXCEPTION_FROM_HOOK:
 				$message = $params[0];
 				$this->code = $params[1] * 1000;
+				break;
+			case PHPTAGS_EXCEPTION_FATAL_LOOPS_LIMIT_REACHED:
+				$message = 'Maximum number of allowed loops reached';
+				break;
 			default:
 				$message = "Undefined error, code {$this->code}";
 				$this->code = PHPTAGS_EXCEPTION_FATAL * 1000;
