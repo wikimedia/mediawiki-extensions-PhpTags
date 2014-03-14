@@ -777,7 +777,7 @@ class Compiler {
 		switch ( $id ) {
 			case '?':
 				// Make the operator without the second value
-				if ( $value[PHPTAGS_STACK_COMMAND] === null ) { // The first value has not command
+				if ( $value[PHPTAGS_STACK_COMMAND] === null ) { // The first value has no command
 					array_unshift(
 							$ternary,
 							array(
@@ -788,7 +788,7 @@ class Compiler {
 								PHPTAGS_STACK_DEBUG => $text,
 							)
 					);
-				} else { // The first value has not command.
+				} else { // The first value has no command.
 					array_unshift(
 							$ternary,
 							array(
@@ -806,7 +806,12 @@ class Compiler {
 				$this->stepUP();
 				$this->stack_push_memory();
 				$result = $this->getNextValue(); // Get the next value, it must be the ternary operator
-				break;
+				if ( $result !== false || $this->id != ':' ) {
+					break;
+				}
+				// Example: $foo ?:
+				$id = $this->id;
+				// break is not necessary here
 			case ':':
 				if ( !isset($ternary[0]) ) {
 					// PHP Parse error:  syntax error, unexpected $id

@@ -17,7 +17,7 @@ if ( !defined( 'MEDIAWIKI' ) ) {
 
 define( 'PHPTAGS_MAJOR_VERSION', 1 );
 define( 'PHPTAGS_MINOR_VERSION', 0 );
-define( 'PHPTAGS_RELEASE_VERSION', 8 );
+define( 'PHPTAGS_RELEASE_VERSION', 9 );
 define( 'PHPTAGS_VERSION', PHPTAGS_MAJOR_VERSION . '.' . PHPTAGS_MINOR_VERSION . '.' . PHPTAGS_RELEASE_VERSION );
 
 // Register this extension on Special:Version

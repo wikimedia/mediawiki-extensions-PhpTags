@@ -1031,6 +1031,54 @@ echo "$a, ", $a-- + -5, ", " . --$a, ", $a.";'),
 				array('true')
 				);
 	}
+	public function testRun_echo_ternary_math_noexpr2_1() {
+		$this->assertEquals(
+				Runtime::runSource('echo "zzzz"?:"false";'),
+				array('zzzz')
+				);
+	}
+	public function testRun_echo_ternary_math_noexpr2_2() {
+		$this->assertEquals(
+				Runtime::runSource('echo false?:"false";'),
+				array('false')
+				);
+	}
+	public function testRun_echo_ternary_math_noexpr2_3() {
+		$this->assertEquals(
+				Runtime::runSource('echo 1+1?:"false";'),
+				array('2')
+				);
+	}
+	public function testRun_echo_ternary_math_noexpr2_4() {
+		$this->assertEquals(
+				Runtime::runSource('echo 1-1?:"false";'),
+				array('false')
+				);
+	}
+	public function testRun_echo_ternary_math_noexpr2_5() {
+		$this->assertEquals(
+				Runtime::runSource('$foo=500; echo $foo?:"false";'),
+				array('500')
+				);
+	}
+	public function testRun_echo_ternary_math_noexpr2_6() {
+		$this->assertEquals(
+				Runtime::runSource('$foo=0; echo $foo?:"false";'),
+				array('false')
+				);
+	}
+	public function testRun_echo_ternary_math_noexpr2_7() {
+		$this->assertEquals(
+				Runtime::runSource('$foo=500; echo $foo*2+8?:"false";'),
+				array('1008')
+				);
+	}
+	public function testRun_echo_ternary_math_noexpr2_8() {
+		$this->assertEquals(
+				Runtime::runSource('$foo=-4; echo $foo*2+8?:"false";'),
+				array('false')
+				);
+	}
 
 	public function testRun_echo_if_simple_1() {
 		$this->assertEquals(
