@@ -24,7 +24,9 @@ class PhpTags {
 	 */
 	public static function renderFunction( $parser, $frame, $args ) {
 		global $wgPhpTagsTime, $wgPhpTagsMaxLoops;
-		$time = microtime(true);
+
+		//$time = microtime(true);
+		$time = $parser->mOutput->getTimeSinceStart('cpu');
 
 		$is_banned = self::isBanned($frame);
 		if ( $is_banned ) {
@@ -50,7 +52,8 @@ class PhpTags {
 			$compiler = new PhpTags\Compiler();
 			$bytecode = $compiler->compile($command, $titleText);
 
-			self::$compileTime += microtime(true) - $time;
+			// self::$compileTime += microtime(true) - $time;
+			self::$compileTime += $parser->mOutput->getTimeSinceStart('cpu') - $time;
 
 			$result = \PhpTags\Runtime::run(
 					$bytecode,
@@ -65,13 +68,17 @@ class PhpTags {
 			$return = $exc->getTraceAsString();
 		}
 
-		$wgPhpTagsTime += microtime(true) - $time;
+		// $wgPhpTagsTime += microtime(true) - $time;
+		$wgPhpTagsTime += $parser->mOutput->getTimeSinceStart('cpu') - $time;
+
 		return \UtfNormal::cleanUp($return);
 	}
 
 	public static function render($input, array $args, Parser $parser, PPFrame $frame) {
 		global $wgPhpTagsTime, $wgPhpTagsMaxLoops;
-		$time = microtime(true);
+
+		//$time = microtime(true);
+		$time = $parser->mOutput->getTimeSinceStart('cpu');
 
 		$is_banned = self::isBanned($frame);
 		if ( $is_banned ) {
@@ -92,7 +99,8 @@ class PhpTags {
 			$compiler = new PhpTags\Compiler();
 			$bytecode = $compiler->compile($input, $titleText);
 
-			self::$compileTime += microtime(true) - $time;
+			// self::$compileTime += microtime(true) - $time;
+			self::$compileTime += $parser->mOutput->getTimeSinceStart('cpu') - $time;
 
 			$result = \PhpTags\Runtime::run(
 					$bytecode,
@@ -101,12 +109,17 @@ class PhpTags {
 					array( PHPTAGS_TRANSIT_PARSER=>&$parser, PHPTAGS_TRANSIT_PPFRAME=>&$frame )
 					);
 		} catch ( \PhpTags\ExceptionPhpTags $exc ) {
-			$wgPhpTagsTime += microtime(true) - $time;
+			// $wgPhpTagsTime += microtime(true) - $time;
+			$wgPhpTagsTime += $parser->mOutput->getTimeSinceStart('cpu') - $time;
 			return (string) $exc;
 		} catch ( Exception $exc ) {
-			$wgPhpTagsTime += microtime(true) - $time;
+			// $wgPhpTagsTime += microtime(true) - $time;
+			$wgPhpTagsTime += $parser->mOutput->getTimeSinceStart('cpu') - $time;
 			return $exc->getTraceAsString();
 		}
+
+		// $wgPhpTagsTime += microtime(true) - $time;
+		$wgPhpTagsTime += $parser->mOutput->getTimeSinceStart('cpu') - $time;
 
 		if( $is_debug ) {
 			$parser->getOutput()->addModules('ext.php.Debug');
@@ -121,7 +134,6 @@ class PhpTags {
 			$return .= self::insertGeneral( $parser, $parser->recursiveTagParse(implode($result),$frame) );
 		}
 
-		$wgPhpTagsTime += microtime(true) - $time;
 		return \UtfNormal::cleanUp($return);
 	}
 
