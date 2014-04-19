@@ -1,0 +1,9 @@
+{
+    "@metadata": {
+        "authors": [
+            "pastakhov"
+        ]
+    },
+    "phptags-desc": "{{desc|name=PhpTags|url=http://www.mediawiki.org/wiki/Extension:PhpTags}}",
+    "phptags-disabled-for-namespace": "Error message when is trying to use this extension in not allowed namespaces, parameters:\n* $1 - the namespace text"
+}

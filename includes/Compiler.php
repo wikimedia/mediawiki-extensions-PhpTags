@@ -1,5 +1,6 @@
 <?php
 namespace PhpTags;
+require_once 'Runtime.php';
 
 /**
  * The compiler class of the extension PhpTags.
@@ -43,6 +44,64 @@ class Compiler {
 		array( T_LOGICAL_OR ), // or
 		array( ',' ),
 		array( ';' ),
+	);
+
+	/**
+	 * Conformity operators PHP and PHPTAGS
+	 * @var array
+	 */
+	protected static $runtimeOperators = array(
+		'~' => '~',
+		'!' => '!',
+		'*' => '*',
+		'/' => '/',
+		'%' => '%',
+		'+' => '+',
+		'-' => '-',
+		'.' => '.',
+		'<' => '<',
+		'>' => '>',
+		'&' => '&',
+		'^' => '^',
+		'|' => '|',
+		'=' => '=',
+		T_LOGICAL_OR => PHPTAGS_T_LOGICAL_OR,
+		T_BOOLEAN_OR => PHPTAGS_T_LOGICAL_OR,
+		T_LOGICAL_XOR => PHPTAGS_T_LOGICAL_XOR,
+		T_LOGICAL_AND => PHPTAGS_T_LOGICAL_AND,
+		T_BOOLEAN_AND => PHPTAGS_T_LOGICAL_AND,
+		T_SR_EQUAL => PHPTAGS_T_SR_EQUAL,
+		T_SL_EQUAL => PHPTAGS_T_SL_EQUAL,
+		T_XOR_EQUAL => PHPTAGS_T_XOR_EQUAL,
+		T_OR_EQUAL => PHPTAGS_T_OR_EQUAL,
+		T_AND_EQUAL => PHPTAGS_T_AND_EQUAL,
+		T_MOD_EQUAL => PHPTAGS_T_MOD_EQUAL,
+		T_CONCAT_EQUAL => PHPTAGS_T_CONCAT_EQUAL,
+		T_DIV_EQUAL => PHPTAGS_T_DIV_EQUAL,
+		T_MUL_EQUAL => PHPTAGS_T_MUL_EQUAL,
+		T_MINUS_EQUAL => PHPTAGS_T_MINUS_EQUAL,
+		T_PLUS_EQUAL => PHPTAGS_T_PLUS_EQUAL,
+		T_IS_NOT_IDENTICAL => PHPTAGS_T_IS_NOT_IDENTICAL,
+		T_IS_IDENTICAL => PHPTAGS_T_IS_IDENTICAL,
+		T_IS_NOT_EQUAL => PHPTAGS_T_IS_NOT_EQUAL,
+		T_IS_EQUAL => PHPTAGS_T_IS_EQUAL,
+		T_IS_GREATER_OR_EQUAL => PHPTAGS_T_IS_GREATER_OR_EQUAL,
+		T_IS_SMALLER_OR_EQUAL => PHPTAGS_T_IS_SMALLER_OR_EQUAL,
+		T_SL => PHPTAGS_T_SL,
+		T_SR => PHPTAGS_T_SR,
+		T_UNSET_CAST => PHPTAGS_T_UNSET_CAST,
+		T_BOOL_CAST => PHPTAGS_T_BOOL_CAST,
+		T_ARRAY_CAST => PHPTAGS_T_ARRAY_CAST,
+		T_STRING_CAST => PHPTAGS_T_STRING_CAST,
+		T_DOUBLE_CAST => PHPTAGS_T_DOUBLE_CAST,
+		T_INT_CAST => PHPTAGS_T_INT_CAST,
+		T_DEC => PHPTAGS_T_DEC,
+		T_INC => PHPTAGS_T_INC,
+		T_BREAK => PHPTAGS_T_BREAK,
+		T_CONTINUE => PHPTAGS_T_CONTINUE,
+		T_UNSET => PHPTAGS_T_UNSET,
+		T_ISSET => PHPTAGS_T_ISSET,
+		T_EMPTY => PHPTAGS_T_EMPTY,
 	);
 
 	/**
@@ -101,9 +160,12 @@ class Compiler {
 				if ( $this->id == ';' ) { // Example: ;;;;
 					$this->stepUP( $throwEndTag ); // @todo fix it
 				} else {
-					$value = $this->stepValue();
+					$value =& $this->getNextValue();
 					if ( $value ) { // Example: $foo=1;
-						$this->stack[] = $value;
+						$dummy = array( PHPTAGS_STACK_RESULT=>null );
+						$this->addValueIntoStack( $value, $dummy, PHPTAGS_STACK_RESULT );
+						unset( $dummy );
+						//$this->stack[] =& $value;
 						if ( $this->id != ';' ) { // Example: $foo=1,
 							// PHP Parse error:  syntax error, unexpected $id, expecting ';'
 							throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $this->id, "';'" ), $this->tokenLine, $this->place );
@@ -124,59 +186,68 @@ class Compiler {
 		switch ( $id ) {
 			case T_ECHO:
 				$this->stepUP();
-				$value = $this->getValues();
+				$value =& $this->getNextValue();
+				if( !$value ) { // Example: echo ;
+					// PHP Parse error:  syntax error, unexpected $id
+					throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $this->id ), $this->tokenLine, $this->place );
+				}
+				do {
+					$echo = array(
+						PHPTAGS_STACK_COMMAND => PHPTAGS_T_PRINT,
+						PHPTAGS_STACK_PARAM => null,
+						PHPTAGS_STACK_RESULT => null,
+						PHPTAGS_STACK_TOKEN_LINE => $this->tokenLine,
+						PHPTAGS_STACK_DEBUG => $text,
+					);
+					$this->addValueIntoStack( $value, $echo, PHPTAGS_STACK_PARAM );
+					$this->stack[] =& $echo;
+					unset( $echo );
+					if ( current($this->tokens) != ',' ) {
+						break;
+					}
+					$this->stepUP();
+				} while ( $value =& $this->getNextValue() );
 
 				if ( $this->id != ';' ) { // Example echo "foo"%
 					// PHP Parse error:  syntax error, unexpected $id, expecting ';'
 					throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $this->id, "','", "';'" ), $this->tokenLine, $this->place );
 				}
-				if( !$value ) { // Example: echo ;
-					// PHP Parse error:  syntax error, unexpected $id
-					throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $this->id ), $this->tokenLine, $this->place );
-				}
-				$this->stack[] = array( PHPTAGS_STACK_COMMAND=>T_ECHO, PHPTAGS_STACK_PARAM=>$value, PHPTAGS_STACK_RESULT=>null, PHPTAGS_STACK_TOKEN_LINE=>$this->tokenLine, PHPTAGS_STACK_DEBUG=>$text );
 				$this->stepUP( $throwEndTag );
 				return true;
-				break;
 			case T_IF:
-				$tmp = $this->stepIfConstruct( true, $throwEndTag );
+				$tmp =& $this->stepIfConstruct( true, $throwEndTag );
 				if ( $tmp !== true && $tmp !== false ) {
-					$this->stack[] = $tmp;
+					$this->stack[] =& $tmp;
 				}
 				return true;
-				break;
 			case T_WHILE:
 				$this->stepWhileConstruct( $throwEndTag );
 				return true;
-				break;
 			case T_FOREACH:
 				$this->stepForeachConstruct( $throwEndTag );
 				return true;
-				break;
 			case T_CONTINUE:
 			case T_BREAK:
 				$this->stepUP();
-				$value = $this->getNextValue();
+				$value =& $this->getNextValue();
 
 				if ( $this->id != ';' ) { // Example: continue 5#
 					// PHP Parse error:  syntax error, unexpected $id, expecting ';'
 					throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $this->id, "';'" ), $this->tokenLine, $this->place );
 				}
 				if( !$value ) { // Example: continue;
+					unset( $value );
 					$value = array( PHPTAGS_STACK_COMMAND=>null, PHPTAGS_STACK_RESULT=>1 );
 				}
-				$operator = array( PHPTAGS_STACK_COMMAND=>$id, PHPTAGS_STACK_RESULT=>&$value[PHPTAGS_STACK_RESULT], PHPTAGS_STACK_TOKEN_LINE=>$this->tokenLine, PHPTAGS_STACK_DEBUG=>$text );
-				if ( $value[PHPTAGS_STACK_COMMAND] ) {
-					$this->stack[] = $value; // Add the command for receive value into the stack
-				}
+				$operator = array( PHPTAGS_STACK_COMMAND=>self::$runtimeOperators[$id], PHPTAGS_STACK_RESULT=>null, PHPTAGS_STACK_TOKEN_LINE=>$this->tokenLine, PHPTAGS_STACK_DEBUG=>$text );
+				$this->addValueIntoStack( $value, $operator, PHPTAGS_STACK_RESULT );
 				$this->stack[] = $operator;
 				return true;
-				break;
 			case T_GLOBAL:
 				$variables = array();
 				do {
 					$this->stepUP();
-					$value = $this->getNextValue();
+					$value =& $this->getNextValue();
 
 					if ( $this->id != ',' && $this->id != ';' ) { // Example: global $foo#
 						// PHP Parse error:  syntax error, unexpected $id, expecting ',' or ';'
@@ -186,7 +257,7 @@ class Compiler {
 						// PHP Parse error:  syntax error, unexpected $id,
 						throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $this->id ), $this->tokenLine, $this->place );
 					}
-					if ( $value[PHPTAGS_STACK_COMMAND] != T_VARIABLE ) { // Example global $foo=5;
+					if ( $value[PHPTAGS_STACK_COMMAND] != PHPTAGS_T_VARIABLE ) { // Example global $foo=5;
 						throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $value[PHPTAGS_STACK_COMMAND], 'T_VARIABLE' ), $this->tokenLine, $this->place );
 					}
 					if ( isset($value[PHPTAGS_STACK_ARRAY_INDEX]) ) {
@@ -197,18 +268,17 @@ class Compiler {
 				$this->stepUP( $throwEndTag );
 
 				$this->stack[] = array(
-					PHPTAGS_STACK_COMMAND => T_GLOBAL,
+					PHPTAGS_STACK_COMMAND => PHPTAGS_T_GLOBAL,
 					PHPTAGS_STACK_PARAM => $variables,
 					PHPTAGS_STACK_TOKEN_LINE => $this->tokenLine,
 					PHPTAGS_STACK_DEBUG => $text,
 				);
 				return true;
-				break;
 			case T_STATIC:
 				$this->stack_push_memory();
 				do {
 					$this->stepUP();
-					$value = $this->getNextValue();
+					$value =& $this->getNextValue();
 
 					if ( $this->id != ',' && $this->id != ';' ) { // Example: static $foo#
 						// PHP Parse error:  syntax error, unexpected $id, expecting ',' or ';'
@@ -217,13 +287,13 @@ class Compiler {
 					if ( $value === false ) { // Example: static;
 						throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $this->id, token_name($id) ), $this->tokenLine, $this->place );
 					}
-					if ( $value[PHPTAGS_STACK_COMMAND] == T_VARIABLE ) {
+					if ( $value[PHPTAGS_STACK_COMMAND] == PHPTAGS_T_VARIABLE ) {
 						if ( isset($value[PHPTAGS_STACK_ARRAY_INDEX]) ) {
 							throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( '[', "','", "';'" ), $this->tokenLine, $this->place );
 						}
 						$this->stack_pop_memory();
 						$this->stack[] = array(
-							PHPTAGS_STACK_COMMAND => T_STATIC,
+							PHPTAGS_STACK_COMMAND => PHPTAGS_T_STATIC,
 							PHPTAGS_STACK_PARAM => $value[PHPTAGS_STACK_PARAM],
 							PHPTAGS_STACK_RESULT => null,
 							PHPTAGS_STACK_DO_TRUE => false,
@@ -235,7 +305,7 @@ class Compiler {
 							throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( '[', "','", "';'" ), $this->tokenLine, $this->place );
 						}
 						$operator = array(
-							PHPTAGS_STACK_COMMAND => T_STATIC,
+							PHPTAGS_STACK_COMMAND => PHPTAGS_T_STATIC,
 							PHPTAGS_STACK_PARAM => $value[PHPTAGS_STACK_PARAM][PHPTAGS_STACK_PARAM],
 							PHPTAGS_STACK_RESULT => &$value[PHPTAGS_STACK_PARAM_2],
 							PHPTAGS_STACK_DO_TRUE => $this->stack,
@@ -251,56 +321,58 @@ class Compiler {
 				$this->stepUP( $throwEndTag );
 				$this->stack_pop_memory();
 				return true;
-				break;
 		}
 		return false;
 	}
 
-	private function getValues() {
+	private function & getFunctionParameters( $functionName ) {
 		$result = array();
-		while ( $value = $this->getNextValue() ) {
-			$result[] = &$value[PHPTAGS_STACK_RESULT];
-			if ( $value[PHPTAGS_STACK_COMMAND] ) {
-				$this->stack[] = $value; // Add the command for receive value into the stack
+		$i = 0;
+		while ( $value =& $this->getNextValue() ) {
+			if ( $value[PHPTAGS_STACK_COMMAND] == PHPTAGS_T_VARIABLE ) {
+				$value[PHPTAGS_STACK_PARAM_2] =& $result;
+				$value[PHPTAGS_STACK_AIM] = $i;
+				$result[$i] = null;
+			} else {
+				$result[$i] =& $value[PHPTAGS_STACK_RESULT];
 			}
+			if ( $value[PHPTAGS_STACK_COMMAND] ) {
+				$this->stack[] =& $value;
+			}
+			$this->stack[] = array(
+				PHPTAGS_STACK_COMMAND => PHPTAGS_T_HOOK_CHECK_PARAM,
+				PHPTAGS_STACK_PARAM => $functionName,
+				PHPTAGS_STACK_PARAM_2 => $value[PHPTAGS_STACK_COMMAND] == PHPTAGS_T_VARIABLE,
+				PHPTAGS_STACK_AIM => $i,
+				PHPTAGS_STACK_RESULT => &$result,
+			);
+
 			if ( current($this->tokens) != ',' ) {
 				break;
 			}
+
 			$this->stepUP();
+			$i++;
 		}
 		return $result;
 	}
 
-	private function getLinksValues() {
-		$result = array();
-		while ( $value = $this->getNextValue() ) {
-			$result[] = &$value;
-			if ( $value[PHPTAGS_STACK_COMMAND] ) {
-				$this->stack[] = &$value; // Add the command for receive value into the stack
-			}
-			if ( current($this->tokens) != ',' ) {
-				break;
-			}
-			unset( $value );
-			$this->stepUP();
-		}
-		return $result;
-	}
-
-	private function getNextValue( $operator = ',' ) {
-		$oper = false;
-		$val = $this->stepValue(); // Get a value
+	private function & getNextValue( $operator = ',' ) {
+		$val =& $this->stepValue(); // Get a value
 		if ( $val !== false ) { // The value was received
-			if ( $val[PHPTAGS_STACK_COMMAND] == T_INC || $val[PHPTAGS_STACK_COMMAND] == T_DEC ) { // Operators Incrementing have the highest priority
+			if ( $val[PHPTAGS_STACK_COMMAND] == PHPTAGS_T_INC || $val[PHPTAGS_STACK_COMMAND] == PHPTAGS_T_DEC ) { // Operators Incrementing have the highest priority
 				$tmp = array( PHPTAGS_STACK_COMMAND=>false, PHPTAGS_STACK_RESULT=>&$val[PHPTAGS_STACK_RESULT] );
-				$this->stack[] = $val;
-				$val = $tmp;
+				$this->stack[] =& $val;
+				$val =& $tmp;
 			}
 			// Look for operator
 			$operatorPrecedence = self::$precedencesMatrix[ $operator ]; // The precedence of the operator
-			$oper = $this->getOperator( $val, $operatorPrecedence ); // Get arithmetic operator
+			$oper =& $this->getOperator( $val, $operatorPrecedence ); // Get arithmetic operator
+			if ( $oper ) {
+				return $oper;
+			}
 		} // Value was not received
-		return $oper ?: $val;
+		return $val;
 	}
 
 	private function stepUP( $throwEndTag = true ) {
@@ -347,7 +419,7 @@ class Compiler {
 		}
 	}
 
-	private function stepValue( $owner = false ) {
+	private function & stepValue( $owner = false ) {
 		$result = false;
 
 		$id = $this->id;
@@ -414,108 +486,104 @@ class Compiler {
 					$this->stepUP();
 					if ( $this->id == '(' ) { // it is function
 						$this->stepUP();
-						$linksValues = $this->getLinksValues();
+						$functionParameters =& $this->getFunctionParameters( $text );
 
 						if ( $this->id != ')' ) {
 							// PHP Parse error:  syntax error, unexpected $tmp_id, expecting ')'
 							throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $this->id, "')'" ), $this->tokenLine, $this->place );
 						}
 						$this->stepUP();
-						return array( PHPTAGS_STACK_COMMAND => T_STRING,
+						$result = array( PHPTAGS_STACK_COMMAND => PHPTAGS_T_HOOK,
 							PHPTAGS_STACK_PARAM => $text,
-							PHPTAGS_STACK_PARAM_2 => $linksValues,
+							PHPTAGS_STACK_PARAM_2 => &$functionParameters,
 							PHPTAGS_STACK_RESULT => null,
 							PHPTAGS_STACK_TOKEN_LINE => $this->tokenLine,
 							PHPTAGS_STACK_DEBUG => $text,
 						);
 					} else { // it is constant
-						return array( PHPTAGS_STACK_COMMAND => T_STRING,
+						$result = array( PHPTAGS_STACK_COMMAND => PHPTAGS_T_HOOK,
 							PHPTAGS_STACK_PARAM => $text,
 							PHPTAGS_STACK_RESULT => null,
 							PHPTAGS_STACK_TOKEN_LINE => $this->tokenLine,
 							PHPTAGS_STACK_DEBUG => $text,
 						);
 					}
-					break;
-
+					return $result;
 				}
 				$result = array( PHPTAGS_STACK_COMMAND=>null, PHPTAGS_STACK_RESULT=>$tmp, PHPTAGS_STACK_TOKEN_LINE=>$this->tokenLine, PHPTAGS_STACK_DEBUG=>$text );
 				break;
 			case '"':
 				$this->stepUP();
 				$strings = array();
+				$i = 0;
 				while ( $this->id != '"' ) {
 					if ( $this->id == T_CURLY_OPEN || $this->id == '}' ) {
 						$this->stepUP();
 					} else {
-						$val = $this->stepValue();
+						$val =& $this->stepValue();
 						if ( $val ) { // echo "abcd$foo
-							$strings[] = &$val[PHPTAGS_STACK_RESULT];
-							if ( $val[PHPTAGS_STACK_COMMAND] !== null ) {
-								$this->stack[] = $val;
-							}
+							$strings[$i] = null;
+							$this->addValueIntoStack( $val, $strings, $i );
 						} else {
 							// PHP Parse error:  syntax error, unexpected $id, expecting '"'
 							throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $this->id, "'\"'" ), $this->tokenLine, $this->place );
 						}
+						$i++;
 					}
 				}
-				$result = array( PHPTAGS_STACK_COMMAND=>'"', PHPTAGS_STACK_PARAM=>$strings, PHPTAGS_STACK_RESULT=>null, PHPTAGS_STACK_TOKEN_LINE=>$this->tokenLine, PHPTAGS_STACK_DEBUG=>$text );
+				$result = array( PHPTAGS_STACK_COMMAND=>'"', PHPTAGS_STACK_PARAM=>&$strings, PHPTAGS_STACK_RESULT=>null, PHPTAGS_STACK_TOKEN_LINE=>$this->tokenLine, PHPTAGS_STACK_DEBUG=>$text );
 				break;
 			case T_VARIABLE:
 				static $assignOpers = array( '=', T_PLUS_EQUAL, T_MINUS_EQUAL, T_MUL_EQUAL, T_DIV_EQUAL, T_CONCAT_EQUAL, T_MOD_EQUAL, T_AND_EQUAL, T_OR_EQUAL, T_XOR_EQUAL, T_SL_EQUAL, T_SR_EQUAL );
 				$cannotRead = false;
 
-				$variable = array( PHPTAGS_STACK_COMMAND=>T_VARIABLE, PHPTAGS_STACK_PARAM=>substr($text, 1), PHPTAGS_STACK_RESULT=>null, PHPTAGS_STACK_TOKEN_LINE=>$this->tokenLine, PHPTAGS_STACK_DEBUG=>$text );
+				$variable = array( PHPTAGS_STACK_COMMAND=>PHPTAGS_T_VARIABLE, PHPTAGS_STACK_PARAM=>substr($text, 1), PHPTAGS_STACK_PARAM_2=>null, PHPTAGS_STACK_RESULT=>null, PHPTAGS_STACK_TOKEN_LINE=>$this->tokenLine, PHPTAGS_STACK_DEBUG=>$text );
 
 				$this->stepUP();
 				if ( $this->id == '[' ) { // There is array index
 					$variable[PHPTAGS_STACK_ARRAY_INDEX] = array();
+					$i = 0;
 					do { // Example: $foo[
 						$this->stepUP();
-						$indexVal = $this->getNextValue();
+						$indexVal =& $this->getNextValue();
 						if ( $this->id != ']' ) { // Example: $foo[1] or $foo[]
 							// PHP Parse error:  syntax error, unexpected $id, expecting ']'
 							throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $this->id, "']'" ), $this->tokenLine, $this->place );
 						}
 						if ( $indexVal ) { // Example: $foo[1]
-							$variable[PHPTAGS_STACK_ARRAY_INDEX][] = &$indexVal;
-							if ( $indexVal[PHPTAGS_STACK_COMMAND] ) {
-								$this->stack[] = &$indexVal;
-							}
-							unset( $indexVal );
+							$variable[PHPTAGS_STACK_ARRAY_INDEX][$i] = null;
+							$this->addValueIntoStack( $indexVal, $variable[PHPTAGS_STACK_ARRAY_INDEX], $i );
 						} else { // Example: $foo[]
-							$variable[PHPTAGS_STACK_ARRAY_INDEX][] = null;
+							$variable[PHPTAGS_STACK_ARRAY_INDEX][$i] = INF;
 							$cannotRead = true;
 						}
 						$this->stepUP();
+						$i++;
 					} while ( $this->id == '[' );
 				} // There is not array index
 
 				$id = $this->id;
 				$text = $this->text;
-				if ( in_array($id, $assignOpers) ) { // There is assignment operator
+				if ( in_array($id, $assignOpers) ) { // There is assignment operator @todo isset( $assignOpers[$id] )
 					$this->stepUP();
-					$val = $this->getNextValue( '=' );
+					$val =& $this->getNextValue( '=' );
 					if ( $val == false ) { // Example: $foo=;
 						// PHP Parse error:  syntax error, unexpected $id
 						throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $this->id ), $this->tokenLine, $this->place );
 					}
 					$return = array(
-						PHPTAGS_STACK_COMMAND => $id,
+						PHPTAGS_STACK_COMMAND => self::$runtimeOperators[$id],
 						PHPTAGS_STACK_PARAM => $variable,
-						PHPTAGS_STACK_PARAM_2 => &$val[PHPTAGS_STACK_RESULT],
+						PHPTAGS_STACK_PARAM_2 => null,
 						PHPTAGS_STACK_RESULT => null,
 						PHPTAGS_STACK_TOKEN_LINE => $this->tokenLine,
 						PHPTAGS_STACK_DEBUG => $text,
 					);
-					if ( $val[PHPTAGS_STACK_COMMAND] ) {
-						$this->stack[] = $val;
-					}
+					$this->addValueIntoStack( $val, $return, PHPTAGS_STACK_PARAM_2 );
 					return $return; // *********** EXIT ***********
 				} elseif ( $id == T_INC || $id == T_DEC ) {
 					$variable = array(
-						PHPTAGS_STACK_COMMAND => $id,
+						PHPTAGS_STACK_COMMAND => self::$runtimeOperators[$id],
 						PHPTAGS_STACK_PARAM => $variable,
 						PHPTAGS_STACK_PARAM_2 => true, // Example: $foo++
 						PHPTAGS_STACK_RESULT => null,
@@ -528,14 +596,16 @@ class Compiler {
 					throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_FATAL_CANNOT_USE_FOR_READING, null, $this->tokenLine, $this->place );
 				}
 				return $variable; // *********** EXIT ***********
-				break;
 			case T_INC:
 			case T_DEC:
 				$this->stepUP();
 				if ( $this->id == T_VARIABLE ) {
 					$variable = $this->stepValue();
+					//$value[PHPTAGS_STACK_RESULT] =& $variable;
+					//$value[PHPTAGS_STACK_AIM] = ;
+					//$variable[PHPTAGS_STACK_AIM]
 					$result = array(
-						PHPTAGS_STACK_COMMAND => $id,
+						PHPTAGS_STACK_COMMAND => self::$runtimeOperators[$id],
 						PHPTAGS_STACK_PARAM => $variable,
 						PHPTAGS_STACK_PARAM_2 => false, // Example: ++$foo
 						PHPTAGS_STACK_RESULT => null,
@@ -547,10 +617,9 @@ class Compiler {
 					throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $this->id, 'T_VARIABLE' ), $this->tokenLine, $this->place );
 				}
 				return $result; // *********** EXIT ***********
-				break;
 			case '(':
 				$this->stepUP();
-				$result = $this->getNextValue();
+				$result =& $this->getNextValue();
 				if ( $this->id != ')' ) {
 					// PHP Parse error:  syntax error, unexpected $tmp_id, expecting ')'
 					throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $this->id, "')'" ), $this->tokenLine, $this->place );
@@ -567,22 +636,19 @@ class Compiler {
 			case T_BOOL_CAST:	// (bool)
 			case T_UNSET_CAST:	// (unset)
 				$this->stepUP();
-				$tmp = $this->stepValue();
+				$tmp =& $this->stepValue();
 				if ( $tmp ) {
 					$result = array(
-						PHPTAGS_STACK_COMMAND => $id,
+						PHPTAGS_STACK_COMMAND => self::$runtimeOperators[$id],
 						PHPTAGS_STACK_RESULT => null,
-						PHPTAGS_STACK_PARAM_2 => &$tmp[PHPTAGS_STACK_RESULT],
+						PHPTAGS_STACK_PARAM_2 => null,
 						PHPTAGS_STACK_PARAM => 0,
 						PHPTAGS_STACK_TOKEN_LINE => $this->tokenLine,
 						PHPTAGS_STACK_DEBUG => $text,
 					);
-					if ( $tmp[PHPTAGS_STACK_COMMAND] ) {
-						$this->stack[] = $tmp;
-					}
+					$this->addValueIntoStack( $tmp, $result, PHPTAGS_STACK_PARAM_2, true );
 				}
 				return $result;
-				break;
 			case T_ARRAY:
 				$this->stepUP();
 				if ( $this->id != '(' ) {
@@ -592,7 +658,7 @@ class Compiler {
 				// break is not necessary here
 			case '[':
 				$this->stepUP();
-				$result = $this->stepArrayConstruct( $id );
+				$result =& $this->stepArrayConstruct( $id );
 				break;
 			case T_LIST:
 				$this->stepUP();
@@ -601,27 +667,31 @@ class Compiler {
 					throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $this->id, "'('" ), $this->tokenLine, $this->place );
 				}
 				$param = array();
+				$i = 0;
 				do {
 					$this->stepUP();
 					if ( $this->id == T_LIST ) { // T_LIST inside T_LIST. Example: list( $foo, list
-						$value = $this->stepValue( T_LIST );
+						$value =& $this->stepValue( T_LIST );
 					} else {
-						$value = $this->getNextValue();
+						$value =& $this->getNextValue();
 						if ( $value === false ) { // Example: list($foo, ,
 							$value = null;
-						}elseif ( $value[PHPTAGS_STACK_COMMAND] != T_VARIABLE && $value[PHPTAGS_STACK_COMMAND] != T_LIST ) { // Example: unset( $foo+1 );
+						} elseif ( $value[PHPTAGS_STACK_COMMAND] != PHPTAGS_T_VARIABLE && $value[PHPTAGS_STACK_COMMAND] != PHPTAGS_T_LIST ) { // Example: unset( $foo+1 );
 							throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $value[PHPTAGS_STACK_COMMAND], 'T_VARIABLE' ), $this->tokenLine, $this->place );
 						}
 					}
-					$param[] = $value;
+					$tmp = array( PHPTAGS_STACK_COMMAND=>null, PHPTAGS_STACK_RESULT=>&$value );
+					$param[$i] = null;
+					$this->addValueIntoStack( $tmp, $param, $i++ );
+					unset( $value, $tmp );
 				} while ( $this->id == ',' );
 				if ( $this->id != ')' ) {
 					// PHP Parse error:  syntax error, unexpected $id, expecting ')'
 					throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $this->id, "')'" ), $this->tokenLine, $this->place );
 				}
 				$result = array(
-					PHPTAGS_STACK_COMMAND => T_LIST,
-					PHPTAGS_STACK_PARAM => $param,
+					PHPTAGS_STACK_COMMAND => PHPTAGS_T_LIST,
+					PHPTAGS_STACK_PARAM => &$param,
 					PHPTAGS_STACK_TOKEN_LINE => $this->tokenLine,
 					PHPTAGS_STACK_DEBUG => $text,
 				);
@@ -632,7 +702,7 @@ class Compiler {
 						throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $this->id, "'='" ), $this->tokenLine, $this->place );
 					}
 					$this->stepUP();
-					$val = $this->getNextValue( '=' );
+					$val =& $this->getNextValue( '=' );
 					if ( $val == false ) {
 						// PHP Parse error:  syntax error, unexpected $id
 						throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $this->id ), $this->tokenLine, $this->place );
@@ -640,20 +710,18 @@ class Compiler {
 					$return = array(
 						PHPTAGS_STACK_COMMAND => '=',
 						PHPTAGS_STACK_PARAM => $result,
-						PHPTAGS_STACK_PARAM_2 => &$val[PHPTAGS_STACK_RESULT],
+						PHPTAGS_STACK_PARAM_2 => null,
 						PHPTAGS_STACK_RESULT => null,
 						PHPTAGS_STACK_TOKEN_LINE => $this->tokenLine,
 						PHPTAGS_STACK_DEBUG => '=',
 					);
-					if ( $val[PHPTAGS_STACK_COMMAND] ) {
-						$this->stack[] = $val;
-					}
+					$this->addValueIntoStack( $val, $return, PHPTAGS_STACK_PARAM_2 );
 					return $return; // *********** EXIT ***********
 				}
 				break;
 			case T_PRINT:
 				$this->stepUP();
-				$value = $this->getNextValue();
+				$value =& $this->getNextValue();
 				if ( $this->id != ';' ) { // Example print "foo"%
 					// PHP Parse error:  syntax error, unexpected $id, expecting ';'
 					throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $this->id, "';'" ), $this->tokenLine, $this->place );
@@ -663,17 +731,14 @@ class Compiler {
 					throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $this->id ), $this->tokenLine, $this->place );
 				}
 				$result = array(
-					PHPTAGS_STACK_COMMAND => T_ECHO,
-					PHPTAGS_STACK_PARAM => array( &$value[PHPTAGS_STACK_RESULT] ),
+					PHPTAGS_STACK_COMMAND => PHPTAGS_T_PRINT,
+					PHPTAGS_STACK_PARAM => null,
 					PHPTAGS_STACK_RESULT => 1,
 					PHPTAGS_STACK_TOKEN_LINE => $this->tokenLine,
 					PHPTAGS_STACK_DEBUG => $text
 				);
-				if ( $value[PHPTAGS_STACK_COMMAND] ) {
-					$this->stack[] = $value;
-				}
+				$this->addValueIntoStack( $value, $result, PHPTAGS_STACK_PARAM );
 				return $result;
-				break;
 			case T_EMPTY:
 			case T_ISSET:
 			case T_UNSET:
@@ -685,22 +750,22 @@ class Compiler {
 				$param = array();
 				do {
 					$this->stepUP();
-					$value = $this->getNextValue();
+					$value =& $this->getNextValue();
 					if ( $value === false ) { // Example: unset();
 						// PHP Parse error:  syntax error, unexpected $id,
 						throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $this->id ), $this->tokenLine, $this->place );
 					}
-					if ( $value[PHPTAGS_STACK_COMMAND] != T_VARIABLE ) { // Example: unset( $foo+1 );
+					if ( $value[PHPTAGS_STACK_COMMAND] != PHPTAGS_T_VARIABLE ) { // Example: unset( $foo+1 );
 						throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $value[PHPTAGS_STACK_COMMAND], 'T_VARIABLE' ), $this->tokenLine, $this->place );
 					}
-					$param[] = $value;
+					$param[] =& $value;
 				} while ( $this->id == ',' );
 				if ( $this->id != ')' ) {
 					// PHP Parse error:  syntax error, unexpected $id, expecting ')'
 					throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $this->id, "')'" ), $this->tokenLine, $this->place );
 				}
 				$result = array(
-					PHPTAGS_STACK_COMMAND => $id,
+					PHPTAGS_STACK_COMMAND => self::$runtimeOperators[$id],
 					PHPTAGS_STACK_PARAM => $param,
 					PHPTAGS_STACK_TOKEN_LINE => $this->tokenLine,
 					PHPTAGS_STACK_DEBUG => $text,
@@ -713,24 +778,37 @@ class Compiler {
 		return $result;
 	}
 
-	private function getOperator( $value, $precedence ) {
+	private function & getOperator( &$value, $precedence ) {
 		$result = false;
 		while ( true ) {
 			$id = $this->id;
 			$text = $this->text;
-			if ( array_key_exists($id, self::$precedencesMatrix) && self::$precedencesMatrix[$id] < $precedence ) {
+			if ( array_key_exists($id, self::$precedencesMatrix) && self::$precedencesMatrix[$id] < $precedence ) { // @todo isset()
 				// if the current token is an operator and it precedence is less the variable $precedence
 				// else leave loop
 
 				// Ternary operators handled function getTernaryOperator()
-				$result = $this->getTernaryOperator( $value );
-				if ( $result !== false ) {
-					$value = $result;
+				$ternary =& $this->getTernaryOperator( $value );
+				if ( $ternary !== false ) {
+					$value =& $ternary;
+					$result =& $ternary;
 					continue;
 				}
 
 				$this->stepUP();
-				$nextValue = $this->getNextValue( $id ); // Get the next value, it is the second value for the operator
+
+				// Make the operator
+				$operator = array(
+					PHPTAGS_STACK_COMMAND => self::$runtimeOperators[$id],
+					PHPTAGS_STACK_PARAM => null, //&$value[PHPTAGS_STACK_RESULT],
+					PHPTAGS_STACK_PARAM_2 => null, //&$nextValue[PHPTAGS_STACK_RESULT],
+					PHPTAGS_STACK_RESULT => null,
+					PHPTAGS_STACK_TOKEN_LINE => $this->tokenLine,
+					PHPTAGS_STACK_DEBUG => $text,
+				);
+				$didit = $this->addValueIntoStack( $value, $operator, PHPTAGS_STACK_PARAM, false ); // Add the first value into the stack
+
+				$nextValue =& $this->getNextValue( $id ); // Get the next value, it is the second value for the operator
 				// $nextValue can be as the result of other operators if them the precedence larger the precedence of the current operator
 				// Example: 1*2+3; $nextValue will be '2'
 				// Example: 1+2*3; $nextValue will be the result of the operator '2*3'
@@ -738,30 +816,10 @@ class Compiler {
 					// PHP Parse error:  syntax error, unexpected $id
 					throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $this->id ), $this->tokenLine, $this->place );
 				}
-				// Make the operator
-				$result = array(
-					PHPTAGS_STACK_COMMAND => $id,
-					PHPTAGS_STACK_PARAM => &$value[PHPTAGS_STACK_RESULT],
-					PHPTAGS_STACK_PARAM_2 => &$nextValue[PHPTAGS_STACK_RESULT],
-					PHPTAGS_STACK_RESULT => null,
-					PHPTAGS_STACK_TOKEN_LINE => $this->tokenLine,
-					PHPTAGS_STACK_DEBUG => $text,
-				);
-				if ( $value[PHPTAGS_STACK_COMMAND] === null && $nextValue[PHPTAGS_STACK_COMMAND] === null ) {
-					// The first and second values of the operator have no command
-					$tmp = array( PHPTAGS_STACK_COMMAND=>T_RETURN, PHPTAGS_STACK_PARAM=>&$result[PHPTAGS_STACK_RESULT] );
-					$result = array(
-						PHPTAGS_STACK_COMMAND => null, // Mark the operator as the already processed.
-						PHPTAGS_STACK_RESULT => Runtime::run( // Process operarot
-								array( $result, $tmp ),
-								array( 'PhpTags\\Compiler class' )
-							),
-					);
-				} else { // The first or second values of the operator have command
-					if ( $nextValue[PHPTAGS_STACK_COMMAND] ) { $this->stack[] = $nextValue; } // Add the second value into the stack if need
-					if ( $value[PHPTAGS_STACK_COMMAND] ) { $this->stack[] = $value; } // Add the first value into the stack if need
-				}
-				$value = $result; // Set the operator as the value for the next loop
+				$this->addValueIntoStack( $nextValue, $operator, PHPTAGS_STACK_PARAM_2, $didit ); // Add the second value into the stack
+				$value =& $operator; // Set the operator as the value for the next loop
+				$result =& $operator;
+				unset( $operator );
 			} else {
 				break;
 			}
@@ -769,184 +827,219 @@ class Compiler {
 		return $result;
 	}
 
-	private function getTernaryOperator( $value ) {
-		static $ternary = array();
+	private function & getTernaryOperator( &$value ) {
+		static $ternaryOperators = array();
 		$result = false;
 		$id = $this->id;
 		$text = $this->text;
 		switch ( $id ) {
 			case '?':
 				// Make the operator without the second value
-				if ( $value[PHPTAGS_STACK_COMMAND] === null ) { // The first value has no command
-					array_unshift(
-							$ternary,
-							array(
-								PHPTAGS_STACK_COMMAND => '?',
-								PHPTAGS_STACK_PARAM => (bool)$value[PHPTAGS_STACK_RESULT], // set the first value as the bool value
-								PHPTAGS_STACK_RESULT => null,
-								PHPTAGS_STACK_TOKEN_LINE => $this->tokenLine,
-								PHPTAGS_STACK_DEBUG => $text,
-							)
-					);
-				} else { // The first value has no command.
-					array_unshift(
-							$ternary,
-							array(
-								PHPTAGS_STACK_COMMAND => '?',
-								PHPTAGS_STACK_PARAM => &$value[PHPTAGS_STACK_RESULT],
-								PHPTAGS_STACK_RESULT => null,
-								PHPTAGS_STACK_TOKEN_LINE => $this->tokenLine,
-								PHPTAGS_STACK_DEBUG => $text,
-							)
-					);
-					if ( $value[PHPTAGS_STACK_COMMAND] ) {
-						$this->stack[] = $value;
-					}
+				$ternary = array(
+					PHPTAGS_STACK_COMMAND => '?',
+					PHPTAGS_STACK_PARAM => null,
+					PHPTAGS_STACK_PARAM_2 => null,
+					PHPTAGS_STACK_RESULT => null,
+					PHPTAGS_STACK_TOKEN_LINE => $this->tokenLine,
+					PHPTAGS_STACK_DEBUG => $text,
+				);
+				array_unshift( $ternaryOperators, $ternary );
+				$didValue = $this->addValueIntoStack( $value, $ternaryOperators[0], PHPTAGS_STACK_PARAM, false );
+				if ( $didValue && $ternaryOperators[0][PHPTAGS_STACK_PARAM] === null ) {
+					$ternaryOperators[0][PHPTAGS_STACK_PARAM] = false;
 				}
+
 				$this->stepUP();
 				$this->stack_push_memory();
-				$result = $this->getNextValue(); // Get the next value, it must be the ternary operator
+				$result =& $this->getNextValue(); // Get next value, it must be the ternary operator
 				if ( $result !== false || $this->id != ':' ) {
 					break;
 				}
 				// Example: $foo ?:
+				$value_clone = $value;
+				unset( $value );
+				$value = $value_clone;
 				$id = $this->id;
 				// break is not necessary here
 			case ':':
-				if ( !isset($ternary[0]) ) {
+				if ( !isset($ternaryOperators[0]) ) {
 					// PHP Parse error:  syntax error, unexpected $id
 					throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $id ), $this->tokenLine, $this->place );
 				}
-				$ternary[0][PHPTAGS_STACK_PARAM_2] = array(
-					PHPTAGS_STACK_RESULT => null,
-					PHPTAGS_STACK_PARAM => &$value[PHPTAGS_STACK_RESULT],
-				);
 
-				if ( $value[PHPTAGS_STACK_COMMAND] || $this->stack ) {
+				$ternaryOperators[0][PHPTAGS_STACK_PARAM_2] = array(
+					PHPTAGS_STACK_RESULT => null,
+					PHPTAGS_STACK_PARAM => null,
+					PHPTAGS_STACK_PARAM_2 => null,
+				);
+				if ( $value[PHPTAGS_STACK_COMMAND] == PHPTAGS_T_VARIABLE ) {
+					$copy1 = array( PHPTAGS_STACK_COMMAND=>PHPTAGS_T_COPY, PHPTAGS_STACK_PARAM=>null, PHPTAGS_STACK_RESULT=>&$ternaryOperators[0][PHPTAGS_STACK_PARAM_2][PHPTAGS_STACK_PARAM] );
+					$this->addValueIntoStack( $value, $copy1, PHPTAGS_STACK_PARAM, false );
+					$this->stack[] =& $copy1;
+				} else {
+					$this->addValueIntoStack( $value, $ternaryOperators[0][PHPTAGS_STACK_PARAM_2], PHPTAGS_STACK_PARAM, false );
+				}
+
+				if ( $this->stack ) {
 					$stack_true = $this->stack;
-					if ( $this->stack ) { $this->stack = array(); } // Reset stack if need
-					if ( $value[PHPTAGS_STACK_COMMAND] ) {
-						$stack_true[] = $value;
-					}
+					$this->stack = array();
 				} else {
 					$stack_true = false;
 				}
 
 				$this->stepUP();
-				$nextValue = $this->getNextValue( ':' ); // Get the next value, it is the right part of the ternary operator
+				$nextValue =& $this->getNextValue( ':' ); // Get the next value, it is the right part of the ternary operator
 				if ( $nextValue === false ) { // $nextValue must be not false, otherwise throw the exception
 					// PHP Parse error:  syntax error, unexpected $id
 					throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $this->id ), $this->tokenLine, $this->place );
 				}
-				$ternary[0][PHPTAGS_STACK_PARAM_2][PHPTAGS_STACK_PARAM_2] = &$nextValue[PHPTAGS_STACK_RESULT];
-
-				if ( $nextValue[PHPTAGS_STACK_COMMAND] || $this->stack ) {
-					$stack_false = $this->stack;
-					if ( $nextValue[PHPTAGS_STACK_COMMAND] ) {
-						$stack_false[] = $nextValue;
-					}
+				if ( $nextValue[PHPTAGS_STACK_COMMAND] == PHPTAGS_T_VARIABLE ) {
+					$copy2 = array( PHPTAGS_STACK_COMMAND=>PHPTAGS_T_COPY, PHPTAGS_STACK_PARAM=>null, PHPTAGS_STACK_RESULT=>&$ternaryOperators[0][PHPTAGS_STACK_PARAM_2][PHPTAGS_STACK_PARAM_2] );
+					$this->addValueIntoStack( $nextValue, $copy2, PHPTAGS_STACK_PARAM, false );
+					$this->stack[] =& $copy2;
 				} else {
-					$stack_false = false;
+					$this->addValueIntoStack( $nextValue, $ternaryOperators[0][PHPTAGS_STACK_PARAM_2], PHPTAGS_STACK_PARAM_2, false );
 				}
+				$stack_false = $this->stack ?: false;
 				$this->stack_pop_memory();
 
-				if ( $ternary[0][PHPTAGS_STACK_PARAM] === true ) {
-					$result = array( PHPTAGS_STACK_COMMAND=>false, PHPTAGS_STACK_RESULT=>&$ternary[0][PHPTAGS_STACK_PARAM_2][PHPTAGS_STACK_PARAM] );
+				if ( $ternaryOperators[0][PHPTAGS_STACK_PARAM] == true ) { // Example: echo true ? ...
+					$result = array( PHPTAGS_STACK_COMMAND=>false, PHPTAGS_STACK_RESULT=>&$ternaryOperators[0][PHPTAGS_STACK_PARAM_2][PHPTAGS_STACK_PARAM] );
 					if ( $stack_true !== false ) {
 						$this->stack = array_merge( $this->stack, $stack_true );
 					}
-				} elseif ( $ternary[0][PHPTAGS_STACK_PARAM] === false ) {
-					$result = array( PHPTAGS_STACK_COMMAND=>false, PHPTAGS_STACK_RESULT=>&$ternary[0][PHPTAGS_STACK_PARAM_2][PHPTAGS_STACK_PARAM_2] );
+				} elseif ( $ternaryOperators[0][PHPTAGS_STACK_PARAM] === false ) { // Example: echo false ? ...
+					$result = array( PHPTAGS_STACK_COMMAND=>false, PHPTAGS_STACK_RESULT=>&$ternaryOperators[0][PHPTAGS_STACK_PARAM_2][PHPTAGS_STACK_PARAM_2] );
 					if ( $stack_false !== false ) {
 						$this->stack = array_merge( $this->stack, $stack_false );
 					}
-				} else {
-					$ternary[0][PHPTAGS_STACK_PARAM_2][PHPTAGS_STACK_DO_TRUE] = $stack_true;
-					$ternary[0][PHPTAGS_STACK_PARAM_2][PHPTAGS_STACK_DO_FALSE] = $stack_false;
-					$result = &$ternary[0];
+				} else { // It is not static value, Example: echo $foo ? ...
+					$ternaryOperators[0][PHPTAGS_STACK_PARAM_2][PHPTAGS_STACK_DO_TRUE] = $stack_true;
+					$ternaryOperators[0][PHPTAGS_STACK_PARAM_2][PHPTAGS_STACK_DO_FALSE] = $stack_false;
+					$result =& $ternaryOperators[0];
 				}
-				array_shift( $ternary );
+				array_shift( $ternaryOperators );
 				break;
 			case T_BOOLEAN_AND:	// &&
-			case T_BOOLEAN_OR:	// ||
 			case T_LOGICAL_AND:	// and
-			case T_LOGICAL_OR:	// or
 				$this->stepUP();
 				$this->stack_push_memory();
-				$nextValue = $this->getNextValue( $id );
+				$nextValue =& $this->getNextValue( $id );
 				if ( $nextValue === false ) {
 					// PHP Parse error:  syntax error, unexpected $id
 					throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $this->id ), $this->tokenLine, $this->place );
 				}
 
-				$id = $id == T_BOOLEAN_AND ? T_LOGICAL_AND : ( $id != T_BOOLEAN_OR ? $id : T_LOGICAL_OR );
+				$operator = array(
+					PHPTAGS_STACK_COMMAND => self::$runtimeOperators[$id],
+					PHPTAGS_STACK_PARAM => null,
+					PHPTAGS_STACK_PARAM_2 => null,
+					PHPTAGS_STACK_RESULT => null,
+					PHPTAGS_STACK_TOKEN_LINE => $this->tokenLine,
+					PHPTAGS_STACK_DEBUG => $text,
+				);
 
-				if ( $nextValue[PHPTAGS_STACK_COMMAND] || $this->stack ) {
-					$stack_false = $this->stack;
-					$tmp = array(
-						PHPTAGS_STACK_COMMAND => $id,
-						PHPTAGS_STACK_PARAM => &$value[PHPTAGS_STACK_RESULT],
-						PHPTAGS_STACK_PARAM_2 => &$nextValue[PHPTAGS_STACK_RESULT],
-						PHPTAGS_STACK_RESULT => null,
-						PHPTAGS_STACK_TOKEN_LINE => $this->tokenLine,
-						PHPTAGS_STACK_DEBUG => $text,
-					);
-					if ( $nextValue[PHPTAGS_STACK_COMMAND] ) {
-						$stack_false[] = $nextValue;
-					}
-					$stack_result = &$tmp[PHPTAGS_STACK_RESULT];
-					$stack_false[] = $tmp;
-				} else {
-					$stack_false = false;
-					$stack_result = (bool)$nextValue[PHPTAGS_STACK_RESULT];
-				}
+				$this->addValueIntoStack( $nextValue, $operator, PHPTAGS_STACK_PARAM_2, true );
+				$stack_true = $this->stack ?: false;
 				$this->stack_pop_memory();
+				$doit = $this->addValueIntoStack( $value, $operator, PHPTAGS_STACK_PARAM, true );
 
-				if ( $id == T_LOGICAL_AND ) {
-					if ( $stack_false === false && $stack_result == false || $value[PHPTAGS_STACK_COMMAND] === null && $value[PHPTAGS_STACK_RESULT] == false ) {
-						$result = array( PHPTAGS_STACK_COMMAND => null,	PHPTAGS_STACK_RESULT => false );
-						break;
-					}
-					$param2 = array(
-						PHPTAGS_STACK_RESULT => null,
-						PHPTAGS_STACK_PARAM => &$stack_result,
-						PHPTAGS_STACK_DO_TRUE => $stack_false,
-						PHPTAGS_STACK_PARAM_2 => false,
-						PHPTAGS_STACK_DO_FALSE => false,
-					);
-				} else { // $id == T_LOGICAL_OR
-					if ( $stack_false === false && $stack_result == true || $value[PHPTAGS_STACK_COMMAND] === null && $value[PHPTAGS_STACK_RESULT] == true ) {
-						$result = array( PHPTAGS_STACK_COMMAND => null,	PHPTAGS_STACK_RESULT => true );
-						break;
-					}
-					$param2 = array(
-						PHPTAGS_STACK_RESULT => null,
-						PHPTAGS_STACK_PARAM => true,
-						PHPTAGS_STACK_DO_TRUE => false,
-						PHPTAGS_STACK_PARAM_2 => &$stack_result,
-						PHPTAGS_STACK_DO_FALSE => $stack_false,
-					);
+				if ( $stack_true === false && $operator[PHPTAGS_STACK_PARAM_2] == false || $doit === true && $operator[PHPTAGS_STACK_PARAM] == false ) {
+					$result = array( PHPTAGS_STACK_COMMAND => null,	PHPTAGS_STACK_RESULT => false ); // it's always false
+					break;
 				}
-				unset( $stack_result );
+				if ( $stack_true === false && $operator[PHPTAGS_STACK_PARAM_2] == true && $doit === true && $operator[PHPTAGS_STACK_PARAM] == true ) {
+					$result = array( PHPTAGS_STACK_COMMAND => null,	PHPTAGS_STACK_RESULT => true ); // it's always true
+					break;
+				}
+
+				if ( $stack_true === false ) {
+					$stack_true = array( &$operator );
+				} else {
+					$stack_true[] =& $operator;
+				}
+
+				$param2 = array(
+					PHPTAGS_STACK_RESULT => null,
+					PHPTAGS_STACK_PARAM => &$operator[PHPTAGS_STACK_RESULT],
+					PHPTAGS_STACK_DO_TRUE => $stack_true,
+					PHPTAGS_STACK_PARAM_2 => false,
+					PHPTAGS_STACK_DO_FALSE => false,
+				);
 				$result = array(
 					PHPTAGS_STACK_COMMAND => '?',
-					PHPTAGS_STACK_PARAM => &$value[PHPTAGS_STACK_RESULT],
+					PHPTAGS_STACK_PARAM => null,
 					PHPTAGS_STACK_PARAM_2 => $param2,
 					PHPTAGS_STACK_RESULT => null,
 					PHPTAGS_STACK_TOKEN_LINE => $this->tokenLine,
 					PHPTAGS_STACK_DEBUG => $text,
 				);
-				if ( $value[PHPTAGS_STACK_COMMAND] ) {
-					$this->stack[] = $value;
+				$this->addValueIntoStack( $value, $result, PHPTAGS_STACK_PARAM, true );
+				break;
+			case T_BOOLEAN_OR:	// ||
+			case T_LOGICAL_OR:	// or
+				$this->stepUP();
+				$this->stack_push_memory();
+				$nextValue =& $this->getNextValue( $id );
+				if ( $nextValue === false ) {
+					// PHP Parse error:  syntax error, unexpected $id
+					throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $this->id ), $this->tokenLine, $this->place );
 				}
+
+				$operator = array(
+					PHPTAGS_STACK_COMMAND => self::$runtimeOperators[$id],
+					PHPTAGS_STACK_PARAM => null,
+					PHPTAGS_STACK_PARAM_2 => null,
+					PHPTAGS_STACK_RESULT => null,
+					PHPTAGS_STACK_TOKEN_LINE => $this->tokenLine,
+					PHPTAGS_STACK_DEBUG => $text,
+				);
+
+				$this->addValueIntoStack( $nextValue, $operator, PHPTAGS_STACK_PARAM_2, true );
+				$stack_false = $this->stack ?: false;
+				$this->stack_pop_memory();
+				$doit = $this->addValueIntoStack( $value, $operator, PHPTAGS_STACK_PARAM, true );
+
+				if ( $stack_false === false && $operator[PHPTAGS_STACK_PARAM_2] == true || $doit === true && $operator[PHPTAGS_STACK_PARAM] == true ) {
+					$result = array( PHPTAGS_STACK_COMMAND => null,	PHPTAGS_STACK_RESULT => true ); // it's always true
+					break;
+				}
+				if ( $stack_false === false && $operator[PHPTAGS_STACK_PARAM_2] == false && $doit === true && $operator[PHPTAGS_STACK_PARAM] == false ) {
+					$result = array( PHPTAGS_STACK_COMMAND => null,	PHPTAGS_STACK_RESULT => false ); // it's always false
+					break;
+				}
+
+				if ( $stack_false === false ) {
+					$stack_false = array( &$operator );
+				} else {
+					$stack_false[] =& $operator;
+				}
+
+				$param2 = array(
+					PHPTAGS_STACK_RESULT => null,
+					PHPTAGS_STACK_PARAM => true,
+					PHPTAGS_STACK_DO_TRUE => false,
+					PHPTAGS_STACK_PARAM_2 => &$operator[PHPTAGS_STACK_RESULT],
+					PHPTAGS_STACK_DO_FALSE => $stack_false,
+				);
+				$result = array(
+					PHPTAGS_STACK_COMMAND => '?',
+					PHPTAGS_STACK_PARAM => null,
+					PHPTAGS_STACK_PARAM_2 => $param2,
+					PHPTAGS_STACK_RESULT => null,
+					PHPTAGS_STACK_TOKEN_LINE => $this->tokenLine,
+					PHPTAGS_STACK_DEBUG => $text,
+				);
+				$this->addValueIntoStack( $value, $result, PHPTAGS_STACK_PARAM, true );
 				break;
 		}
 		return $result;
 	}
 
-	private function stepIfConstruct( $allowElse, $throwEndTag = true ) {
-		static $if = array();
+	private function & stepIfConstruct( $allowElse, $throwEndTag = true ) {
 		$return = false;
+		$text = $this->text; // if
+		$tokenLine = $this->tokenLine;
 		$this->stepUP();
 
 		if ( $this->id != '(' ) {
@@ -955,8 +1048,7 @@ class Compiler {
 		}
 		$this->stepUP();
 
-		$text = $this->text;
-		$value = $this->getNextValue();
+		$value =& $this->getNextValue();
 		if ( $value === false ) {
 			// PHP Parse error:  syntax error, unexpected $id
 			throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $this->id ), $this->tokenLine, $this->place );
@@ -965,33 +1057,17 @@ class Compiler {
 			// PHP Parse error:  syntax error, unexpected $id, expecting ')'
 			throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $this->id, "')'" ), $this->tokenLine, $this->place );
 		}
+
 		// Make the 'if' operator
-		if ( $value[PHPTAGS_STACK_COMMAND] === null ) { // The first value has not command
-			array_unshift(
-					$if,
-					array(
-						PHPTAGS_STACK_COMMAND => T_IF,
-						PHPTAGS_STACK_PARAM => (bool)$value[PHPTAGS_STACK_RESULT], // set the first value as the bool value
-						PHPTAGS_STACK_RESULT => null,
-						PHPTAGS_STACK_TOKEN_LINE => $this->tokenLine,
-						PHPTAGS_STACK_DEBUG => $text,
-					)
-				);
-		} else { // The first value has command.
-			array_unshift(
-					$if,
-					array(
-						PHPTAGS_STACK_COMMAND => T_IF,
-						PHPTAGS_STACK_PARAM => &$value[PHPTAGS_STACK_RESULT],
-						PHPTAGS_STACK_RESULT => null,
-						PHPTAGS_STACK_TOKEN_LINE => $this->tokenLine,
-						PHPTAGS_STACK_DEBUG => $text,
-					)
-				);
-			if ( $value[PHPTAGS_STACK_COMMAND] ) {
-				$this->stack[] = $value;
-			}
-		}
+		$if = array(
+			PHPTAGS_STACK_COMMAND => PHPTAGS_T_IF,
+			PHPTAGS_STACK_PARAM => null,
+			PHPTAGS_STACK_RESULT => null,
+			PHPTAGS_STACK_TOKEN_LINE => $tokenLine,
+			PHPTAGS_STACK_DEBUG => $text,
+		);
+		$this->addValueIntoStack( $value, $if, PHPTAGS_STACK_PARAM, false );
+
 		$this->stack_push_memory();
 		$this->stepUP();
 		if ( $this->id == '{' ) {
@@ -1002,12 +1078,9 @@ class Compiler {
 			$this->stepFirstOperator( $throwEndTag );
 		}
 		if ( $this->stack ) {
-			$if[0][PHPTAGS_STACK_DO_TRUE] = $this->stack;
+			$if[PHPTAGS_STACK_DO_TRUE] = $this->stack;
 			$this->stack = array();
 		}
-
-		$operator = &$if[0];
-		array_shift( $if );
 
 		if ( $allowElse ) {
 			if ( $this->id == T_ELSE ) {
@@ -1020,68 +1093,82 @@ class Compiler {
 					$this->stepFirstOperator( $throwEndTag );
 				}
 				if ( $this->stack ) {
-					$operator[PHPTAGS_STACK_DO_FALSE] = $this->stack;
+					$if[PHPTAGS_STACK_DO_FALSE] = $this->stack;
 				}
 			} elseif ( $this->id == T_ELSEIF ) {
-				$tmp = $this->stepIfConstruct( true, $throwEndTag );
+				$tmp =& $this->stepIfConstruct( true, $throwEndTag );
 				if ( $tmp !== true  && $tmp !== false ) {
-					$this->stack[] = $tmp;
-					$operator[PHPTAGS_STACK_DO_FALSE] = $this->stack;
+					$this->stack[] =& $tmp;
+					$if[PHPTAGS_STACK_DO_FALSE] = $this->stack;
 				} elseif ( $this->stack ) {
-					$operator[PHPTAGS_STACK_DO_FALSE] = $this->stack;
+					$if[PHPTAGS_STACK_DO_FALSE] = $this->stack;
 				}
 			}
 		}
+
 		$this->stack_pop_memory();
-		if ( $operator[PHPTAGS_STACK_PARAM] === true ) {
-			if ( $operator[PHPTAGS_STACK_DO_TRUE] ) {
-				$this->stack = array_merge( $this->stack, $operator[PHPTAGS_STACK_DO_TRUE] );
+		if ( $if[PHPTAGS_STACK_PARAM] == true ) {
+			if ( $if[PHPTAGS_STACK_DO_TRUE] ) {
+				$this->stack = array_merge( $this->stack, $if[PHPTAGS_STACK_DO_TRUE] );
 			}
 			$return = true;
-		} elseif ( $operator[PHPTAGS_STACK_PARAM] === false ) {
-			if ( isset($operator[PHPTAGS_STACK_DO_FALSE]) && $operator[PHPTAGS_STACK_DO_FALSE] ) {
-				$this->stack = array_merge( $this->stack, $operator[PHPTAGS_STACK_DO_FALSE] );
+		} elseif ( $if[PHPTAGS_STACK_PARAM] === false ) {
+			if ( isset($if[PHPTAGS_STACK_DO_FALSE]) && $if[PHPTAGS_STACK_DO_FALSE] ) {
+				$this->stack = array_merge( $this->stack, $if[PHPTAGS_STACK_DO_FALSE] );
 			}
 			// $return = false; it is already false
 		} else {
-			$return = $operator;
+			$return =& $if;
 		}
 		return $return;
 	}
 
-	private function stepArrayConstruct( $startToken ) {
+	private function & stepArrayConstruct( $startToken ) {
 		$key = false;
 		$result = false;
 		$endToken = $startToken == '[' ? ']' : ')';
 		$array = array();
-
-		while ( $value = $this->getNextValue() ) {
+		$i = 0;
+		$r = 0;
+		while ( $value =& $this->getNextValue() ) {
 			switch ( $this->id ) {
 				case ',':
 				case $endToken:
 					if ( $key === false ) {
-						$array[] = &$value[PHPTAGS_STACK_RESULT];
+						if ( $value[PHPTAGS_STACK_COMMAND] == PHPTAGS_T_VARIABLE ) {
+							$array[$i] = null;
+							$copy = array( PHPTAGS_STACK_COMMAND=>PHPTAGS_T_COPY, PHPTAGS_STACK_PARAM=>null, PHPTAGS_STACK_RESULT=>&$array[$i] );
+							$this->addValueIntoStack( $value, $copy, PHPTAGS_STACK_PARAM, false );
+							$this->stack[] =& $copy;
+						} else {
+							$this->addValueIntoStack( $value, $array, $i );
+						}
+						$i++;
 					} else {
 						if ( $result === false && $key[PHPTAGS_STACK_COMMAND] === null ) {
-							$array[ $key[PHPTAGS_STACK_RESULT] ] = &$value[PHPTAGS_STACK_RESULT];
+							$this->addValueIntoStack( $value, $array, $key[PHPTAGS_STACK_RESULT] );
 						} elseif ( $result === false ) {
 							$result = array(
-								PHPTAGS_STACK_COMMAND => T_ARRAY,
-								PHPTAGS_STACK_PARAM => array( $array ) ,
-								PHPTAGS_STACK_PARAM_2 => array( array(&$key[PHPTAGS_STACK_RESULT], &$value[PHPTAGS_STACK_RESULT]) ),
+								PHPTAGS_STACK_COMMAND => PHPTAGS_T_ARRAY,
+								PHPTAGS_STACK_PARAM => array( &$array ) ,
+								PHPTAGS_STACK_PARAM_2 => array( array(null, null) ),
 								PHPTAGS_STACK_RESULT => null,
 							);
+							$this->addValueIntoStack( $key, $result[PHPTAGS_STACK_PARAM_2][$r], 0 );
+							$this->addValueIntoStack( $value, $result[PHPTAGS_STACK_PARAM_2][$r], 1 );
+							$r++;
+							unset( $array );
 							$array = array();
 						} else {
-							$result[PHPTAGS_STACK_PARAM][] = $array;
-							$result[PHPTAGS_STACK_PARAM_2][] = array( &$key[PHPTAGS_STACK_RESULT], &$value[PHPTAGS_STACK_RESULT] );
+							$result[PHPTAGS_STACK_PARAM][$r] = &$array;
+							$result[PHPTAGS_STACK_PARAM_2][$r] = array( null, null );
+							$this->addValueIntoStack( $key, $result[PHPTAGS_STACK_PARAM_2][$r], 0 );
+							$this->addValueIntoStack( $value, $result[PHPTAGS_STACK_PARAM_2][$r], 1 );
+							unset( $array );
 							$array = array();
 						}
 						unset( $key );
 						$key = false;
-					}
-					if ( $value[PHPTAGS_STACK_COMMAND] ) {
-						$this->stack[] = $value; // Add the command for receive value into the stack
 					}
 					if ( $this->id == $endToken ) {
 						break 2;
@@ -1106,33 +1193,31 @@ class Compiler {
 			throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $this->id ), $this->tokenLine, $this->place );
 		}
 		if ( $result === false ) {
-			return array( PHPTAGS_STACK_COMMAND=>false, PHPTAGS_STACK_RESULT=>$array );
-		}
-		if ( $array ) {
-			$result[PHPTAGS_STACK_PARAM][] = $array;
+			$result = array( PHPTAGS_STACK_COMMAND=>false, PHPTAGS_STACK_RESULT=>&$array );
+		} elseif ( $array ) {
+			$result[PHPTAGS_STACK_PARAM][] = &$array;
 		}
 		return $result;
 	}
 
 	private function stepWhileConstruct( $throwEndTag = true ) {
+		$text = $this->text; // while
 		$this->stack_push_memory();
 		$tokenLine = $this->tokenLine;
-		$operator = $this->stepIfConstruct( false, $throwEndTag );
+		$operator =& $this->stepIfConstruct( false, $throwEndTag );
 		$stack = $this->stack;
 		$this->stack_pop_memory();
 		if ( $operator !== false ) {
 			if ( $operator !== true ) {
-				$stack[] = array(
-					PHPTAGS_STACK_COMMAND => T_IF,
-					PHPTAGS_STACK_PARAM => &$operator[PHPTAGS_STACK_PARAM],
-					PHPTAGS_STACK_DO_FALSE => array( array(PHPTAGS_STACK_COMMAND=>T_BREAK, PHPTAGS_STACK_RESULT=>1) ),
-					PHPTAGS_STACK_DO_TRUE => false,
-				);
+				$stack[] =& $operator;
 				$stack = array_merge( $stack, $operator[PHPTAGS_STACK_DO_TRUE] );
+				$operator[PHPTAGS_STACK_DO_FALSE] = array( array(PHPTAGS_STACK_COMMAND=>PHPTAGS_T_BREAK, PHPTAGS_STACK_RESULT=>1) );
+				$operator[PHPTAGS_STACK_DO_TRUE] = false;
+				$operator[PHPTAGS_STACK_DEBUG] = $text;
 			}
-			$stack[] = array( PHPTAGS_STACK_COMMAND=>T_CONTINUE, PHPTAGS_STACK_RESULT=>1, PHPTAGS_STACK_TOKEN_LINE=>$tokenLine ); // Add operator T_CONTINUE to the end of the cycle
+			$stack[] = array( PHPTAGS_STACK_COMMAND=>PHPTAGS_T_CONTINUE, PHPTAGS_STACK_RESULT=>1, PHPTAGS_STACK_TOKEN_LINE=>$tokenLine ); // Add operator T_CONTINUE to the end of the cycle
 
-			$this->stack[] = array( PHPTAGS_STACK_COMMAND=>T_WHILE, PHPTAGS_STACK_DO_TRUE=>$stack );
+			$this->stack[] = array( PHPTAGS_STACK_COMMAND=>PHPTAGS_T_WHILE, PHPTAGS_STACK_DO_TRUE=>$stack );
 		}
 		return true;
 	}
@@ -1148,12 +1233,12 @@ class Compiler {
 		}
 		$this->stepUP();
 
-		$arrayExpression = $this->stepValue();
+		$arrayExpression =& $this->stepValue();
 		if ( $arrayExpression === false ) {
 			// PHP Parse error:  syntax error, unexpected $id
 			throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $this->id ), $this->tokenLine, $this->place );
 		}
-		if ( $arrayExpression[PHPTAGS_STACK_COMMAND] != T_VARIABLE && $arrayExpression[PHPTAGS_STACK_COMMAND] != T_ARRAY ) {
+		if ( $arrayExpression[PHPTAGS_STACK_COMMAND] != PHPTAGS_T_VARIABLE && $arrayExpression[PHPTAGS_STACK_COMMAND] != PHPTAGS_T_ARRAY ) {
 			// PHP Parse error:  syntax error, unexpected $id, expecting T_VARIABLE
 			throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $arrayExpression[PHPTAGS_STACK_COMMAND], 'T_VARIABLE', 'T_ARRAY' ), $this->tokenLine, $this->place );
 		}
@@ -1165,12 +1250,12 @@ class Compiler {
 		$text_as = $this->text;
 		$this->stepUP();
 
-		$value = $this->stepValue();
+		$value =& $this->stepValue();
 		if ( $value === false ) {
 			// PHP Parse error:  syntax error, unexpected $id
 			throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $this->id ), $this->tokenLine, $this->place );
 		}
-		if ( $value[PHPTAGS_STACK_COMMAND] != T_VARIABLE ) {
+		if ( $value[PHPTAGS_STACK_COMMAND] != PHPTAGS_T_VARIABLE ) {
 			// PHP Parse error:  syntax error, unexpected $id, expecting T_VARIABLE
 			throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $value[PHPTAGS_STACK_COMMAND], 'T_VARIABLE' ), $this->tokenLine, $this->place );
 		}
@@ -1179,8 +1264,8 @@ class Compiler {
 			throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( '[' ), $this->tokenLine, $this->place );
 		}
 		$t_as = array(
-			PHPTAGS_STACK_COMMAND => T_AS,
-			PHPTAGS_STACK_RESULT => &$arrayExpression[PHPTAGS_STACK_RESULT],
+			PHPTAGS_STACK_COMMAND => PHPTAGS_T_AS,
+			PHPTAGS_STACK_RESULT => null,
 			PHPTAGS_STACK_PARAM => $value[PHPTAGS_STACK_PARAM], // Variable name
 			PHPTAGS_STACK_TOKEN_LINE => $this->tokenLine,
 			PHPTAGS_STACK_DEBUG => $text_as,
@@ -1188,12 +1273,12 @@ class Compiler {
 
 		if ( $this->id == T_DOUBLE_ARROW ) { // =>
 			$this->stepUP();
-			$value = $this->stepValue();
+			$value =& $this->stepValue();
 			if ( $value === false ) {
 				// PHP Parse error:  syntax error, unexpected $id
 				throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $this->id ), $this->tokenLine, $this->place );
 			}
-			if ( $value[PHPTAGS_STACK_COMMAND] != T_VARIABLE ) {
+			if ( $value[PHPTAGS_STACK_COMMAND] != PHPTAGS_T_VARIABLE ) {
 				// PHP Parse error:  syntax error, unexpected $id, expecting T_VARIABLE
 				throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED, array( $value[PHPTAGS_STACK_COMMAND], 'T_VARIABLE' ), $this->tokenLine, $this->place );
 			}
@@ -1211,7 +1296,9 @@ class Compiler {
 		$this->stepUP();
 
 		$this->stack_push_memory();
-		$this->stack[] = $t_as;
+		$asExpression = $arrayExpression;
+		$this->addValueIntoStack( $asExpression, $t_as, PHPTAGS_STACK_RESULT );
+		$this->stack[] =& $t_as;
 
 		if ( $this->id == '{' ) {
 			$this->stepUP();
@@ -1221,18 +1308,43 @@ class Compiler {
 			$this->stepFirstOperator( $throwEndTag );
 		}
 
-		$this->stack[] = array( PHPTAGS_STACK_COMMAND=>T_CONTINUE, PHPTAGS_STACK_RESULT=>1, PHPTAGS_STACK_TOKEN_LINE=>$tokenLine ); // Add operator T_CONTINUE to the end of the cycle
+		$this->stack[] = array( PHPTAGS_STACK_COMMAND=>PHPTAGS_T_CONTINUE, PHPTAGS_STACK_RESULT=>1, PHPTAGS_STACK_TOKEN_LINE=>$tokenLine ); // Add operator T_CONTINUE to the end of the cycle
 		$foreach = array(
-			PHPTAGS_STACK_COMMAND => T_FOREACH,
-			PHPTAGS_STACK_PARAM => &$arrayExpression[PHPTAGS_STACK_RESULT],
+			PHPTAGS_STACK_COMMAND => PHPTAGS_T_FOREACH,
+			PHPTAGS_STACK_PARAM => null,
 			PHPTAGS_STACK_DO_TRUE => $this->stack,
 			PHPTAGS_STACK_TOKEN_LINE => $tokenLine,
 			PHPTAGS_STACK_DEBUG => $text,
 		);
 		$this->stack_pop_memory();
-		$this->stack[] = $arrayExpression;
-		$this->stack[] = $foreach;
+		$this->addValueIntoStack( $arrayExpression, $foreach, PHPTAGS_STACK_PARAM );
+		$this->stack[] =& $foreach;
 		return true;
+	}
+
+	public function addValueIntoStack( &$value, &$result, $aim, $doit = false ) {
+		if ( $value[PHPTAGS_STACK_COMMAND] == PHPTAGS_T_VARIABLE ) {
+			$value[PHPTAGS_STACK_PARAM_2] =& $result;
+			$value[PHPTAGS_STACK_AIM] = $aim;
+		} else {
+			$result[$aim] =& $value[PHPTAGS_STACK_RESULT];
+		}
+
+		if ( $value[PHPTAGS_STACK_COMMAND] ) {
+			$this->stack[] =& $value;
+		} elseif( $value[PHPTAGS_STACK_COMMAND] === null ) {
+			// The values of the operator have no command
+			if ( $doit ) {
+				$tmp = array( PHPTAGS_STACK_COMMAND => PHPTAGS_T_RETURN, PHPTAGS_STACK_PARAM => &$result[PHPTAGS_STACK_RESULT] );
+				$result = array(
+					PHPTAGS_STACK_COMMAND => null, // Mark the operator as the already processed.
+					PHPTAGS_STACK_RESULT => Runtime::run( array($result, $tmp),	array('PhpTags\\Compiler') ),
+				);
+			}
+			return true;
+		}
+
+		return false;
 	}
 
 }

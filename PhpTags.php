@@ -16,9 +16,12 @@ if ( !defined( 'MEDIAWIKI' ) ) {
 }
 
 define( 'PHPTAGS_MAJOR_VERSION', 1 );
-define( 'PHPTAGS_MINOR_VERSION', 0 );
-define( 'PHPTAGS_RELEASE_VERSION', 10 );
+define( 'PHPTAGS_MINOR_VERSION', 1 );
+define( 'PHPTAGS_RELEASE_VERSION', 0 );
 define( 'PHPTAGS_VERSION', PHPTAGS_MAJOR_VERSION . '.' . PHPTAGS_MINOR_VERSION . '.' . PHPTAGS_RELEASE_VERSION );
+
+define( 'PHPTAGS_HOOK_RELEASE', 1 );
+define( 'PHPTAGS_RUNTIME_RELEASE', 1 );
 
 // Register this extension on Special:Version
 $wgExtensionCredits['parserhook'][] = array(
@@ -31,6 +34,7 @@ $wgExtensionCredits['parserhook'][] = array(
 );
 
 // Allow translations for this extension
+$wgMessagesDirs['PhpTags'] =				__DIR__ . '/i18n';
 $wgExtensionMessagesFiles['PhpTags'] =		__DIR__ . '/PhpTags.i18n.php';
 $wgExtensionMessagesFiles['PhpTagsMagic'] =	__DIR__ . '/PhpTags.i18n.magic.php';
 

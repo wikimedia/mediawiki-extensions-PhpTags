@@ -1,0 +1,9 @@
+{
+    "@metadata": {
+        "authors": [
+            "pastakhov"
+        ]
+    },
+    "phptags-desc": "Enhances parser with Magic expression that has syntax of PHP language",
+    "phptags-disabled-for-namespace": "Extension PhpTags is disabled for the namespace \"$1\"."
+}

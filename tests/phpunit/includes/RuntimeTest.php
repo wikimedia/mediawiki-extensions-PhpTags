@@ -1019,6 +1019,30 @@ echo "$a, ", $a-- + -5, ", " . --$a, ", $a.";'),
 				array('false0')
 				);
 	}
+	public function testRun_echo_ternary_variable_7() {
+		$this->assertEquals(
+				Runtime::runSource('$f="false"; $t="true"; echo true ? $t : $f;'),
+				array('true')
+				);
+	}
+	public function testRun_echo_ternary_variable_8() {
+		$this->assertEquals(
+				Runtime::runSource('$f="false"; $t="true"; echo false ? $t : $f;'),
+				array('false')
+				);
+	}
+	public function testRun_echo_ternary_variable_9() {
+		$this->assertEquals(
+				Runtime::runSource('$f="false"; $t="true"; echo true ? $t . "1" : $f . "0";'),
+				array('true1')
+				);
+	}
+	public function testRun_echo_ternary_variable_10() {
+		$this->assertEquals(
+				Runtime::runSource('$f="false"; $t="true"; echo false ? $t . "1" : $f . "0";'),
+				array('false0')
+				);
+	}
 	public function testRun_echo_ternary_math_1() {
 		$this->assertEquals(
 				Runtime::runSource('echo 1-1?"true":"false";'),
@@ -1932,6 +1956,18 @@ if ( $foo + $bar ) echo "\$foo + \$bar";'),
 				array('1', '2', '3')
 				);
 	}
+	public function testRun_while_3() {
+		$this->assertEquals(
+				Runtime::runSource('$i=3; while( $i ) echo $i--;'),
+				array('3', '2', '1')
+				);
+	}
+	public function testRun_while_4() {
+		$this->assertEquals(
+				Runtime::runSource('$i=3; while( $i-- ) echo $i;'),
+				array('2', '1', '0')
+				);
+	}
 	public function testRun_while_continue_1() {
 		$this->assertEquals(
 				Runtime::runSource('$i=1; while( $i <= 3 ) { echo $i++; continue; $i++; }'),
@@ -2067,8 +2103,8 @@ $bar++; $stat++;
 echo $foo, $argv[0], $argc, $bar, $stat, $argv["test"];', array('testTemplate', 'HELLO!'), 1),
 				array(
 					(string) new ExceptionPhpTags( PHPTAGS_EXCEPTION_NOTICE_UNDEFINED_VARIABLE, 'bar', 4, 'testTemplate' ),
-					(string) new ExceptionPhpTags( PHPTAGS_EXCEPTION_NOTICE_UNDEFINED_INDEX, 'test', 5, 'testTemplate' ),
-					'HELLO!', 'testTemplate', 2, 1, 1, null)
+					'HELLO!', 'testTemplate', 2, 1, 1,
+					(string) new ExceptionPhpTags( PHPTAGS_EXCEPTION_NOTICE_UNDEFINED_INDEX, 'test', 5, 'testTemplate' ), null)
 				);
 	}
 	public function testRun_echo_scope_static_3() {
@@ -2094,8 +2130,8 @@ $bar++; $stat++;
 echo $foo, $argv[0], $argc, $bar, $stat, $argv["test"];', array('testTemplate', 'HELLO!'), 3),
 				array(
 					(string) new ExceptionPhpTags( PHPTAGS_EXCEPTION_NOTICE_UNDEFINED_VARIABLE, 'bar', 4, 'testTemplate' ),
-					(string) new ExceptionPhpTags( PHPTAGS_EXCEPTION_NOTICE_UNDEFINED_INDEX, 'test', 5, 'testTemplate' ),
-					'HELLO!', 'testTemplate', 2, 1, 3, null)
+					'HELLO!', 'testTemplate', 2, 1, 3,
+					(string) new ExceptionPhpTags( PHPTAGS_EXCEPTION_NOTICE_UNDEFINED_INDEX, 'test', 5, 'testTemplate' ), null)
 				);
 	}
 	public function testRun_echo_scope_static_5() {
