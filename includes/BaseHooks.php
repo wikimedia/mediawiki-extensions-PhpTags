@@ -6,8 +6,13 @@ define( 'PHPTAGS_HOOK_GROUP', 'G' );
 define( 'PHPTAGS_HOOK_VALUE_N', 'N' );
 define( 'PHPTAGS_HOOK_VALUE_TYPE', 0 );
 define( 'PHPTAGS_HOOK_NEED_LINK', 1 );
-define( 'PHPTAGS_HOOK_DEFAULT_VALUE', 2 );
 define( 'PHPTAGS_HOOK_RETURNS_ON_FAIL', 2 );
+define( 'PHPTAGS_HOOK_CONTAINS_LINKS', 'L' );
+define( 'PHPTAGS_HOOK_DEFAULT_VALUES', 'D' );
+
+define( 'PHPTAGS_MIXED_LINKS', null );
+define( 'PHPTAGS_NO_LINKS', false );
+define( 'PHPTAGS_ONLY_LINKS', true );
 
 define( 'PHPTAGS_TYPE_ARRAY', 'a' );
 define( 'PHPTAGS_TYPE_BOOL', 'b' );
@@ -33,21 +38,12 @@ abstract class BaseHooks {
 		return get_called_class();
 	}
 
-	public static function isNeedReference( $name, $index, &$transit ) {
+	public static function getFunctionInfo( $name ) {
 		if ( !isset(static::$functions_definition[$name]) ) {
 			throw new ExceptionPhpTags( PHPTAGS_EXCEPTION_WARNING_INVALID_HOOK, array(static::getClassName(), $name) );
 		}
-
 		$definition = static::$functions_definition[$name];
-		if ( !isset($definition[$index+1]) ) {
-			if ( isset($definition[PHPTAGS_HOOK_VALUE_N]) ) {
-					return $definition[PHPTAGS_HOOK_VALUE_N][PHPTAGS_HOOK_NEED_LINK];
-				} else {
-					$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new ExceptionPhpTags( PHPTAGS_EXCEPTION_WARNING_WRONG_PARAMETER_COUNT, $name );
-					return;
-				}
-		}
-		return $definition[$index+1][PHPTAGS_HOOK_NEED_LINK];
+		return isset( $definition[PHPTAGS_HOOK_CONTAINS_LINKS] ) ? $definition[PHPTAGS_HOOK_CONTAINS_LINKS] : false;
 	}
 
 	public static function onFunctionHook( $name, $params, &$transit ) {
@@ -59,7 +55,15 @@ abstract class BaseHooks {
 		for ( $i=0, $c=count($params); $i < $c; $i++ ) {
 			$d = $i + 1;
 
-			switch ( $definition[$d][PHPTAGS_HOOK_VALUE_TYPE] ) {
+			if ( isset($definition[$d]) ) {
+				$valueType = $definition[$d];
+			} elseif( isset($definition[PHPTAGS_HOOK_VALUE_N]) ) {
+				$valueType = $definition[$d];
+			} else {
+				$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new ExceptionPhpTags( PHPTAGS_EXCEPTION_WARNING_WRONG_PARAMETER_COUNT, $name );
+				return;
+			}
+			switch ( $valueType ) {
 				case PHPTAGS_TYPE_ARRAY:
 					if ( !is_array($params[$i]) ) {
 						$transit[PHPTAGS_TRANSIT_EXCEPTION][] =	new ExceptionPhpTags( PHPTAGS_EXCEPTION_WARNING_EXPECTS_PARAMETER, array($name, $d, 'array', gettype($params[$i])) );
@@ -85,16 +89,17 @@ abstract class BaseHooks {
 
 		while ( !isset($definition[PHPTAGS_HOOK_INVOKE][$i]) ) {
 			$d = $i + 1;
-			if ( !isset($definition[$d]) || !array_key_exists(PHPTAGS_HOOK_DEFAULT_VALUE, $definition[$d]) ) {
-				if ( !isset($definition[$d]) && isset($definition[PHPTAGS_HOOK_INVOKE][PHPTAGS_HOOK_VALUE_N]) ) {
-					$d = PHPTAGS_HOOK_VALUE_N;
-					break;
-				}
-				$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new ExceptionPhpTags( PHPTAGS_EXCEPTION_WARNING_WRONG_PARAMETER_COUNT, $name );
-				return;
+			if ( isset($definition[PHPTAGS_HOOK_DEFAULT_VALUES]) && array_key_exists($d, $definition[PHPTAGS_HOOK_DEFAULT_VALUES]) ) {
+				$params[$i] = $definition[PHPTAGS_HOOK_DEFAULT_VALUES][$d];
+				$i++;
+				continue;
 			}
-			$params[$i] = $definition[$d][PHPTAGS_HOOK_DEFAULT_VALUE];
-			$i++;
+			if ( isset($definition[PHPTAGS_HOOK_INVOKE][PHPTAGS_HOOK_VALUE_N]) ) {
+				$d = PHPTAGS_HOOK_VALUE_N;
+				break;
+			}
+			$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new ExceptionPhpTags( PHPTAGS_EXCEPTION_WARNING_WRONG_PARAMETER_COUNT, $name );
+			return;
 		}
 		return static::$definition[PHPTAGS_HOOK_INVOKE][$d]( $params, $transit );
 	}

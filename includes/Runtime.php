@@ -418,12 +418,27 @@ class Runtime {
 						break;
 					case PHPTAGS_T_HOOK_CHECK_PARAM:
 						$name = $value[PHPTAGS_STACK_PARAM];
-						$hookClassName = self::getHookClassName( $name, $value, $place, $return );
-						if ( $hookClassName === false ) {
+						$hookInfo = self::getFunctionHookInfo( $name, $value, $place, $return );
+						if ( $hookInfo === false ) {
 							return $return;
 						}
 						$i = $value[PHPTAGS_STACK_AIM];
-						$isNeedFeference = $hookClassName::isNeedReference( $name, $i, $transit );
+						$containsReferences = $hookInfo[1];
+						if( $containsReferences === false ) {
+							$isNeedFeference = false;
+						} elseif ( $containsReferences === true ) {
+							$isNeedFeference = true;
+						} elseif ( is_array($containsReferences) ) {
+							if( isset($containsReferences[$i+1]) || array_key_exists($i+1, $containsReferences) ) {
+								$isNeedFeference = $containsReferences[$i+1];
+							} elseif( isset($containsReferences[PHPTAGS_HOOK_VALUE_N]) || array_key_exists(PHPTAGS_HOOK_VALUE_N, $containsReferences) ) {
+								$isNeedFeference = $containsReferences[PHPTAGS_HOOK_VALUE_N];
+							} else {
+								$isNeedFeference = false;
+							}
+						} else {
+							$isNeedFeference = (bool)( 1 << $i & $containsReferences );
+						}
 						if ( $value[PHPTAGS_STACK_PARAM_2] === true && $isNeedFeference === false ) {
 							// Param is variable and it's need to clone
 							$t = $value[PHPTAGS_STACK_RESULT][$i];
@@ -441,10 +456,11 @@ class Runtime {
 						$transit[PHPTAGS_TRANSIT_EXCEPTION] = array();
 						if ( isset($value[PHPTAGS_STACK_PARAM_2]) ) { // This is function or object
 							if ( is_array($value[PHPTAGS_STACK_PARAM_2]) ) { // This is function
-								$hookClassName = self::getHookClassName( $name, $value, $place, $return );
-								if ( $hookClassName === false ) {
+								$hookInfo = self::getFunctionHookInfo( $name, $value, $place, $return );
+								if ( $hookInfo === false ) {
 									return $return;
 								}
+								$hookClassName = $hookInfo[0];
 
 								try {
 									wfSuppressWarnings();
@@ -768,7 +784,7 @@ class Runtime {
 		self::$objectsHook += array_fill_keys( $objectsName, $className );
 	}
 
-	public static function getHookClassName( $name, $value, $place, &$return ) {
+	public static function getFunctionHookInfo( $name, $value, $place, &$return ) {
 		static $hooks = array();
 		if( isset($hooks[$name]) ) {
 			return $hooks[$name];
@@ -787,8 +803,9 @@ class Runtime {
 			$return[] = new ExceptionPhpTags( PHPTAGS_EXCEPTION_FATAL_INVALID_HOOK_CLASS, array($name, $hookClassName), $value[PHPTAGS_STACK_TOKEN_LINE], $place );
 			return false;
 		}
-		$hooks[$name] = $hookClassName;
-		return $hookClassName;
+		$hookInfo = array( $hookClassName, $hookClassName::getFunctionInfo($name) );
+		$hooks[$name] = $hookInfo;
+		return $hookInfo;
 	}
 
 }
