@@ -62,7 +62,7 @@ class PhpTags {
 					array( PHPTAGS_TRANSIT_PARSER=>&$parser, PHPTAGS_TRANSIT_PPFRAME=>&$frame )
 					);
 			$return = implode( $result );
-		} catch (\PhpTags\ExceptionPhpTags $exc) {
+		} catch (\PhpTags\PhpTagsException $exc) {
 			$return = (string) $exc;
 		} catch (Exception $exc) {
 			$return = $exc->getTraceAsString();
@@ -108,7 +108,7 @@ class PhpTags {
 					self::getScope( $frame ),
 					array( PHPTAGS_TRANSIT_PARSER=>&$parser, PHPTAGS_TRANSIT_PPFRAME=>&$frame )
 					);
-		} catch ( \PhpTags\ExceptionPhpTags $exc ) {
+		} catch ( \PhpTags\PhpTagsException $exc ) {
 			// $wgPhpTagsTime += microtime(true) - $time;
 			$wgPhpTagsTime += $parser->mOutput->getTimeSinceStart('cpu') - $time;
 			return (string) $exc;
@@ -131,7 +131,10 @@ class PhpTags {
 
 		if( count($result) > 0 ) {
 			//$return .= Sanitizer::removeHTMLtags(implode($result));
-			$return .= self::insertGeneral( $parser, $parser->recursiveTagParse(implode($result),$frame) );
+			$return .= self::insertGeneral(
+					$parser,
+					$parser->recursiveTagParse( implode($result), $frame )
+				);
 		}
 
 		return \UtfNormal::cleanUp($return);

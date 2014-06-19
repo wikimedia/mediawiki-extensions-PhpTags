@@ -15,12 +15,12 @@ if ( !defined( 'MEDIAWIKI' ) ) {
 	die( 'This file is an extension to MediaWiki and thus not a valid entry point.' );
 }
 
-define( 'PHPTAGS_MAJOR_VERSION', 1 );
-define( 'PHPTAGS_MINOR_VERSION', 2 );
+define( 'PHPTAGS_MAJOR_VERSION', 2 );
+define( 'PHPTAGS_MINOR_VERSION', 0 );
 define( 'PHPTAGS_RELEASE_VERSION', 0 );
 define( 'PHPTAGS_VERSION', PHPTAGS_MAJOR_VERSION . '.' . PHPTAGS_MINOR_VERSION . '.' . PHPTAGS_RELEASE_VERSION );
 
-define( 'PHPTAGS_HOOK_RELEASE', 2 );
+define( 'PHPTAGS_HOOK_RELEASE', 3 );
 define( 'PHPTAGS_RUNTIME_RELEASE', 1 );
 
 // Register this extension on Special:Version
@@ -48,7 +48,7 @@ $wgHooks['ParserFirstCallInit'][] = function( Parser &$parser ) {
 	return true;
 };
 $wgHooks['PhpTagsRuntimeFirstInit'][] = function() {
-	\PhpTags\Runtime::setConstantsValue(
+	\PhpTags\Hooks::setConstantValues(
 			array(
 				'PHPTAGS_MAJOR_VERSION' => PHPTAGS_MAJOR_VERSION,
 				'PHPTAGS_MINOR_VERSION' => PHPTAGS_MINOR_VERSION,
@@ -76,10 +76,13 @@ $wgAutoloadClasses['PhpTags']					= __DIR__ . '/PhpTags.body.php';
 
 $wgAutoloadClasses['PhpTags\\iRawOutput']		= __DIR__ . '/includes/iRawOutput.php';
 $wgAutoloadClasses['PhpTags\\outPrint']			= __DIR__ . '/includes/outPrint.php';
-$wgAutoloadClasses['PhpTags\\ExceptionPhpTags']	= __DIR__ . '/includes/ExceptionPhpTags.php';
+$wgAutoloadClasses['PhpTags\\ErrorHandler']		= __DIR__ . '/includes/ErrorHandler.php';
+$wgAutoloadClasses['PhpTags\\PhpTagsException']	= __DIR__ . '/includes/PhpTagsException.php';
 $wgAutoloadClasses['PhpTags\\Compiler']			= __DIR__ . '/includes/Compiler.php';
 $wgAutoloadClasses['PhpTags\\Runtime']			= __DIR__ . '/includes/Runtime.php';
-$wgAutoloadClasses['PhpTags\\BaseHooks']		= __DIR__ . '/includes/BaseHooks.php';
+$wgAutoloadClasses['PhpTags\\GenericObject']	= __DIR__ . '/includes/GenericObject.php';
+$wgAutoloadClasses['PhpTags\\GenericFunction']	= __DIR__ . '/includes/GenericFunction.php';
+$wgAutoloadClasses['PhpTags\\Hooks']			= __DIR__ . '/includes/Hooks.php';
 
 /**
  * Add files to phpunit test

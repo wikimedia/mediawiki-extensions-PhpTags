@@ -2102,9 +2102,9 @@ static $stat = 0;
 $bar++; $stat++;
 echo $foo, $argv[0], $argc, $bar, $stat, $argv["test"];', array('testTemplate', 'HELLO!'), 1),
 				array(
-					(string) new ExceptionPhpTags( PHPTAGS_EXCEPTION_NOTICE_UNDEFINED_VARIABLE, 'bar', 4, 'testTemplate' ),
+					(string) new PhpTagsException( PHPTAGS_EXCEPTION_NOTICE_UNDEFINED_VARIABLE, 'bar', 4, 'testTemplate' ),
 					'HELLO!', 'testTemplate', 2, 1, 1,
-					(string) new ExceptionPhpTags( PHPTAGS_EXCEPTION_NOTICE_UNDEFINED_INDEX, 'test', 5, 'testTemplate' ), null)
+					(string) new PhpTagsException( PHPTAGS_EXCEPTION_NOTICE_UNDEFINED_INDEX, 'test', 5, 'testTemplate' ), null)
 				);
 	}
 	public function testRun_echo_scope_static_3() {
@@ -2116,7 +2116,7 @@ static $stat = 0;
 $bar++; $stat++;
 echo $foo, $argv[0], $argc, $bar, $stat, $argv["test"];', array('testTemplate', 'HELLO!', 'test'=>'TEST!!!'), 2),
 				array(
-					(string) new ExceptionPhpTags( PHPTAGS_EXCEPTION_NOTICE_UNDEFINED_VARIABLE, 'bar', 4, 'testTemplate' ),
+					(string) new PhpTagsException( PHPTAGS_EXCEPTION_NOTICE_UNDEFINED_VARIABLE, 'bar', 4, 'testTemplate' ),
 					'HELLO!', 'testTemplate', 3, 1, 2, 'TEST!!!')
 				);
 	}
@@ -2129,9 +2129,9 @@ static $stat = 0;
 $bar++; $stat++;
 echo $foo, $argv[0], $argc, $bar, $stat, $argv["test"];', array('testTemplate', 'HELLO!'), 3),
 				array(
-					(string) new ExceptionPhpTags( PHPTAGS_EXCEPTION_NOTICE_UNDEFINED_VARIABLE, 'bar', 4, 'testTemplate' ),
+					(string) new PhpTagsException( PHPTAGS_EXCEPTION_NOTICE_UNDEFINED_VARIABLE, 'bar', 4, 'testTemplate' ),
 					'HELLO!', 'testTemplate', 2, 1, 3,
-					(string) new ExceptionPhpTags( PHPTAGS_EXCEPTION_NOTICE_UNDEFINED_INDEX, 'test', 5, 'testTemplate' ), null)
+					(string) new PhpTagsException( PHPTAGS_EXCEPTION_NOTICE_UNDEFINED_INDEX, 'test', 5, 'testTemplate' ), null)
 				);
 	}
 	public function testRun_echo_scope_static_5() {
