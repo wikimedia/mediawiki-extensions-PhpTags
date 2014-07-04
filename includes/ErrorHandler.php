@@ -23,13 +23,12 @@ class ErrorHandler {
 					preg_match( '/expects parameter (\\d+) to be (\\w+), (\\w+) given/', $errstr, $matches )
 				)
 			{
-				if ( $backtrace[3]['function'] == '__callStatic' ) {
-					Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new PhpTagsException(
-							PHPTAGS_EXCEPTION_WARNING_EXPECTS_PARAMETER,
-							array( substr($backtrace[3]['args'][0], 2), $matches[1], $matches[2], $matches[3])
-						);
-					return true;
-				}
+				$function = substr( $backtrace[3]['function'] == '__callStatic' ? $backtrace[3]['args'][0] : $backtrace[3]['function'], 2 );
+				Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new PhpTagsException(
+						PHPTAGS_EXCEPTION_WARNING_EXPECTS_PARAMETER,
+						array( $function, $matches[1], $matches[2], $matches[3])
+					);
+				return true;
 			}
 		} elseif( strpos( $errstr, 'expects exactly' ) !== false ) {
 			if (
@@ -39,13 +38,46 @@ class ErrorHandler {
 					preg_match( '/expects exactly (\\d+) (parameter[s]?), (\\d+) given/', $errstr, $matches )
 				)
 			{
-				if ( $backtrace[3]['function'] == '__callStatic' ) {
-					Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new PhpTagsException(
-							$matches[2] == 'parameter' ? PHPTAGS_EXCEPTION_WARNING_EXPECTS_EXACTLY_PARAMETER : PHPTAGS_EXCEPTION_WARNING_EXPECTS_EXACTLY_PARAMETERS,
-							array( substr($backtrace[3]['args'][0], 2), $matches[1], $matches[3] )
-						);
-					return true;
+				$function = substr( $backtrace[3]['function'] == '__callStatic' ? $backtrace[3]['args'][0] : $backtrace[3]['function'], 2 );
+				Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new PhpTagsException(
+						$matches[2] == 'parameter' ? PHPTAGS_EXCEPTION_WARNING_EXPECTS_EXACTLY_PARAMETER : PHPTAGS_EXCEPTION_WARNING_EXPECTS_EXACTLY_PARAMETERS,
+						array( $function, $matches[1], $matches[3] )
+					);
+				return true;
+			}
+		} elseif( strpos( $errstr, 'expects at least' ) !== false ) {
+			if (
+					false === isset($backtrace[1]['file']) &&
+					$backtrace[2]['function'] == "call_user_func_array" &&
+					isset($backtrace[3]['class']) && is_subclass_of( $backtrace[3]['class'], 'PhpTags\\GenericFunction') &&
+					preg_match( '/expects at least (\\d+) (parameter[s]?), (\\d+) given/', $errstr, $matches )
+				)
+			{
+				$function = substr( $backtrace[3]['function'] == '__callStatic' ? $backtrace[3]['args'][0] : $backtrace[3]['function'], 2 );
+				Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new PhpTagsException(
+						$matches[2] == 'parameter' ? PHPTAGS_EXCEPTION_WARNING_EXPECTS_AT_LEAST_PARAMETER : PHPTAGS_EXCEPTION_WARNING_EXPECTS_AT_LEAST_PARAMETERS,
+						array( $function, $matches[1], $matches[3] )
+					);
+				return true;
+			}
+		} elseif( strpos( $errstr, 'could not be converted' ) !== false ) {
+			if (
+					false === isset($backtrace[1]['file']) &&
+					$backtrace[2]['function'] == "call_user_func_array" &&
+					isset($backtrace[3]['class']) && is_subclass_of( $backtrace[3]['class'], 'PhpTags\\GenericFunction') &&
+					preg_match( '/^Object of class ([\\w:\\\\]+) could not be converted to (\\w+).*?/', $errstr, $matches )
+				)
+			{
+				foreach ( $object['arguments'] as $arg ) {
+					if ( $arg instanceof GenericObject && get_class($arg) == $matches[1] ) {
+						$matches[1] = $arg->getName();
+					}
 				}
+				Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new PhpTagsException(
+						PHPTAGS_EXCEPTION_NOTICE_OBJECT_CONVERTED,
+						array( $matches[1], $matches[2] )
+					);
+				return true;
 			}
 		}
 		return false;

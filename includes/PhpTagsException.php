@@ -24,6 +24,9 @@ define( 'PHPTAGS_EXCEPTION_WARNING_EXPECTS_PARAMETER', 3006 ); // PHP Warning:  
 define( 'PHPTAGS_EXCEPTION_WARNING_WRONG_PARAMETER_COUNT', 3007 ); // PHP Warning:  Wrong parameter count for $1()
 define( 'PHPTAGS_EXCEPTION_WARNING_EXPECTS_EXACTLY_PARAMETERS', 3008 ); // PHP Warning:  date_format() expects exactly 2 parameters, 3 given
 define( 'PHPTAGS_EXCEPTION_WARNING_EXPECTS_EXACTLY_PARAMETER', 3009 ); // PHP Warning:  date_format() expects exactly 1 parameter, 3 given
+define( 'PHPTAGS_EXCEPTION_WARNING_EXPECTS_AT_LEAST_PARAMETERS', 3010 );
+define( 'PHPTAGS_EXCEPTION_WARNING_EXPECTS_AT_LEAST_PARAMETER', 3011 ); // PHP Warning:  sprintf() expects at least 1 parameter, 0 given
+
 define( 'PHPTAGS_EXCEPTION_WARNING_CALLFUNCTION_INVALID_HOOK', 3100 );
 
 define( 'PHPTAGS_EXCEPTION_FATAL', 4 );
@@ -153,6 +156,12 @@ class PhpTagsException extends \Exception {
 				break;
 			case PHPTAGS_EXCEPTION_WARNING_EXPECTS_EXACTLY_PARAMETER:
 				$message = "{$arguments[0]}() expects exactly {$arguments[1]} parameter, {$arguments[2]} given";
+				break;
+			case PHPTAGS_EXCEPTION_WARNING_EXPECTS_AT_LEAST_PARAMETERS:
+				$message = "{$arguments[0]}() expects at least {$arguments[1]} parameters, {$arguments[2]} given";
+				break;
+			case PHPTAGS_EXCEPTION_WARNING_EXPECTS_AT_LEAST_PARAMETER:
+				$message = "{$arguments[0]}() expects at least {$arguments[1]} parameter, {$arguments[2]} given";
 				break;
 			case PHPTAGS_EXCEPTION_NOTICE_OBJECT_CONVERTED:
 				$message = "Object of class {$arguments[0]} could not be converted to {$arguments[1]}";

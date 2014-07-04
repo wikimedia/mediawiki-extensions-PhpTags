@@ -24,7 +24,7 @@ class outPrint implements iRawOutput {
 	}
 
 	public function __toString() {
-		if( $this->element !== null ){
+		if( $this->element !== false ){
 			if( $this->raw ) {
 				return \Html::rawElement( $this->element, array(), $this->contents ) . "\n";
 			}else{
