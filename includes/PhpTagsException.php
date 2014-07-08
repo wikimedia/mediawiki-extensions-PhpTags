@@ -27,7 +27,8 @@ define( 'PHPTAGS_EXCEPTION_WARNING_EXPECTS_EXACTLY_PARAMETER', 3009 ); // PHP Wa
 define( 'PHPTAGS_EXCEPTION_WARNING_EXPECTS_AT_LEAST_PARAMETERS', 3010 );
 define( 'PHPTAGS_EXCEPTION_WARNING_EXPECTS_AT_LEAST_PARAMETER', 3011 ); // PHP Warning:  sprintf() expects at least 1 parameter, 0 given
 
-define( 'PHPTAGS_EXCEPTION_WARNING_CALLFUNCTION_INVALID_HOOK', 3100 );
+define( 'PHPTAGS_EXCEPTION_WARNING_CALLFUNCTION_INVALID_HOOK', 3900 );
+define( 'PHPTAGS_EXCEPTION_WARNING_CALLCONSTANT_INVALID_HOOK', 3901 );
 
 define( 'PHPTAGS_EXCEPTION_FATAL', 4 );
 define( 'PHPTAGS_EXCEPTION_FATAL_CANNOT_USE_FOR_READING', 4001 ); // PHP Fatal error:  Cannot use [] for reading in Command line code on line 1
@@ -44,6 +45,8 @@ define( 'PHPTAGS_EXCEPTION_FATAL_BAD_CLASS_NAME', 4011 ); // PHP Fatal error:  C
 define( 'PHPTAGS_EXCEPTION_FATAL_MUST_EXTENDS_GENERIC', 4012 );
 define( 'PHPTAGS_EXCEPTION_FATAL_CREATEOBJECT_INVALID_CLASS', 4013 );
 define( 'PHPTAGS_EXCEPTION_FATAL_NONSTATIC_CALLED_STATICALLY', 4014 ); // PHP Fatal error:  Non-static method DateTime::format() cannot be called statically
+define( 'PHPTAGS_EXCEPTION_FATAL_NONEXISTENT_CONSTANT_CLASS', 4015 );
+define( 'PHPTAGS_EXCEPTION_FATAL_INVALID_CONSTANT_CLASS', 4016 );
 
 define( 'PHPTAGS_EXCEPTION_CATCHABLE_FATAL', 5 );
 define( 'PHPTAGS_EXCEPTION_FATAL_OBJECT_COULD_NOT_BE_CONVERTED', 6001 ); //PHP Catchable fatal error:  Object of class stdClass could not be converted to string
@@ -184,8 +187,17 @@ class PhpTagsException extends \Exception {
 			case PHPTAGS_EXCEPTION_FATAL_INVALID_HOOK_CLASS:
 				$message = "For the function {$arguments[0]} was registered invalid hook class {$arguments[1]}";
 				break;
+			case PHPTAGS_EXCEPTION_FATAL_NONEXISTENT_CONSTANT_CLASS:
+				$message = "For the constant {$arguments[0]} was registered nonexistent hook class {$arguments[1]}";
+				break;
+			case PHPTAGS_EXCEPTION_FATAL_INVALID_CONSTANT_CLASS:
+				$message = "For the constant {$arguments[0]} was registered invalid hook class {$arguments[1]}";
+				break;
 			case PHPTAGS_EXCEPTION_WARNING_CALLFUNCTION_INVALID_HOOK:
 				$message = "Class {$arguments[0]} has registered hook for function {$arguments[1]}, but one has no information about how to process it.";
+				break;
+			case PHPTAGS_EXCEPTION_WARNING_CALLCONSTANT_INVALID_HOOK:
+				$message = "Class {$arguments[0]} has registered hook for constant {$arguments[1]}, but one has no information about how to process it.";
 				break;
 			case PHPTAGS_EXCEPTION_FATAL_CREATEOBJECT_INVALID_CLASS:
 				$message = "Cannot find class {$arguments[0]} for create object {$arguments[1]}";

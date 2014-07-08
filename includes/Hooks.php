@@ -164,7 +164,23 @@ class Hooks {
 	 * @return mixed
 	 */
 	private static function callConstant( $name ) {
-		if ( isset(self::$constantValues[$name]) || array_key_exists($name, self::$constantValues) ) {
+		static $constants = array(); // cache of called constants
+
+		if ( isset ( self::$constants[$name] ) ) {
+			$className = self::$constants[$name];
+
+			if( false === isset( $constants[$className] )  ) { // it is not exists in cache
+				// Need to check this class
+				if( false === class_exists( $className ) ) {
+					throw new PhpTagsException( PHPTAGS_EXCEPTION_FATAL_NONEXISTENT_CONSTANT_CLASS, array($name, $className) );
+				}
+				if ( false === is_subclass_of( $className, 'PhpTags\\GenericFunction' ) ) {
+					throw new PhpTagsException( PHPTAGS_EXCEPTION_FATAL_INVALID_CONSTANT_CLASS, array($name, $className) );
+				}
+				$constants[$className] = true; // add to cache
+			}
+			return $className::getConstantValue( $name );
+		} elseif ( isset( self::$constantValues[$name] ) || array_key_exists( $name, self::$constantValues ) ) {
 			return self::$constantValues[$name];
 		}
 		Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new PhpTagsException( PHPTAGS_EXCEPTION_NOTICE_UNDEFINED_CONSTANT, $name );
@@ -249,9 +265,7 @@ class Hooks {
 		if ( false === class_exists( $className ) ) {
 			throw new PhpTagsException( PHPTAGS_EXCEPTION_FATAL_CREATEOBJECT_INVALID_CLASS, array($className, $name) );
 		}
-
-		$classParens = class_parents( $className );
-		if ( false === isset($classParens['PhpTags\\GenericObject']) ) {
+		if ( false === is_subclass_of( $className, 'PhpTags\\GenericObject' ) ) {
 			throw new PhpTagsException( PHPTAGS_EXCEPTION_FATAL_MUST_EXTENDS_GENERIC, $className );
 		}
 
