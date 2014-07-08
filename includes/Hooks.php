@@ -19,6 +19,13 @@ class Hooks {
 	private static $constantValues = array();
 
 	/**
+	 * Array of constant's hooks
+	 * self::$constants[ constant_name ] = class of constant for calling
+	 * @var array
+	 */
+	private static $constants = array();
+
+	/**
 	 * Array of function's hooks
 	 * self::$functions[ function_name ] = class of function for calling
 	 * @var array
@@ -33,19 +40,28 @@ class Hooks {
 
 	/**
 	 * Set the values of the constants
-	 * @param array $constant_values
+	 * @param array $constantValues
 	 */
-	public static function setConstantValues( array $constant_values ) {
-		self::$constantValues += $constant_values;
+	public static function setConstantValues( array $constantValues ) {
+		self::$constantValues += $constantValues;
+	}
+
+	/**
+	 * Set the hooks of the constants
+	 * @param string $className
+	 * @param array $constantNames
+	 */
+	public static function setConstants( $className, array $constantNames ) {
+		self::$constants += array_fill_keys( $constantNames, $className );
 	}
 
 	/**
 	 * Set the hooks of the functions
-	 * @param string $class_name Name of the class that will be used for processing the functions
-	 * @param array $function_names List of the functions
+	 * @param string $className Name of the class that will be used for processing the functions
+	 * @param array $functionNames List of the functions
 	 */
-	public static function setFunctions( $class_name, array $function_names ) {
-		self::$functions += array_fill_keys( $function_names, $class_name );
+	public static function setFunctions( $className, array $functionNames ) {
+		self::$functions += array_fill_keys( $functionNames, $className );
 	}
 
 	/**

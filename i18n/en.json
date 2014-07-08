@@ -4,6 +4,6 @@
             "pastakhov"
         ]
     },
-    "phptags-desc": "Enhances parser with Magic expression that has syntax of PHP language",
+    "phptags-desc": "Allows users to use the Magic expressions with PHP language syntax",
     "phptags-disabled-for-namespace": "Extension PhpTags is disabled for the namespace \"$1\"."
 }

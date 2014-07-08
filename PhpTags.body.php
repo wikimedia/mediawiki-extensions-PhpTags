@@ -40,11 +40,13 @@ class PhpTags {
 		}
 
 		$command = array_shift($args);
-		if( count($args) > 0 ) {
-			foreach ($args as &$value) {
+		if ( count( $args ) > 0 ) {
+			foreach ( $args as &$value ) {
 				$value = $frame->expand( $value );
 			}
-			$command = "echo $command (" . implode(',', $args) . ');';
+			$command = "echo $command (" . implode( ',', $args ) . ');';
+		} elseif ( preg_match( '/^\$\S+$/', $command ) == 1 ) {
+			$command = "echo $command;";
 		}
 
 		try {
