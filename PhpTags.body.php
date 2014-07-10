@@ -45,7 +45,7 @@ class PhpTags {
 				$value = $frame->expand( $value );
 			}
 			$command = "echo $command (" . implode( ',', $args ) . ');';
-		} elseif ( preg_match( '/^\$\S+$/', $command ) == 1 ) {
+		} elseif ( preg_match( '/^\S+$/', $command ) == 1 ) {
 			$command = "echo $command;";
 		}
 

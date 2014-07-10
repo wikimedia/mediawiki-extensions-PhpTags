@@ -43,7 +43,7 @@ class Hooks {
 	 * @param array $constantValues
 	 */
 	public static function setConstantValues( array $constantValues ) {
-		self::$constantValues += $constantValues;
+		self::$constantValues = $constantValues + self::$constantValues;
 	}
 
 	/**
@@ -52,7 +52,7 @@ class Hooks {
 	 * @param array $constantNames
 	 */
 	public static function setConstants( $className, array $constantNames ) {
-		self::$constants += array_fill_keys( $constantNames, $className );
+		self::$constants = array_fill_keys( $constantNames, $className ) + self::$constants;
 	}
 
 	/**
@@ -61,7 +61,7 @@ class Hooks {
 	 * @param array $functionNames List of the functions
 	 */
 	public static function setFunctions( $className, array $functionNames ) {
-		self::$functions += array_fill_keys( $functionNames, $className );
+		self::$functions = array_fill_keys( $functionNames, $className ) + self::$functions;
 	}
 
 	/**
@@ -69,7 +69,7 @@ class Hooks {
 	 * @param array $objects
 	 */
 	public static function setObjects( array $objects ) {
-		self::$objects += $objects;
+		self::$objects = $objects + self::$objects;
 	}
 
 	/**
