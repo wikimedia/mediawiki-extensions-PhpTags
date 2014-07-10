@@ -39,6 +39,9 @@ class PhpTags {
 			self::$needInitRuntime = false;
 		}
 
+		\PhpTags\Runtime::$transit[PHPTAGS_TRANSIT_PARSER] = $parser;
+		\PhpTags\Runtime::$transit[PHPTAGS_TRANSIT_PPFRAME] = $frame;
+
 		$command = array_shift($args);
 		if ( count( $args ) > 0 ) {
 			foreach ( $args as &$value ) {
@@ -60,9 +63,8 @@ class PhpTags {
 			$result = \PhpTags\Runtime::run(
 					$bytecode,
 					array_merge( (array)$titleText, $frame->getArguments() ),
-					self::getScope( $frame ),
-					array( PHPTAGS_TRANSIT_PARSER=>&$parser, PHPTAGS_TRANSIT_PPFRAME=>&$frame )
-					);
+					self::getScope( $frame )
+				);
 			$return = implode( $result );
 		} catch (\PhpTags\PhpTagsException $exc) {
 			$return = (string) $exc;
@@ -93,7 +95,8 @@ class PhpTags {
 			self::$needInitRuntime = false;
 		}
 
-		$is_debug = isset($args['debug']);
+		\PhpTags\Runtime::$transit[PHPTAGS_TRANSIT_PARSER] = $parser;
+		\PhpTags\Runtime::$transit[PHPTAGS_TRANSIT_PPFRAME] = $frame;
 		$return = false;
 
 		try {
@@ -107,9 +110,8 @@ class PhpTags {
 			$result = \PhpTags\Runtime::run(
 					$bytecode,
 					array_merge( (array)$titleText, $frame->getArguments() ),
-					self::getScope( $frame ),
-					array( PHPTAGS_TRANSIT_PARSER=>&$parser, PHPTAGS_TRANSIT_PPFRAME=>&$frame )
-					);
+					self::getScope( $frame )
+				);
 		} catch ( \PhpTags\PhpTagsException $exc ) {
 			// $wgPhpTagsTime += microtime(true) - $time;
 			$wgPhpTagsTime += $parser->mOutput->getTimeSinceStart('cpu') - $time;
@@ -122,14 +124,6 @@ class PhpTags {
 
 		// $wgPhpTagsTime += microtime(true) - $time;
 		$wgPhpTagsTime += $parser->mOutput->getTimeSinceStart('cpu') - $time;
-
-		if( $is_debug ) {
-			$parser->getOutput()->addModules('ext.php.Debug');
-			if( self::$DebugLoops ) {
-				$parser->getOutput()->addModules('ext.php.DebugLoops');
-			}
-			$return .= self::insertNoWiki( $parser, array_shift($result) ) . "\n";
-		}
 
 		if( count($result) > 0 ) {
 			//$return .= Sanitizer::removeHTMLtags(implode($result));
