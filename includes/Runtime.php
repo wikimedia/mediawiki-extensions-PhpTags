@@ -227,7 +227,7 @@ class Runtime {
 							break;
 						case PHPTAGS_T_PRINT:
 							if( $value[PHPTAGS_STACK_PARAM] instanceof GenericObject ) {
-								$return[] = 'object';
+								$return[] = $value[PHPTAGS_STACK_PARAM]->toString();
 							} else {
 								$return[] = $value[PHPTAGS_STACK_PARAM];
 							}

@@ -16,7 +16,7 @@ if ( !defined( 'MEDIAWIKI' ) ) {
 }
 
 define( 'PHPTAGS_MAJOR_VERSION', 2 );
-define( 'PHPTAGS_MINOR_VERSION', 3 );
+define( 'PHPTAGS_MINOR_VERSION', 4 );
 define( 'PHPTAGS_RELEASE_VERSION', 0 );
 define( 'PHPTAGS_VERSION', PHPTAGS_MAJOR_VERSION . '.' . PHPTAGS_MINOR_VERSION . '.' . PHPTAGS_RELEASE_VERSION );
 
@@ -93,6 +93,8 @@ $wgHooks['UnitTestsList'][] = function ( &$files ) {
 	$files = array_merge( $files, glob( "$testDir/includes/*Test.php" ) );
 	return true;
 };
+
+$wgParserTestFiles[] = __DIR__ . '/tests/parser/PhpTagsTests.txt';
 
 define( 'PHPTAGS_TRANSIT_VARIABLES', 'v' );
 define( 'PHPTAGS_TRANSIT_PARSER', 'p' );

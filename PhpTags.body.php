@@ -60,9 +60,12 @@ class PhpTags {
 			// self::$compileTime += microtime(true) - $time;
 			self::$compileTime += $parser->mOutput->getTimeSinceStart('cpu') - $time;
 
+			$arguments = $frame->getArguments();
+			$arguments[0] = $titleText;
+
 			$result = \PhpTags\Runtime::run(
 					$bytecode,
-					array_merge( (array)$titleText, $frame->getArguments() ),
+					$arguments,
 					self::getScope( $frame )
 				);
 			$return = implode( $result );
@@ -107,9 +110,12 @@ class PhpTags {
 			// self::$compileTime += microtime(true) - $time;
 			self::$compileTime += $parser->mOutput->getTimeSinceStart('cpu') - $time;
 
+			$arguments = $frame->getArguments();
+			$arguments[0] = $titleText;
+
 			$result = \PhpTags\Runtime::run(
 					$bytecode,
-					array_merge( (array)$titleText, $frame->getArguments() ),
+					$arguments,
 					self::getScope( $frame )
 				);
 		} catch ( \PhpTags\PhpTagsException $exc ) {
@@ -136,7 +142,13 @@ class PhpTags {
 		return \UtfNormal::cleanUp($return);
 	}
 
-	public static function isBanned(PPFrame $frame) {
+	/**
+	 *
+	 * @global type $wgPhpTagsNamespaces
+	 * @param PPFrame $frame
+	 * @return boolean
+	 */
+	public static function isBanned( PPFrame $frame ) {
 		global $wgPhpTagsNamespaces;
 		if ( $wgPhpTagsNamespaces !== true && !in_array($frame->getTitle()->getNamespace(), $wgPhpTagsNamespaces) ) {
 			return Html::element(
@@ -161,7 +173,7 @@ class PhpTags {
 	 * @param string $text
 	 * @return string
 	 */
-	private static function insertGeneral(Parser &$parser, &$text) {
+	private static function insertGeneral( $parser, $text ) {
 		return $parser->insertStripItem( $text );
 	}
 
@@ -171,7 +183,7 @@ class PhpTags {
 	 * @param string $text
 	 * @return string
 	 */
-	private static function insertNoWiki(Parser &$parser, &$text) {
+	private static function insertNoWiki( $parser, $text ) {
 		// @see Parser::insertStripItem()
 		$rnd = "{$parser->mUniqPrefix}-item-{$parser->mMarkerIndex}-" . Parser::MARKER_SUFFIX;
 		$parser->mMarkerIndex++;

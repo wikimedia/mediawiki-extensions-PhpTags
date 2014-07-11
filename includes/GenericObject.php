@@ -71,4 +71,12 @@ class GenericObject {
 		return $this->name;
 	}
 
+	/**
+	 * It is alias for PHP __toString()
+	 * @return string
+	 */
+	public function toString() {
+		return 'object';
+	}
+
 }

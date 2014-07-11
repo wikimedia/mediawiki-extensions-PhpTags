@@ -1,0 +1,60 @@
+!! article
+argv 0 test page
+!! text
+<phptag> echo $argv[0]; </phptag>
+!! endarticle
+
+!! article
+argv 1 test page
+!! text
+<phptag> echo $argv[1]; </phptag>
+!! endarticle
+
+!! article
+argv 7 test page
+!! text
+<phptag> echo $argv[7]; </phptag>
+!! endarticle
+
+!! article
+argv foo test page
+!! text
+{{#phptag: $argv['foo'] }}
+!! endarticle
+
+
+!! test
+argv 0 test
+!! input
+{{:argv 0 test page}}
+!! result
+<p>Argv 0 test page
+</p>
+!! end
+
+!! test
+argv 1 test
+!! input
+{{:argv 1 test page|Hello}}
+!! result
+<p>Hello
+</p>
+!! end
+
+!! test
+argv 7 test
+!! input
+{{:argv 7 test page|7=Seven}}
+!! result
+<p>Seven
+</p>
+!! end
+
+!! test
+argv foo test
+!! input
+{{:argv foo test page|foo=bar}}
+!! result
+<p>bar
+</p>
+!! end
