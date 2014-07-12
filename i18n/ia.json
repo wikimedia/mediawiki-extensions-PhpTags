@@ -1,0 +1,9 @@
+{
+	"@metadata": {
+		"authors": [
+			"McDutchie"
+		]
+	},
+	"phptags-desc": "Permitte al usatores de usar le expressiones Magic con le syntaxe del linguage PHP",
+	"phptags-disabled-for-namespace": "Le extension PhpTags ha essite disactivate pro le spatio de nomines \"$1\"."
+}

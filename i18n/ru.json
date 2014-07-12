@@ -1,0 +1,8 @@
+{
+	"@metadata": {
+		"authors": [
+			"Okras"
+		]
+	},
+	"phptags-disabled-for-namespace": "Расширение PhpTags отключено для пространства имён «$1»."
+}

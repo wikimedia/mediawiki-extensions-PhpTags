@@ -1,0 +1,9 @@
+{
+	"@metadata": {
+		"authors": [
+			"SnowedEarth"
+		]
+	},
+	"phptags-desc": "Autorise les utilisateurs à utiliser les expressions Magic avec la syntaxe du langage PHP",
+	"phptags-disabled-for-namespace": "L'extension PhpTags est désactivée pour l'espace de noms «$1»."
+}

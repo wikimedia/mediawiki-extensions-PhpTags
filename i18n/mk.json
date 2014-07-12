@@ -1,0 +1,9 @@
+{
+	"@metadata": {
+		"authors": [
+			"Bjankuloski06"
+		]
+	},
+	"phptags-desc": "Им овозможува на корисниците да ги употребуваат изразите на Magic со јазичната синтакса на PHP",
+	"phptags-disabled-for-namespace": "Додатокот PhpTags е оневозможен во именскиот простор „$1“."
+}

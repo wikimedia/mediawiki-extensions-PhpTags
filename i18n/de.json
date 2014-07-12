@@ -4,5 +4,6 @@
 			"Metalhead64"
 		]
 	},
+	"phptags-desc": "Ermöglicht es Benutzern, die Magic-Ausdrücke mit PHP-Sprachsyntax zu nutzen",
 	"phptags-disabled-for-namespace": "Die Erweiterung „PhpTags“ ist für den Namensraum „$1“ deaktiviert."
 }
