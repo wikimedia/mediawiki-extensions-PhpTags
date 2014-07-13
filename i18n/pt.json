@@ -1,0 +1,8 @@
+{
+	"@metadata": {
+		"authors": [
+			"Vitorvicentevalente"
+		]
+	},
+	"phptags-disabled-for-namespace": "A extensão PhpTags está desativada para o domínio \"$1\"."
+}
