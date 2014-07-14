@@ -1,0 +1,9 @@
+{
+	"@metadata": {
+		"authors": [
+			"MrTapsa"
+		]
+	},
+	"phptags-desc": "Mahdollistaa Magic-lausekkeiden käytön PHP-kielen syntaksin kanssa",
+	"phptags-disabled-for-namespace": "PhpTags-laajennus on poistettu käytöstä nimitilan  \"$1\" kanssa."
+}

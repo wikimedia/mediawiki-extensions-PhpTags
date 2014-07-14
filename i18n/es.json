@@ -4,5 +4,6 @@
 			"Fitoschido"
 		]
 	},
+	"phptags-desc": "Permite que los usuarios utilicen expresiones mágicas con la sintaxis del lenguaje PHP",
 	"phptags-disabled-for-namespace": "La extensión PhpTags está desactivada en el espacio de nombres «$1»."
 }
