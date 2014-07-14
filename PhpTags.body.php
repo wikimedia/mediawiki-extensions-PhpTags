@@ -60,8 +60,7 @@ class PhpTags {
 			// self::$compileTime += microtime(true) - $time;
 			self::$compileTime += $parser->mOutput->getTimeSinceStart('cpu') - $time;
 
-			$arguments = $frame->getArguments();
-			$arguments[0] = $titleText;
+			$arguments = array( $titleText ) + $frame->getArguments();
 
 			$result = \PhpTags\Runtime::run(
 					$bytecode,
@@ -110,8 +109,7 @@ class PhpTags {
 			// self::$compileTime += microtime(true) - $time;
 			self::$compileTime += $parser->mOutput->getTimeSinceStart('cpu') - $time;
 
-			$arguments = $frame->getArguments();
-			$arguments[0] = $titleText;
+			$arguments = array( $titleText ) + $frame->getArguments();
 
 			$result = \PhpTags\Runtime::run(
 					$bytecode,
