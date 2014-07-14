@@ -49,7 +49,7 @@ define( 'PHPTAGS_EXCEPTION_FATAL_NONEXISTENT_CONSTANT_CLASS', 4015 );
 define( 'PHPTAGS_EXCEPTION_FATAL_INVALID_CONSTANT_CLASS', 4016 );
 
 define( 'PHPTAGS_EXCEPTION_CATCHABLE_FATAL', 5 );
-define( 'PHPTAGS_EXCEPTION_FATAL_OBJECT_COULD_NOT_BE_CONVERTED', 6001 ); //PHP Catchable fatal error:  Object of class stdClass could not be converted to string
+define( 'PHPTAGS_EXCEPTION_FATAL_OBJECT_COULD_NOT_BE_CONVERTED', 5001 ); //PHP Catchable fatal error:  Object of class stdClass could not be converted to string
 
 define( 'PHPTAGS_EXCEPTION_PARSE', 6 );
 define( 'PHPTAGS_EXCEPTION_SYNTAX_ERROR_UNEXPECTED', 6001 ); // PHP Parse error:  syntax error, unexpected $end, expecting ',' or ';' in Command line code on line 1

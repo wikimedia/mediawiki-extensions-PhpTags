@@ -76,7 +76,7 @@ class GenericObject {
 	 * @return string
 	 */
 	public function toString() {
-		return 'object';
+		throw new PhpTagsException( PHPTAGS_EXCEPTION_FATAL_OBJECT_COULD_NOT_BE_CONVERTED, array( $this->name, 'string' ) );
 	}
 
 }
