@@ -11,6 +11,12 @@ namespace PhpTags;
  */
 class Hooks {
 
+	const EXPECTS_EXACTLY_PARAMETERS = '=';
+	const TYPE_NUMBER = 1;
+	const TYPE_MIXED = 2;
+	const TYPE_CALLBACK = 3;
+	const TYPE_ARRAY = 4;
+
 	/**
 	 * Array of constant's values
 	 * self::$constantValues[ constant_name ] = constant_value
@@ -209,12 +215,18 @@ class Hooks {
 	 */
 	private static function callObjectsMethod( $arguments, $name, $object ) {
 		if ( $object instanceof GenericObject ) {
-			return call_user_func_array( array($object, "m_$name"), $arguments );
+			if ( true === $object->checkArguments( $object, $name, $arguments ) ) {
+				return call_user_func_array( array($object, "m_$name"), $arguments );
+			} else {
+				return;
+			}
 		}
 		// it is calling of static method
 		$className = self::getClassNameByObjectName( $object );
-		$arguments[] = $object;
-		return call_user_func_array( array($className, "s_$name"), $arguments );
+		if ( true === $className::checkArguments( $object, $name, $arguments ) ) {
+			$arguments[] = $object;
+			return call_user_func_array( array($className, "s_$name"), $arguments );
+		}
 	}
 
 	/**

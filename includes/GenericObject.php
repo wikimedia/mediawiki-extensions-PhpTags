@@ -83,4 +83,43 @@ class GenericObject {
 		\PhpTags\Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new \PhpTags\PhpTagsException( $exception, $arguments );
 	}
 
+	public static function checkArguments( $object, $method, $arguments, $expects = false ) {
+		if ( false === $expects ) {
+			return true;
+		}
+
+		$argCount = count( $arguments );
+		if( true === isset( $expects[Hooks::EXPECTS_EXACTLY_PARAMETERS] ) && $argCount != $expects[Hooks::EXPECTS_EXACTLY_PARAMETERS] ) {
+			\PhpTags\Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new \PhpTags\PhpTagsException(
+					\PhpTags\PhpTagsException::WARNING_EXPECTS_EXACTLY_PARAMETER,
+					array( "$object::$method", $expects[Hooks::EXPECTS_EXACTLY_PARAMETERS], $argCount )
+				);
+			return false;
+		}
+
+		$error = false;
+		for ( $i = 0; $i < $argCount; $i++ ) {
+			if ( true === isset( $expects[$i] ) ) {
+				switch ( $expects[$i] ) {
+					case Hooks::TYPE_NUMBER:
+						if ( false === is_numeric( $arguments[$i] ) ) {
+							$error = 'number';
+							break 2;
+						}
+						break;
+				}
+			}
+		}
+
+		if ( $error === false ) {
+			return true;
+		}
+
+		\PhpTags\Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new \PhpTags\PhpTagsException(
+				\PhpTags\PhpTagsException::WARNING_EXPECTS_PARAMETER,
+				array( "$object::$method", $i+1, $error, gettype( $arguments[$i] ) )
+			);
+		return false;
+	}
+
 }
