@@ -31,9 +31,9 @@ class GenericObject {
 		$subname = substr($name, 2);
 		switch ( $callType ) {
 			case 'm_': // method
-				throw new PhpTagsException( PHPTAGS_EXCEPTION_FATAL_CALL_TO_UNDEFINED_METHOD, array($this->name, $subname) );
+				throw new PhpTagsException( PhpTagsException::FATAL_CALL_TO_UNDEFINED_METHOD, array($this->name, $subname) );
 			case 'p_': // property
-				Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new PhpTagsException( PHPTAGS_EXCEPTION_NOTICE_UNDEFINED_PROPERTY, array($this->name, $subname) );
+				Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_PROPERTY, array($this->name, $subname) );
 				break;
 			default:
 				throw new \Exception( 'Call to undefined method ' . __CLASS__ . "::$name()" );
@@ -46,9 +46,9 @@ class GenericObject {
 		$subname = substr($name, 2);
 		switch ( $callType ) {
 			case 's_': // static method
-				throw new PhpTagsException( PHPTAGS_EXCEPTION_FATAL_CALL_TO_UNDEFINED_METHOD, array($object, $subname) );
+				throw new PhpTagsException( PhpTagsException::FATAL_CALL_TO_UNDEFINED_METHOD, array($object, $subname) );
 			case 'c_': // constant
-				Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new PhpTagsException( PHPTAGS_EXCEPTION_NOTICE_UNDEFINED_CLASS_CONSTANT, array($object, $subname) );
+				Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_CLASS_CONSTANT, array($object, $subname) );
 				break;
 			default:
 				throw new \Exception( 'Call to undefined method ' . __CLASS__ . "::$name()" );
@@ -76,7 +76,11 @@ class GenericObject {
 	 * @return string
 	 */
 	public function toString() {
-		throw new PhpTagsException( PHPTAGS_EXCEPTION_FATAL_OBJECT_COULD_NOT_BE_CONVERTED, array( $this->name, 'string' ) );
+		throw new PhpTagsException( PhpTagsException::FATAL_OBJECT_COULD_NOT_BE_CONVERTED, array( $this->name, 'string' ) );
+	}
+
+	protected static function pushException( $exception, $arguments ) {
+		\PhpTags\Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new \PhpTags\PhpTagsException( $exception, $arguments );
 	}
 
 }

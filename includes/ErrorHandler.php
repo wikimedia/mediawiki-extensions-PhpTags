@@ -25,7 +25,7 @@ class ErrorHandler {
 			{
 				$function = substr( $backtrace[3]['function'] == '__callStatic' ? $backtrace[3]['args'][0] : $backtrace[3]['function'], 2 );
 				Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new PhpTagsException(
-						PHPTAGS_EXCEPTION_WARNING_EXPECTS_PARAMETER,
+						PhpTagsException::WARNING_EXPECTS_PARAMETER,
 						array( $function, $matches[1], $matches[2], $matches[3])
 					);
 				return true;
@@ -40,7 +40,7 @@ class ErrorHandler {
 			{
 				$function = substr( $backtrace[3]['function'] == '__callStatic' ? $backtrace[3]['args'][0] : $backtrace[3]['function'], 2 );
 				Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new PhpTagsException(
-						$matches[2] == 'parameter' ? PHPTAGS_EXCEPTION_WARNING_EXPECTS_EXACTLY_PARAMETER : PHPTAGS_EXCEPTION_WARNING_EXPECTS_EXACTLY_PARAMETERS,
+						$matches[2] == 'parameter' ? PhpTagsException::WARNING_EXPECTS_EXACTLY_PARAMETER : PhpTagsException::WARNING_EXPECTS_EXACTLY_PARAMETERS,
 						array( $function, $matches[1], $matches[3] )
 					);
 				return true;
@@ -55,7 +55,7 @@ class ErrorHandler {
 			{
 				$function = substr( $backtrace[3]['function'] == '__callStatic' ? $backtrace[3]['args'][0] : $backtrace[3]['function'], 2 );
 				Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new PhpTagsException(
-						$matches[2] == 'parameter' ? PHPTAGS_EXCEPTION_WARNING_EXPECTS_AT_LEAST_PARAMETER : PHPTAGS_EXCEPTION_WARNING_EXPECTS_AT_LEAST_PARAMETERS,
+						$matches[2] == 'parameter' ? PhpTagsException::WARNING_EXPECTS_AT_LEAST_PARAMETER : PhpTagsException::WARNING_EXPECTS_AT_LEAST_PARAMETERS,
 						array( $function, $matches[1], $matches[3] )
 					);
 				return true;
@@ -74,7 +74,7 @@ class ErrorHandler {
 					}
 				}
 				Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new PhpTagsException(
-						PHPTAGS_EXCEPTION_NOTICE_OBJECT_CONVERTED,
+						PhpTagsException::NOTICE_OBJECT_CONVERTED,
 						array( $matches[1], $matches[2] )
 					);
 				return true;
@@ -85,7 +85,7 @@ class ErrorHandler {
 
 	private static function onRuntimeError( $errno, $errstr, $errfile, $errline, $object ) {
 		if ( strpos( $errstr, 'Division by zero' ) !== false ) {
-			Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new PhpTagsException( PHPTAGS_EXCEPTION_WARNING_DIVISION_BY_ZERO, null );
+			Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new PhpTagsException( PhpTagsException::WARNING_DIVISION_BY_ZERO, null );
 			return true;
 		}
 		$matches = null;
@@ -104,7 +104,7 @@ class ErrorHandler {
 		} else {
 			$matches[1] = $object['value'][PHPTAGS_STACK_PARAM_2]->getName();
 		}
-		Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new PhpTagsException( PHPTAGS_EXCEPTION_NOTICE_OBJECT_CONVERTED, array($matches[1], $matches[2]) );
+		Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new PhpTagsException( PhpTagsException::NOTICE_OBJECT_CONVERTED, array($matches[1], $matches[2]) );
 		return true;
 	}
 
