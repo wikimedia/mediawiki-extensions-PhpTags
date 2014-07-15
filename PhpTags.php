@@ -16,11 +16,11 @@ if ( !defined( 'MEDIAWIKI' ) ) {
 }
 
 define( 'PHPTAGS_MAJOR_VERSION', 2 );
-define( 'PHPTAGS_MINOR_VERSION', 4 );
-define( 'PHPTAGS_RELEASE_VERSION', 1 );
+define( 'PHPTAGS_MINOR_VERSION', 5 );
+define( 'PHPTAGS_RELEASE_VERSION', 0 );
 define( 'PHPTAGS_VERSION', PHPTAGS_MAJOR_VERSION . '.' . PHPTAGS_MINOR_VERSION . '.' . PHPTAGS_RELEASE_VERSION );
 
-define( 'PHPTAGS_HOOK_RELEASE', 3 );
+define( 'PHPTAGS_HOOK_RELEASE', 4 );
 define( 'PHPTAGS_RUNTIME_RELEASE', 1 );
 
 // Register this extension on Special:Version

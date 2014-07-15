@@ -15,11 +15,11 @@ class GenericFunction {
 
 	public static function __callStatic( $name, $arguments ) {
 		$functionName = substr( $name, 2 );
-		throw new PhpTagsException( PHPTAGS_EXCEPTION_WARNING_CALLFUNCTION_INVALID_HOOK, array(get_called_class(), $functionName) );
+		throw new PhpTagsException( PhpTagsException::WARNING_CALLFUNCTION_INVALID_HOOK, array(get_called_class(), $functionName) );
 	}
 
 	public static function getConstantValue( $constantName ) {
-		throw new PhpTagsException( PHPTAGS_EXCEPTION_WARNING_CALLCONSTANT_INVALID_HOOK, array(get_called_class(), $name) );
+		throw new PhpTagsException( PhpTagsException::WARNING_CALLCONSTANT_INVALID_HOOK, array(get_called_class(), $name) );
 	}
 
 	public static function getFunctionReferences( $function_name ) {

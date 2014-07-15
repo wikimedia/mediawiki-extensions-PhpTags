@@ -117,15 +117,15 @@ class Hooks {
 		}
 
 		if ( false === isset( self::$functions[$name] ) ) {
-			throw new PhpTagsException( PHPTAGS_EXCEPTION_FATAL_CALL_TO_UNDEFINED_FUNCTION, $name );
+			throw new PhpTagsException( PhpTagsException::FATAL_CALL_TO_UNDEFINED_FUNCTION, $name );
 		}
 
 		$functionClassName = self::$functions[$name];
 		if( false === class_exists( $functionClassName ) ) {
-			throw new PhpTagsException( PHPTAGS_EXCEPTION_FATAL_NONEXISTENT_HOOK_CLASS, array($name, $functionClassName) );
+			throw new PhpTagsException( PhpTagsException::FATAL_NONEXISTENT_HOOK_CLASS, array($name, $functionClassName) );
 		}
 		if ( false === is_subclass_of( $functionClassName, 'PhpTags\\GenericFunction' ) ) {
-			throw new PhpTagsException( PHPTAGS_EXCEPTION_FATAL_INVALID_HOOK_CLASS, array($name, $functionClassName) );
+			throw new PhpTagsException( PhpTagsException::FATAL_INVALID_HOOK_CLASS, array($name, $functionClassName) );
 		}
 
 		$hookInfo = array( $functionClassName, $functionClassName::getFunctionReferences($name) );
@@ -172,10 +172,10 @@ class Hooks {
 			if( false === isset( $constants[$className] )  ) { // it is not exists in cache
 				// Need to check this class
 				if( false === class_exists( $className ) ) {
-					throw new PhpTagsException( PHPTAGS_EXCEPTION_FATAL_NONEXISTENT_CONSTANT_CLASS, array($name, $className) );
+					throw new PhpTagsException( PhpTagsException::FATAL_NONEXISTENT_CONSTANT_CLASS, array($name, $className) );
 				}
 				if ( false === is_subclass_of( $className, 'PhpTags\\GenericFunction' ) ) {
-					throw new PhpTagsException( PHPTAGS_EXCEPTION_FATAL_INVALID_CONSTANT_CLASS, array($name, $className) );
+					throw new PhpTagsException( PhpTagsException::FATAL_INVALID_CONSTANT_CLASS, array($name, $className) );
 				}
 				$constants[$className] = true; // add to cache
 			}
@@ -183,7 +183,7 @@ class Hooks {
 		} elseif ( isset( self::$constantValues[$name] ) || array_key_exists( $name, self::$constantValues ) ) {
 			return self::$constantValues[$name];
 		}
-		Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new PhpTagsException( PHPTAGS_EXCEPTION_NOTICE_UNDEFINED_CONSTANT, $name );
+		Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_CONSTANT, $name );
 		return $name;
 	}
 
@@ -244,7 +244,7 @@ class Hooks {
 		} catch ( \Exception $exc ) {
 			if ( $showException ) {
 				list(, $message) = explode( ': ', $exc->getMessage(), 2 );
-				Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new PhpTagsException( PHPTAGS_EXCEPTION_FATAL_OBJECT_NOT_CREATED, array( $name, $message ) );
+				Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new PhpTagsException( PhpTagsException::FATAL_OBJECT_NOT_CREATED, array( $name, $message ) );
 			}
 		}
 
@@ -258,15 +258,15 @@ class Hooks {
 		}
 
 		if ( false === isset( self::$objects[$name] ) ) {
-			throw new PhpTagsException( PHPTAGS_EXCEPTION_FATAL_CLASS_NOT_FOUND, $name );
+			throw new PhpTagsException( PhpTagsException::FATAL_CLASS_NOT_FOUND, $name );
 		}
 
 		$className = '\\PhpTagsObjects\\' . self::$objects[$name];
 		if ( false === class_exists( $className ) ) {
-			throw new PhpTagsException( PHPTAGS_EXCEPTION_FATAL_CREATEOBJECT_INVALID_CLASS, array($className, $name) );
+			throw new PhpTagsException( PhpTagsException::FATAL_CREATEOBJECT_INVALID_CLASS, array($className, $name) );
 		}
 		if ( false === is_subclass_of( $className, 'PhpTags\\GenericObject' ) ) {
-			throw new PhpTagsException( PHPTAGS_EXCEPTION_FATAL_MUST_EXTENDS_GENERIC, $className );
+			throw new PhpTagsException( PhpTagsException::FATAL_MUST_EXTENDS_GENERIC, $className );
 		}
 
 		$cache[$name] = $className;
