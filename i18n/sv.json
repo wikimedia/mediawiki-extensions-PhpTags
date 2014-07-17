@@ -1,0 +1,9 @@
+{
+	"@metadata": {
+		"authors": [
+			"Lokal Profil"
+		]
+	},
+	"phptags-desc": "Tillåter användare att använda Magic-uttrycken med PHP-språksyntax",
+	"phptags-disabled-for-namespace": "Tillägget PhpTags är inaktiverat för namnrymden \"$1\"."
+}
