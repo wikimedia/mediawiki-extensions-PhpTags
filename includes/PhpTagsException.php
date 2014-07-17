@@ -102,7 +102,7 @@ class PhpTagsException extends \Exception {
 				$message = "Call to undefined method {$arguments[0]}::{$arguments[1]}()";
 				break;
 			case self::FATAL_CLASS_NOT_FOUND:
-				$message = "Class $arguments not found";
+				$message = "Class \"$arguments\" not found";
 				break;
 			case self::FATAL_NONEXISTENT_HOOK_CLASS:
 				$message = "For the function {$arguments[0]} was registered nonexistent hook class {$arguments[1]}";

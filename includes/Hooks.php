@@ -259,8 +259,6 @@ class Hooks {
 				Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new PhpTagsException( PhpTagsException::FATAL_OBJECT_NOT_CREATED, array( $name, $message ) );
 			}
 		}
-
-		return false;
 	}
 
 	private static function getClassNameByObjectName( $name ) {
