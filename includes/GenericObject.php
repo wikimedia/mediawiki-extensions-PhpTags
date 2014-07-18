@@ -80,7 +80,7 @@ class GenericObject {
 	}
 
 	protected static function pushException( $exception, $arguments ) {
-		\PhpTags\Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new \PhpTags\PhpTagsException( $exception, $arguments );
+		Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new PhpTagsException( $exception, $arguments );
 	}
 
 	public static function checkArguments( $object, $method, $arguments, $expects = false ) {
@@ -90,8 +90,8 @@ class GenericObject {
 
 		$argCount = count( $arguments );
 		if( true === isset( $expects[Hooks::EXPECTS_EXACTLY_PARAMETERS] ) && $argCount != $expects[Hooks::EXPECTS_EXACTLY_PARAMETERS] ) {
-			\PhpTags\Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new \PhpTags\PhpTagsException(
-					\PhpTags\PhpTagsException::WARNING_EXPECTS_EXACTLY_PARAMETER,
+			Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new PhpTagsException(
+					PhpTagsException::WARNING_EXPECTS_EXACTLY_PARAMETER,
 					array( "$object::$method", $expects[Hooks::EXPECTS_EXACTLY_PARAMETERS], $argCount )
 				);
 			return false;
@@ -115,8 +115,8 @@ class GenericObject {
 			return true;
 		}
 
-		\PhpTags\Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new \PhpTags\PhpTagsException(
-				\PhpTags\PhpTagsException::WARNING_EXPECTS_PARAMETER,
+		Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new PhpTagsException(
+				PhpTagsException::WARNING_EXPECTS_PARAMETER,
 				array( "$object::$method", $i+1, $error, gettype( $arguments[$i] ) )
 			);
 		return false;
