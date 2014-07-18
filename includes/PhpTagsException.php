@@ -147,6 +147,9 @@ class PhpTagsException extends \Exception {
 			case self::FATAL_NONSTATIC_CALLED_STATICALLY: // @todo have not used
 				$message = "Non-static method {$arguments[0]}::{$arguments[1]}() cannot be called statically";
 				break;
+			case self::FATAL_CALLED_MANY_EXPENSIVE_FUNCTION:
+				$message = "Too many expensive function calls, last is $arguments";
+				break;
 			default:
 				$message = "Undefined error, code {$this->code}";
 				$this->code = self::EXCEPTION_FATAL * 1000;
@@ -222,6 +225,7 @@ class PhpTagsException extends \Exception {
 	const FATAL_NONEXISTENT_CONSTANT_CLASS = 4015;
 	const FATAL_INVALID_CONSTANT_CLASS = 4016;
 	const FATAL_CANNOT_UNSET_STRING_OFFSETS = 4017; // PHP Fatal error:  Cannot unset string offsets
+	const FATAL_CALLED_MANY_EXPENSIVE_FUNCTION = 4018;
 
 	const EXCEPTION_CATCHABLE_FATAL = 5;
 	const FATAL_OBJECT_COULD_NOT_BE_CONVERTED = 5001;  //PHP Catchable fatal error:  Object of class stdClass could not be converted to string

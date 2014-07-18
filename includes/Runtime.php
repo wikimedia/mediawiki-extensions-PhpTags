@@ -730,4 +730,25 @@ class Runtime {
 		}
 	}
 
+	/**
+	 * Get Parser
+	 * @return \Parser
+	 */
+	public static function getParser() {
+		return self::$transit[PHPTAGS_TRANSIT_PARSER];
+	}
+
+	/**
+	 * Increment the expensive function count
+	 * @param string $functionName
+	 * @return null
+	 * @throws PhpTagsException
+	 */
+	public static function incrementExpensiveFunctionCount( $functionName ) {
+		if ( false === self::getParser()->incrementExpensiveFunctionCount() ) {
+			throw new PhpTagsException( PhpTagsException::FATAL_CALLED_MANY_EXPENSIVE_FUNCTION, $functionName );
+		}
+		return null;
+	}
+
 }
