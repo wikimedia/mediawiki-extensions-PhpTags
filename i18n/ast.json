@@ -1,0 +1,9 @@
+{
+	"@metadata": {
+		"authors": [
+			"Xuacu"
+		]
+	},
+	"phptags-desc": "Permite a los usuarios usar les espresiones Magic con sintaxis del llinguax PHP",
+	"phptags-disabled-for-namespace": "La estensión PhpTags ta desactivada pal espaciu de nomes $1"
+}
