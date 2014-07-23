@@ -345,16 +345,19 @@ class Compiler {
 			} else {
 				$ref = false;
 			}
-			$this->stack[] = array(
+			$hookCheckParam = array(
 				PHPTAGS_STACK_COMMAND => PHPTAGS_T_HOOK_CHECK_PARAM,
 				PHPTAGS_STACK_PARAM_3 => &$ref,
-				PHPTAGS_STACK_PARAM => $functionName,
+				PHPTAGS_STACK_PARAM => false, // $functionName
 				PHPTAGS_STACK_PARAM_2 => $value[PHPTAGS_STACK_COMMAND] == PHPTAGS_T_VARIABLE,
 				PHPTAGS_STACK_AIM => $i,
 				PHPTAGS_STACK_RESULT => &$result,
 				PHPTAGS_STACK_TOKEN_LINE => $this->tokenLine,
 			);
-			unset( $ref );
+			$func = $functionName; // clone the function name for use in the next loop
+			$this->addValueIntoStack( $func, $hookCheckParam, PHPTAGS_STACK_PARAM );
+			$this->stack[] =& $hookCheckParam;
+			unset( $ref, $hookCheckParam, $func );
 
 			if ( current($this->tokens) != ',' ) {
 				break;
@@ -494,8 +497,9 @@ class Compiler {
 
 					$this->stepUP();
 
-					$result = array( // define hook as the constant
+					$result = array( // define blank hook as the constant
 						PHPTAGS_STACK_COMMAND => PHPTAGS_T_HOOK,
+						PHPTAGS_STACK_HOOK_TYPE => PHPTAGS_HOOK_GET_CONSTANT,
 						PHPTAGS_STACK_PARAM => $text,  // function or method
 						PHPTAGS_STACK_PARAM_2 => false, // &$functionParameters
 						PHPTAGS_STACK_PARAM_3 => false, // false or &object
@@ -505,29 +509,15 @@ class Compiler {
 					);
 
 					if ( $this->id == '(' ) { // it is function
-						$this->stepUP();
-
-						if ( $owner !== false ) { // it is object
-							$this->addValueIntoStack( $owner[0], $result, PHPTAGS_STACK_PARAM_3 );
-							$functionParameters =& $this->getFunctionParameters( $text, array( &$result ) );
-						} else { // it is function
-							$functionParameters =& $this->getFunctionParameters( $text );
-						}
-
-						$result[PHPTAGS_STACK_PARAM_2] =& $functionParameters; // now, hook is function
-
-						if ( $this->id != ')' ) {
-							// PHP Parse error:  syntax error, unexpected $tmp_id, expecting ')'
-							throw new PhpTagsException( PhpTagsException::PARSE_SYNTAX_ERROR_UNEXPECTED, array( $this->id, "')'" ), $this->tokenLine, $this->place );
-						}
-						$this->stepUP();
+						$this->stepFunction( $result, array(PHPTAGS_STACK_COMMAND=>false, PHPTAGS_STACK_RESULT=>$text), $owner );
 					} elseif ( $owner !== false ) { // it is an objects property. Example: it's 'bar' for FOO::bar
+						$result[PHPTAGS_STACK_HOOK_TYPE] = $owner[1] === true ? PHPTAGS_HOOK_GET_STATIC_PROPERTY : PHPTAGS_HOOK_GET_OBJECT_PROPERTY;
 						$this->addValueIntoStack( $owner[0], $result, PHPTAGS_STACK_PARAM_3 );
 					} elseif ( $this->id == T_DOUBLE_COLON ) { // it is static constant or method of an object. Examples: FOO::property or FOO::method()
 						$result[PHPTAGS_STACK_COMMAND] = false;
 						$result[PHPTAGS_STACK_RESULT] = $text;
 
-						$result = & $this->stepMethodChaining( $result );
+						$result = & $this->stepMethodChaining( $result, true );
 					}
 
 					return $result;
@@ -560,9 +550,12 @@ class Compiler {
 				$cannotRead = false;
 
 				$variable = array( PHPTAGS_STACK_COMMAND=>PHPTAGS_T_VARIABLE, PHPTAGS_STACK_PARAM=>substr($text, 1), PHPTAGS_STACK_PARAM_2=>null, PHPTAGS_STACK_RESULT=>null, PHPTAGS_STACK_TOKEN_LINE=>$this->tokenLine, PHPTAGS_STACK_DEBUG=>$text );
-
 				$this->stepUP();
-				if ( $this->id == '[' ) { // There is array index
+
+checkOperators:
+				if ( $this->id == '(' ) { // it is function
+					$variable =& $this->stepFunctionFromVariable( $variable, $text, $owner );
+				} elseif ( $this->id == '[' ) { // There is array index
 					$variable[PHPTAGS_STACK_ARRAY_INDEX] = array();
 					$i = 0;
 					do { // Example: $foo[
@@ -593,41 +586,101 @@ class Compiler {
 						// PHP Parse error:  syntax error, unexpected $id
 						throw new PhpTagsException( PhpTagsException::PARSE_SYNTAX_ERROR_UNEXPECTED, array( $this->id ), $this->tokenLine, $this->place );
 					}
-					$return = array(
-						PHPTAGS_STACK_COMMAND => self::$runtimeOperators[$id],
-						PHPTAGS_STACK_PARAM => $variable,
-						PHPTAGS_STACK_PARAM_2 => null,
-						PHPTAGS_STACK_RESULT => null,
-						PHPTAGS_STACK_TOKEN_LINE => $this->tokenLine,
-						PHPTAGS_STACK_DEBUG => $text,
-					);
-					$this->addValueIntoStack( $val, $return, PHPTAGS_STACK_PARAM_2 );
-					return $return; // *********** EXIT ***********
+					if ( $owner === false && $variable[PHPTAGS_STACK_COMMAND] == PHPTAGS_T_VARIABLE ) {
+						$return = array(
+							PHPTAGS_STACK_COMMAND => self::$runtimeOperators[$id],
+							PHPTAGS_STACK_PARAM => $variable,
+							PHPTAGS_STACK_PARAM_2 => null,
+							PHPTAGS_STACK_RESULT => null,
+							PHPTAGS_STACK_TOKEN_LINE => $this->tokenLine,
+							PHPTAGS_STACK_DEBUG => $text,
+						);
+						$this->addValueIntoStack( $val, $return, PHPTAGS_STACK_PARAM_2 );
+						return $return; // *********** EXIT ***********
+					} elseif ( $owner === false ) {
+						// $variable[PHPTAGS_STACK_COMMAND] == PHPTAGS_T_HOOK
+						switch ( $variable[PHPTAGS_STACK_HOOK_TYPE] ) {
+							case PHPTAGS_HOOK_GET_OBJECT_PROPERTY: // Example: $foo = new FOO(); $foo->bar =
+								$variable[PHPTAGS_STACK_HOOK_TYPE] = PHPTAGS_HOOK_SET_OBJECT_PROPERTY;
+								break;
+							case PHPTAGS_HOOK_GET_STATIC_PROPERTY: // Example: $foo = new FOO(); $foo::bar =
+								$variable[PHPTAGS_STACK_HOOK_TYPE] = PHPTAGS_HOOK_SET_STATIC_PROPERTY;
+								break;
+							default :  // Example: FOO->$bar() =
+								// PHP Parse error:  syntax error, unexpected $id
+								throw new PhpTagsException( PhpTagsException::PARSE_SYNTAX_ERROR_UNEXPECTED, array( $this->id ), $this->tokenLine, $this->place );
+						}
+						$this->addValueIntoStack( $val, $variable, PHPTAGS_STACK_PARAM_2 );
+						return $variable; // *********** EXIT ***********
+					} else { // Property name as variable. Example: $foo = new FOO(); $bar='anyproperty'; $foo->$bar =
+						$return = array( // define hook
+							PHPTAGS_STACK_COMMAND => PHPTAGS_T_HOOK,
+							PHPTAGS_STACK_HOOK_TYPE => $owner[1] === true ? PHPTAGS_HOOK_SET_STATIC_PROPERTY : PHPTAGS_HOOK_SET_OBJECT_PROPERTY,
+							PHPTAGS_STACK_PARAM => false,  // function or method
+							PHPTAGS_STACK_PARAM_2 => false, // &$functionParameters
+							PHPTAGS_STACK_PARAM_3 => false, // false or &object
+							PHPTAGS_STACK_RESULT => null,
+							PHPTAGS_STACK_TOKEN_LINE => $this->tokenLine,
+							PHPTAGS_STACK_DEBUG => $text,
+						);
+						$this->addValueIntoStack( $variable, $return, PHPTAGS_STACK_PARAM ); // property name
+						$this->addValueIntoStack( $val, $return, PHPTAGS_STACK_PARAM_2 ); // value
+						$this->addValueIntoStack( $owner[0], $return, PHPTAGS_STACK_PARAM_3 ); // object
+						return $return;
+					}
 				} elseif ( $id == T_INC || $id == T_DEC ) {
-					$variable = array(
-						PHPTAGS_STACK_COMMAND => self::$runtimeOperators[$id],
-						PHPTAGS_STACK_PARAM => $variable,
-						PHPTAGS_STACK_PARAM_2 => true, // Example: $foo++
-						PHPTAGS_STACK_RESULT => null,
-						PHPTAGS_STACK_TOKEN_LINE => $this->tokenLine,
-						PHPTAGS_STACK_DEBUG => $text,
-					);
-					$this->stepUP();
-				} elseif ( $cannotRead ) {
+					if ( $variable[PHPTAGS_STACK_COMMAND] == PHPTAGS_T_VARIABLE ) {
+						$variable = array(
+							PHPTAGS_STACK_COMMAND => self::$runtimeOperators[$id],
+							PHPTAGS_STACK_PARAM => $variable,
+							PHPTAGS_STACK_PARAM_2 => true, // Example: $foo++
+							PHPTAGS_STACK_RESULT => null,
+							PHPTAGS_STACK_TOKEN_LINE => $this->tokenLine,
+							PHPTAGS_STACK_DEBUG => $text,
+						);
+						$this->stepUP();
+					} else { // $variable[PHPTAGS_STACK_COMMAND] == PHPTAGS_T_HOOK Example: FOO->$bar()++
+						// PHP Parse error:  syntax error, unexpected $id
+						throw new PhpTagsException( PhpTagsException::PARSE_SYNTAX_ERROR_UNEXPECTED, array( $this->id ), $this->tokenLine, $this->place );
+					}
+				} elseif ( $cannotRead ) { // Example: echo $foo[];
 					// PHP Fatal error:  Cannot use [] for reading
 					throw new PhpTagsException( PhpTagsException::FATAL_CANNOT_USE_FOR_READING, null, $this->tokenLine, $this->place );
-				} elseif ( $owner === false && ($id == T_OBJECT_OPERATOR || $id == T_DOUBLE_COLON) ) { // Example: $foo->
+				} elseif ( $owner !== false ) {
+					if ( $variable[PHPTAGS_STACK_COMMAND] == PHPTAGS_T_HOOK ) { // Example: $bar = 'anymethod'; echo $foo->$bar();
+						return $variable;
+					} // Example: $bar = 'anyproperty'; echo $foo->$bar
+					$return = array( // define hook
+						PHPTAGS_STACK_COMMAND => PHPTAGS_T_HOOK,
+						PHPTAGS_STACK_HOOK_TYPE => $owner[1] === true ? PHPTAGS_HOOK_GET_STATIC_PROPERTY : PHPTAGS_HOOK_GET_OBJECT_PROPERTY,
+						PHPTAGS_STACK_PARAM => false,  // function or method
+						PHPTAGS_STACK_PARAM_2 => false, // &$functionParameters
+						PHPTAGS_STACK_PARAM_3 => false, // false or &object
+						PHPTAGS_STACK_RESULT => null,
+						PHPTAGS_STACK_TOKEN_LINE => $this->tokenLine,
+						PHPTAGS_STACK_DEBUG => $text,
+					);
+					$this->addValueIntoStack( $variable, $return, PHPTAGS_STACK_PARAM ); // property name
+					$this->addValueIntoStack( $owner[0], $return, PHPTAGS_STACK_PARAM_3 ); // object
+
+					$id = $this->id;
+					if ( $id == T_OBJECT_OPERATOR || $id == T_DOUBLE_COLON ) {
+						$return =& $this->stepMethodChaining( $return, $id == T_DOUBLE_COLON );
+					}
+					return $return;
+				} elseif ( $id == T_OBJECT_OPERATOR || $id == T_DOUBLE_COLON ) { // Example: $foo->
 					$this->stepUP();
-					$val =& $this->stepValue( array(&$variable) );
-					if ( $val == false || $val[PHPTAGS_STACK_COMMAND] != PHPTAGS_T_HOOK ) { // Example: $foo->;
+					$variable =& $this->stepValue( array(&$variable, $id == T_DOUBLE_COLON) );
+					if ( $variable == false || $variable[PHPTAGS_STACK_COMMAND] != PHPTAGS_T_HOOK ) { // Example: $foo->;
 						// PHP Parse error:  syntax error, unexpected $id
 						throw new PhpTagsException( PhpTagsException::PARSE_SYNTAX_ERROR_UNEXPECTED, array( $this->id ), $this->tokenLine, $this->place );
 					}
 
-					if ( $this->id == T_OBJECT_OPERATOR || $this->id == T_DOUBLE_COLON ) {
-						$val = & $this->stepMethodChaining( $val );
+					$id = $this->id;
+					if ( $id == T_OBJECT_OPERATOR || $id == T_DOUBLE_COLON ) {
+						$variable =& $this->stepMethodChaining( $variable, $id == T_DOUBLE_COLON );
 					}
-					return $val;
+					goto checkOperators;
 				}
 				return $variable; // *********** EXIT ***********
 			case T_INC:
@@ -826,7 +879,10 @@ class Compiler {
 				}
 				if ( $this->id == '(' ) { // it has parameters
 					$this->stepUP();
-					$objectParameters =& $this->getFunctionParameters( PHPTAGS_METHOD_CONSTRUCTOR, array( &$result ) );
+					$objectParameters =& $this->getFunctionParameters(
+							array( PHPTAGS_STACK_COMMAND => false, PHPTAGS_STACK_RESULT => PHPTAGS_METHOD_CONSTRUCTOR),
+							array( &$result )
+						);
 					if ( $this->id != ')' ) {
 						// PHP Parse error:  syntax error, unexpected $tmp_id, expecting ')'
 						throw new PhpTagsException( PhpTagsException::PARSE_SYNTAX_ERROR_UNEXPECTED, array( $this->id, "')'" ), $this->tokenLine, $this->place );
@@ -1388,16 +1444,16 @@ class Compiler {
 		return true;
 	}
 
-	private function & stepMethodChaining( &$result ) {
+	private function & stepMethodChaining( &$result, $isStatic ) {
 		do {
 			$this->stepUP();
-			$val =& $this->stepValue( array(&$result) );
+			$val =& $this->stepValue( array(&$result, $isStatic) );
 			if ( $val == false ) { // Example: FOO::bar-> ;
 				// PHP Parse error:  syntax error, unexpected $id
 				throw new PhpTagsException( PhpTagsException::PARSE_SYNTAX_ERROR_UNEXPECTED, array( $this->id ), $this->tokenLine, $this->place );
 			}
 			switch ( $val[PHPTAGS_STACK_COMMAND] ) {
-				case PHPTAGS_T_HOOK: // Example: FOO::bar->too
+				case PHPTAGS_T_HOOK: // Examples: FOO::bar->too
 					$result =& $val;
 					break;
 				case PHPTAGS_T_VARIABLE: // Example: FOO::bar->$variable
@@ -1422,33 +1478,98 @@ class Compiler {
 		return $result;
 	}
 
-	private function addValueIntoStack( &$value, &$result, $aim, $doit = false ) {
+	/**
+	 * This function adds $value to the $aim in $command
+	 * If $value has a variable then it will be added to stack
+	 * If the values of the command are scalar then command can be processed
+	 * and if $doit is TRUE then the command will be processed
+	 * and in this case the function returns TRUE otherwise FALSE.
+	 * @param array $value Array with PHPTAGS_STACK_COMMAND
+	 * @param array $command Array with $aim
+	 * @param string $aim The aim in $command
+	 * @param boolean $doit Process the command if possible
+	 * @return boolean Returns TRUE, if the command was processed
+	 */
+	private function addValueIntoStack( &$value, &$command, $aim, $doit = false ) {
 		if ( $value[PHPTAGS_STACK_COMMAND] == PHPTAGS_T_VARIABLE ) {
-			$value[PHPTAGS_STACK_PARAM_2] =& $result;
+			$value[PHPTAGS_STACK_PARAM_2] =& $command;
 			$value[PHPTAGS_STACK_AIM] = $aim;
 		} else {
-			$result[$aim] =& $value[PHPTAGS_STACK_RESULT];
+			$command[$aim] =& $value[PHPTAGS_STACK_RESULT];
 		}
 
-		if ( $value[PHPTAGS_STACK_COMMAND] ) {
-			$this->stack[] =& $value;
-		} elseif( $value[PHPTAGS_STACK_COMMAND] === null ) {
-			// The values of the operator have no command
+		if ( $value[PHPTAGS_STACK_COMMAND] === null ) {
+			// The values of the command are scalar
 			if ( $doit ) {
-				$tmp = array( PHPTAGS_STACK_COMMAND => PHPTAGS_T_RETURN, PHPTAGS_STACK_PARAM => &$result[PHPTAGS_STACK_RESULT] );
-				$runtimeReturn = Runtime::run( array($result, $tmp),	array('PhpTags\\Compiler') );
+				$tmp = array( PHPTAGS_STACK_COMMAND => PHPTAGS_T_RETURN, PHPTAGS_STACK_PARAM => &$command[PHPTAGS_STACK_RESULT] );
+				$runtimeReturn = Runtime::run( array($command, $tmp),	array('PhpTags\\Compiler') );
 				if ( $runtimeReturn instanceof PhpTagsException ) {
 					return false;
 				}
-				$result = array(
+				$command = array(
 					PHPTAGS_STACK_COMMAND => null, // Mark the operator as the already processed.
 					PHPTAGS_STACK_RESULT => $runtimeReturn,
 				);
 			}
 			return true;
+		} elseif ( $value[PHPTAGS_STACK_COMMAND] !== false ) {
+			$this->stack[] =& $value;
 		}
 
 		return false;
+	}
+
+	/**
+	 * Returns Hook as function() or $object->method()
+	 * @param array $hook The blank hook
+	 * @param array $funcName The function name
+	 * @param mixed $owner Object as array or FALSE for function
+	 * @return array Hook
+	 * @throws PhpTagsException
+	 */
+	private function & stepFunction( &$hook, $funcName, $owner ) {
+		$this->stepUP();
+
+		if ( $owner !== false ) { // $owner is object
+			$hook[PHPTAGS_STACK_HOOK_TYPE] = $owner[1] === true ? PHPTAGS_HOOK_STATIC_METHOD : PHPTAGS_HOOK_OBJECT_METHOD;
+			$this->addValueIntoStack( $owner[0], $hook, PHPTAGS_STACK_PARAM_3 );
+			$hook[PHPTAGS_STACK_PARAM_2] =& $this->getFunctionParameters( $funcName, array( &$hook ) );
+		} else { // it is function
+			$hook[PHPTAGS_STACK_HOOK_TYPE] = PHPTAGS_HOOK_FUNCTION;
+			$hook[PHPTAGS_STACK_PARAM_2] =& $this->getFunctionParameters( $funcName );
+		}
+
+		if ( $this->id != ')' ) {
+			// PHP Parse error:  syntax error, unexpected $tmp_id, expecting ')'
+			throw new PhpTagsException( PhpTagsException::PARSE_SYNTAX_ERROR_UNEXPECTED, array( $this->id, "')'" ), $this->tokenLine, $this->place );
+		}
+		$this->stepUP();
+		return $hook;
+	}
+
+	/**
+	 * Returns Hook as $function() or objects->$method() where name will be received from variable
+	 * @param array $variable The variable as function or method name
+	 * @param string $text Text of variable for debug
+	 * @param mixed $owner Object as array or FALSE for function
+	 * @return array Hook
+	 * @throws PhpTagsException
+	 */
+	public function & stepFunctionFromVariable( $variable, $text, $owner ) {
+		$hook = array( // define the blank hook
+			PHPTAGS_STACK_COMMAND => PHPTAGS_T_HOOK,
+			PHPTAGS_STACK_HOOK_TYPE => false,
+			PHPTAGS_STACK_PARAM => false, // function or method name from $variable
+			PHPTAGS_STACK_PARAM_2 => false, // &$functionParameters
+			PHPTAGS_STACK_PARAM_3 => false, // false or &object
+			PHPTAGS_STACK_RESULT => null,
+			PHPTAGS_STACK_TOKEN_LINE => $this->tokenLine,
+			PHPTAGS_STACK_DEBUG => $text,
+		);
+
+		$return =& $this->stepFunction( $hook, $variable, $owner );
+		$this->addValueIntoStack( $variable, $return, PHPTAGS_STACK_PARAM ); // Add function or method name to hook
+		return $return;
 	}
 
 }

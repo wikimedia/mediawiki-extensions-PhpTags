@@ -13,6 +13,16 @@ define( 'PHPTAGS_STACK_DO_FALSE', 'f' );
 define( 'PHPTAGS_STACK_ARRAY_INDEX', 'a' );
 define( 'PHPTAGS_STACK_DEBUG', '#' );
 define( 'PHPTAGS_STACK_AIM', '*' );
+define( 'PHPTAGS_STACK_HOOK_TYPE', 'h' );
+
+define( 'PHPTAGS_HOOK_GET_CONSTANT', '_' );
+define( 'PHPTAGS_HOOK_FUNCTION', 'f' );
+define( 'PHPTAGS_HOOK_GET_STATIC_PROPERTY', 'c' );
+define( 'PHPTAGS_HOOK_GET_OBJECT_PROPERTY', 'p' );
+define( 'PHPTAGS_HOOK_SET_STATIC_PROPERTY', 'k' );
+define( 'PHPTAGS_HOOK_SET_OBJECT_PROPERTY', 'b' );
+define( 'PHPTAGS_HOOK_STATIC_METHOD', 's' );
+define( 'PHPTAGS_HOOK_OBJECT_METHOD', 'm' );
 
 define( 'PHPTAGS_OBJECT_DEFINITION', 0 );
 define( 'PHPTAGS_METHOD_CONSTRUCTOR', 1 );
@@ -438,6 +448,7 @@ class Runtime {
 							break;
 						case PHPTAGS_T_HOOK:
 							$result = Hooks::callHook(
+									$value[PHPTAGS_STACK_HOOK_TYPE],
 									$value[PHPTAGS_STACK_PARAM_2], // arguments
 									$value[PHPTAGS_STACK_PARAM], // name of function or method
 									$value[PHPTAGS_STACK_PARAM_3] // $object or false
