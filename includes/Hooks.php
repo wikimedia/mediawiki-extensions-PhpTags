@@ -140,28 +140,33 @@ class Hooks {
 	}
 
 	/**
-	 * Call a hook like as constant or function or object's method of PhpTags
+	 * Call a hook of PhpTags
+	 * @param int $type Hook type
 	 * @param mixed $arguments Array or boolean false for the constants
 	 * @param mixed $name Name of constant or function or method
 	 * @param mixed $object boolean false for the functions or the object or object's name
 	 * @return mixed
 	 * @throws PhpTagsException
 	 */
-	public static function callHook( $arguments, $name, $object ) {
-		// it is a constant or a function or a method of an object
-		if ( $arguments === false ) { // it is a constant or a property of an object
-			if ( $object === false ) { // it is a constant
-				return self::callConstant( $name );
-			} else { // it is a property of an object
-				return self::callObjectsProperty( $name, $object );
-			}
+	public static function callHook( $type, $arguments, $name, $object ) {
+		switch ( $type ) {
+			case PHPTAGS_HOOK_GET_CONSTANT: // Hook is a constant. Example: echo M_PI;
+				return self::callGetConstant( $name );
+			case PHPTAGS_HOOK_FUNCTION: // Hook is a function. Example: echo foo();
+				return self::callFunction( $arguments, $name );
+			case PHPTAGS_HOOK_GET_STATIC_PROPERTY: // Hook is a static property of a method. Example: echo FOO::bar;
+				return self::callGetStaticProperty( $name, $object );
+			case PHPTAGS_HOOK_GET_OBJECT_PROPERTY: // Hook is a property of a method. Example: $foo = new Foo(); echo $foo->bar;
+				return self::callGetObjectsProperty( $name, $object );
+			case PHPTAGS_HOOK_SET_STATIC_PROPERTY: // Example FOO::bar = true;
+				return self::callSetStaticProperty( $name, $object, $arguments );
+			case PHPTAGS_HOOK_SET_OBJECT_PROPERTY: // Example: $foo = new Foo(); $foo->bar = true;
+				return self::callSetObjectsProperty( $name, $object, $arguments );
+			case PHPTAGS_HOOK_STATIC_METHOD: // Example: FOO::bar()
+				return self::callStaticMethod( $arguments, $name, $object );
+			case PHPTAGS_HOOK_OBJECT_METHOD: // Example: $foo = new Foo(); $foo->bar();
+				return self::callObjectsMethod( $arguments, $name, $object );
 		}
-		// it is a function or a method of an object
-		if ( $object === false ) { // it is a function
-			return self::callFunction( $arguments, $name );
-		}
-		// it is a method of an object
-		return self::callObjectsMethod( $arguments, $name, $object );
 	}
 
 	/**
@@ -169,7 +174,7 @@ class Hooks {
 	 * @param string $name Name of the constant
 	 * @return mixed
 	 */
-	private static function callConstant( $name ) {
+	private static function callGetConstant( $name ) {
 		static $constants = array(); // cache of called constants
 
 		if ( isset ( self::$constants[$name] ) ) {
@@ -221,7 +226,13 @@ class Hooks {
 				return;
 			}
 		}
-		// it is calling of static method
+		Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new PhpTagsException( PhpTagsException::FATAL_CALL_FUNCTION_ON_NON_OBJECT, $name );
+	}
+
+	private static function callStaticMethod( $arguments, $name, $object ) {
+		if ( $object instanceof GenericObject ) {
+			$object = $object->getName();
+		}
 		$className = self::getClassNameByObjectName( $object );
 		if ( true === $className::checkArguments( $object, $name, $arguments ) ) {
 			$arguments[] = $object;
@@ -236,13 +247,34 @@ class Hooks {
 	 * @return mixed
 	 * @throws PhpTagsException
 	 */
-	public static function callObjectsProperty( $name, $object ) {
+	public static function callGetObjectsProperty( $name, $object ) {
 		if ( $object instanceof GenericObject ) {
 			return call_user_func( array($object, "p_$name") );
 		}
-		// it is calling of static property
+		Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new PhpTagsException( PhpTagsException::NOTICE_GET_PROPERTY_OF_NON_OBJECT, null );
+	}
+
+	public static function callGetStaticProperty( $name, $object ) {
+		if ( $object instanceof GenericObject ) {
+			$object = $object->getName();
+		}
 		$className = self::getClassNameByObjectName( $object );
 		return call_user_func( array($className, "c_$name"), $object );
+	}
+
+	public static function callSetObjectsProperty( $name, $object, $value ) {
+		if ( $object instanceof GenericObject ) {
+			return call_user_func( array($object, "b_$name"), $value );
+		}
+		Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new PhpTagsException( PhpTagsException::WARNING_ATTEMPT_TO_ASSIGN_PROPERTY, null );
+	}
+
+	public static function callSetStaticProperty( $name, $object, $value ) {
+		if ( $object instanceof GenericObject ) {
+			$object = $object->getName();
+		}
+		$className = self::getClassNameByObjectName( $object );
+		return call_user_func( array($className, "k_$name"), $object, $value );
 	}
 
 	public static function createObject( $arguments, $name, $showException = true ) {

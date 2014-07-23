@@ -150,6 +150,15 @@ class PhpTagsException extends \Exception {
 			case self::FATAL_CALLED_MANY_EXPENSIVE_FUNCTION:
 				$message = "Too many expensive function calls, last is $arguments";
 				break;
+			case self::NOTICE_GET_PROPERTY_OF_NON_OBJECT:
+				$message = 'Trying to get property of non-object';
+				break;
+			case self::WARNING_ATTEMPT_TO_ASSIGN_PROPERTY:
+				$message = 'Attempt to assign property of non-object';
+				break;
+			case self::FATAL_CALL_FUNCTION_ON_NON_OBJECT;
+				$message = "Call to a member function $arguments() on a non-object";
+				break;
 			default:
 				$message = "Undefined error, code {$this->code}";
 				$this->code = self::EXCEPTION_FATAL * 1000;
@@ -191,6 +200,7 @@ class PhpTagsException extends \Exception {
 	const NOTICE_UNDEFINED_PROPERTY = 2006;  // PHP Notice:  Undefined property: DateInterval::$rsss
 	const NOTICE_UNDEFINED_CLASS_CONSTANT = 2007;  // PHP Fatal error:  Undefined class constant 'EXCLUDE_START_DATEqqqq'
 	const NOTICE_OBJECT_CONVERTED = 2008;  // PHP Notice:  Object of class Exception could not be converted to int
+	const NOTICE_GET_PROPERTY_OF_NON_OBJECT = 2009; // PHP Notice:  Trying to get property of non-object
 
 	const EXCEPTION_WARNING = 3;
 	const WARNING_DIVISION_BY_ZERO = 3001;  // PHP Warning:  Division by zero
@@ -203,6 +213,7 @@ class PhpTagsException extends \Exception {
 	const WARNING_EXPECTS_EXACTLY_PARAMETER = 3009;  // PHP Warning:  date_format() expects exactly 1 parameter, 3 given
 	const WARNING_EXPECTS_AT_LEAST_PARAMETERS = 3010;
 	const WARNING_EXPECTS_AT_LEAST_PARAMETER = 3011;  // PHP Warning:  sprintf() expects at least 1 parameter, 0 given
+	const WARNING_ATTEMPT_TO_ASSIGN_PROPERTY = 3012; // PHP Warning:  Attempt to assign property of non-object
 
 	const WARNING_CALLFUNCTION_INVALID_HOOK = 3900;
 	const WARNING_CALLCONSTANT_INVALID_HOOK = 3901;
@@ -226,6 +237,7 @@ class PhpTagsException extends \Exception {
 	const FATAL_INVALID_CONSTANT_CLASS = 4016;
 	const FATAL_CANNOT_UNSET_STRING_OFFSETS = 4017; // PHP Fatal error:  Cannot unset string offsets
 	const FATAL_CALLED_MANY_EXPENSIVE_FUNCTION = 4018;
+	const FATAL_CALL_FUNCTION_ON_NON_OBJECT = 4019; // PHP Fatal error:  Call to a member function doo() on a non-object
 
 	const EXCEPTION_CATCHABLE_FATAL = 5;
 	const FATAL_OBJECT_COULD_NOT_BE_CONVERTED = 5001;  //PHP Catchable fatal error:  Object of class stdClass could not be converted to string
