@@ -159,6 +159,12 @@ class PhpTagsException extends \Exception {
 			case self::FATAL_CALL_FUNCTION_ON_NON_OBJECT;
 				$message = "Call to a member function $arguments() on a non-object";
 				break;
+			case self::FATAL_ACCESS_TO_UNDECLARED_STATIC_PROPERTY:
+				$message = "Access to undeclared static property: {$arguments[0]}::\${$arguments[1]}";
+				break;
+			case self::WARNING_EXPECTS_AT_MOST_PARAMETERS:
+				$message = "$arguments[0]() expects at most $arguments[1] parameters, $arguments[2] given";
+				break;
 			default:
 				$message = "Undefined error, code {$this->code}";
 				$this->code = self::EXCEPTION_FATAL * 1000;
@@ -214,6 +220,7 @@ class PhpTagsException extends \Exception {
 	const WARNING_EXPECTS_AT_LEAST_PARAMETERS = 3010;
 	const WARNING_EXPECTS_AT_LEAST_PARAMETER = 3011;  // PHP Warning:  sprintf() expects at least 1 parameter, 0 given
 	const WARNING_ATTEMPT_TO_ASSIGN_PROPERTY = 3012; // PHP Warning:  Attempt to assign property of non-object
+	const WARNING_EXPECTS_AT_MOST_PARAMETERS = 3013; // PHP Warning:  round() expects at most 3 parameters, 4 given
 
 	const WARNING_CALLFUNCTION_INVALID_HOOK = 3900;
 	const WARNING_CALLCONSTANT_INVALID_HOOK = 3901;
@@ -238,17 +245,13 @@ class PhpTagsException extends \Exception {
 	const FATAL_CANNOT_UNSET_STRING_OFFSETS = 4017; // PHP Fatal error:  Cannot unset string offsets
 	const FATAL_CALLED_MANY_EXPENSIVE_FUNCTION = 4018;
 	const FATAL_CALL_FUNCTION_ON_NON_OBJECT = 4019; // PHP Fatal error:  Call to a member function doo() on a non-object
+	const FATAL_ACCESS_TO_UNDECLARED_STATIC_PROPERTY = 4020; // PHP Fatal error:  Access to undeclared static property: F::$rsrr
 
 	const EXCEPTION_CATCHABLE_FATAL = 5;
 	const FATAL_OBJECT_COULD_NOT_BE_CONVERTED = 5001;  //PHP Catchable fatal error:  Object of class stdClass could not be converted to string
 
 	const EXCEPTION_PARSE = 6;
 	const PARSE_SYNTAX_ERROR_UNEXPECTED = 6001;  // PHP Parse error:  syntax error, unexpected $end, expecting ',' or ';' in Command line code on line 1
-
-	// pcre
-	const WARNING_WRONG_DELIMITER = 2009;  // PHP Warning:  preg_replace(): Delimiter must not be alphanumeric or backslash
-	const WARNING_NO_ENDING_DELIMITER = 2010;  // PHP Warning:  preg_replace(): No ending delimiter '/' found
-	const WARNING_UNKNOWN_MODIFIER = 111;  // PHP Warning:  preg_replace(): Unknown modifier 'z'
 
 // PHP Fatal error:  Allowed memory size of 134217728 bytes exhausted (tried to allocate 73 bytes)
 // PHP Fatal error:  Maximum execution time of 30 seconds exceeded
