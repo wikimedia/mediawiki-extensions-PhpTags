@@ -432,6 +432,7 @@ class Runtime {
 							$i = $value[PHPTAGS_STACK_AIM];
 							$reference_info = Hooks::getReferenceInfo(
 									$i + 1, // ordinal number of the argument
+									$value[PHPTAGS_STACK_HOOK_TYPE],
 									$value[PHPTAGS_STACK_PARAM], // name of function or method
 									$value[PHPTAGS_STACK_PARAM_3] === false ? false : $value[PHPTAGS_STACK_PARAM_3][PHPTAGS_STACK_PARAM_3] // $object or false
 								);

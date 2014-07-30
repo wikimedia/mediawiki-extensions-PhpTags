@@ -88,8 +88,8 @@ class Hooks {
 	 * @return mixed True if argument should be passed by reference, 1 if argument can be value
 	 * @throws PhpTagsException
 	 */
-	public static function getReferenceInfo( $number, $name, $object ) {
-		if ( $object === false ) { // It is function
+	public static function getReferenceInfo( $number, $type, $name, $object ) {
+		if ( $type == PHPTAGS_HOOK_FUNCTION ) { // It is function
 			$info = self::getFunctionInfo( $name );
 			$references = $info[1];
 		} elseif ( $object instanceof GenericObject ) { // Object has been created
@@ -230,7 +230,7 @@ class Hooks {
 				return;
 			}
 		}
-		Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new PhpTagsException( PhpTagsException::FATAL_CALL_FUNCTION_ON_NON_OBJECT, $name );
+		throw new PhpTagsException( PhpTagsException::FATAL_CALL_FUNCTION_ON_NON_OBJECT, $name );
 	}
 
 	private static function callStaticMethod( $arguments, $name, $object ) {

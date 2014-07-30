@@ -342,11 +342,14 @@ class Compiler {
 			}
 			if ( $objectName ) {
 				$ref =& $objectName[0];
+				$hookType = $ref[PHPTAGS_STACK_HOOK_TYPE];
 			} else {
 				$ref = false;
+				$hookType = PHPTAGS_HOOK_FUNCTION;
 			}
 			$hookCheckParam = array(
 				PHPTAGS_STACK_COMMAND => PHPTAGS_T_HOOK_CHECK_PARAM,
+				PHPTAGS_STACK_HOOK_TYPE => $hookType,
 				PHPTAGS_STACK_PARAM_3 => &$ref,
 				PHPTAGS_STACK_PARAM => false, // $functionName
 				PHPTAGS_STACK_PARAM_2 => $value[PHPTAGS_STACK_COMMAND] == PHPTAGS_T_VARIABLE,
@@ -864,6 +867,7 @@ checkOperators:
 			case T_NEW:
 				$result = array(
 					PHPTAGS_STACK_COMMAND => self::$runtimeOperators[$id],
+					PHPTAGS_STACK_HOOK_TYPE => PHPTAGS_HOOK_OBJECT_METHOD,
 					PHPTAGS_STACK_PARAM_2 => null,
 					PHPTAGS_STACK_PARAM_3 => null, // object name
 					PHPTAGS_STACK_TOKEN_LINE => $this->tokenLine,
@@ -883,7 +887,7 @@ checkOperators:
 				if ( $this->id == '(' ) { // it has parameters
 					$this->stepUP();
 					$objectParameters =& $this->getFunctionParameters(
-							array( PHPTAGS_STACK_COMMAND => false, PHPTAGS_STACK_RESULT => PHPTAGS_METHOD_CONSTRUCTOR),
+							array( PHPTAGS_STACK_COMMAND => false, PHPTAGS_STACK_RESULT => PHPTAGS_METHOD_CONSTRUCTOR ),
 							array( &$result )
 						);
 					if ( $this->id != ')' ) {

@@ -119,19 +119,24 @@ class GenericObject {
 		$error = false;
 		for ( $i = 0; $i < $argCount; $i++ ) {
 			if ( true === isset( $expects[$i] ) ) {
-				switch ( $expects[$i] ) {
-					case Hooks::TYPE_NUMBER:
-						if ( false === is_numeric( $arguments[$i] ) ) {
-							$error = 'number';
-							break 2;
-						}
-						break;
-					case Hooks::TYPE_ARRAY:
-						if ( false === is_array( $arguments[$i] ) ) {
-							$error = 'array';
-							break 2;
-						}
-						break;
+				if ( is_numeric( $expects[$i] ) ) {
+					switch ( $expects[$i] ) {
+						case Hooks::TYPE_NUMBER:
+							if ( false === is_numeric( $arguments[$i] ) ) {
+								$error = 'number';
+								break 2;
+							}
+							break;
+						case Hooks::TYPE_ARRAY:
+							if ( false === is_array( $arguments[$i] ) ) {
+								$error = 'array';
+								break 2;
+							}
+							break;
+					}
+				} elseif ( false === $arguments[$i] instanceof GenericObject || $arguments[$i]->name != $expects[$i] ) {
+					$error = $expects[$i];
+					break;
 				}
 			}
 		}
