@@ -35,8 +35,9 @@ class GenericObject {
 			case 'p_': // property
 				Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_PROPERTY, array($this->name, $subname) );
 				break;
+			// case 'b_': @todo
 			default:
-				throw new \Exception( 'Call to undefined method ' . __CLASS__ . "::$name()" );
+				throw new \Exception( $this->name . ': Call to undefined method ' . __CLASS__ . "::$name()" );
 		}
 	}
 
@@ -47,11 +48,14 @@ class GenericObject {
 		switch ( $callType ) {
 			case 's_': // static method
 				throw new PhpTagsException( PhpTagsException::FATAL_CALL_TO_UNDEFINED_METHOD, array($object, $subname) );
+			case 'q': // static property
+			case 'd':
+				throw new PhpTagsException( PhpTagsException::FATAL_ACCESS_TO_UNDECLARED_STATIC_PROPERTY, array($object, $subname) );
 			case 'c_': // constant
 				Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_CLASS_CONSTANT, array($object, $subname) );
 				break;
 			default:
-				throw new \Exception( 'Call to undefined method ' . __CLASS__ . "::$name()" );
+				throw new \Exception( $object . 'Call to undefined method ' . __CLASS__ . "::$name()" );
 		}
 	}
 
@@ -95,6 +99,21 @@ class GenericObject {
 					array( "$object::$method", $expects[Hooks::EXPECTS_EXACTLY_PARAMETERS], $argCount )
 				);
 			return false;
+		} else {
+			if ( true == isset( $expects[Hooks::EXPECTS_MAXIMUM_PARAMETERS] ) && $argCount > $expects[Hooks::EXPECTS_MAXIMUM_PARAMETERS] ) {
+				Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new PhpTagsException(
+					PhpTagsException::WARNING_EXPECTS_AT_MOST_PARAMETERS,
+					array( "$object::$method", $expects[Hooks::EXPECTS_MAXIMUM_PARAMETERS], $argCount )
+				);
+				return false;
+			}
+			if ( true == isset( $expects[Hooks::EXPECTS_MINIMUM_PARAMETERS] ) && $argCount < $expects[Hooks::EXPECTS_MINIMUM_PARAMETERS] ) {
+				Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new PhpTagsException(
+					PhpTagsException::WARNING_EXPECTS_AT_LEAST_PARAMETERS,
+					array( "$object::$method", $expects[Hooks::EXPECTS_MINIMUM_PARAMETERS], $argCount )
+				);
+				return false;
+			}
 		}
 
 		$error = false;
@@ -104,6 +123,12 @@ class GenericObject {
 					case Hooks::TYPE_NUMBER:
 						if ( false === is_numeric( $arguments[$i] ) ) {
 							$error = 'number';
+							break 2;
+						}
+						break;
+					case Hooks::TYPE_ARRAY:
+						if ( false === is_array( $arguments[$i] ) ) {
+							$error = 'array';
 							break 2;
 						}
 						break;

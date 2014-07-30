@@ -12,6 +12,8 @@ namespace PhpTags;
 class Hooks {
 
 	const EXPECTS_EXACTLY_PARAMETERS = '=';
+	const EXPECTS_MAXIMUM_PARAMETERS = '<';
+	const EXPECTS_MINIMUM_PARAMETERS = '>';
 	const TYPE_NUMBER = 1;
 	const TYPE_MIXED = 2;
 	const TYPE_CALLBACK = 3;
@@ -154,6 +156,8 @@ class Hooks {
 				return self::callGetConstant( $name );
 			case PHPTAGS_HOOK_FUNCTION: // Hook is a function. Example: echo foo();
 				return self::callFunction( $arguments, $name );
+			case PHPTAGS_HOOK_GET_OBJECT_CONSTANT:
+				return self::callGetObjectsConstant( $name, $object );
 			case PHPTAGS_HOOK_GET_STATIC_PROPERTY: // Hook is a static property of a method. Example: echo FOO::bar;
 				return self::callGetStaticProperty( $name, $object );
 			case PHPTAGS_HOOK_GET_OBJECT_PROPERTY: // Hook is a property of a method. Example: $foo = new Foo(); echo $foo->bar;
@@ -240,6 +244,14 @@ class Hooks {
 		}
 	}
 
+	public static function callGetObjectsConstant( $name, $object ) {
+		if ( $object instanceof GenericObject ) {
+			$object = $object->getName();
+		}
+		$className = self::getClassNameByObjectName( $object );
+		return call_user_func( array($className, "c_$name"), $object );
+	}
+
 	/**
 	 * Call the property of object based on class \PhpTags\GenericObject
 	 * @param string $name Name of the property
@@ -259,7 +271,7 @@ class Hooks {
 			$object = $object->getName();
 		}
 		$className = self::getClassNameByObjectName( $object );
-		return call_user_func( array($className, "c_$name"), $object );
+		return call_user_func( array($className, "q_$name"), $object );
 	}
 
 	public static function callSetObjectsProperty( $name, $object, $value ) {
@@ -274,20 +286,33 @@ class Hooks {
 			$object = $object->getName();
 		}
 		$className = self::getClassNameByObjectName( $object );
-		return call_user_func( array($className, "k_$name"), $object, $value );
+		return call_user_func( array($className, "d_$name"), $object, $value );
 	}
 
+	/**
+	 *
+	 * @param array $arguments
+	 * @param string $name
+	 * @param bool $showException
+	 * @return \PhpTags\GenericObject
+	 */
 	public static function createObject( $arguments, $name, $showException = true ) {
 		$className = self::getClassNameByObjectName( $name );
 		$object = new $className( $name );
 
 		try {
-			if ( true === call_user_func_array( array($object, 'm___construct'), $arguments ) ) {
+			if ( true === $object->checkArguments( $name, '__construct', $arguments )
+					&& true === call_user_func_array( array($object, 'm___construct'), $arguments ) ) {
 				return $object;
+			} else {
+				return false;
 			}
 		} catch ( \Exception $exc ) {
 			if ( $showException ) {
 				list(, $message) = explode( ': ', $exc->getMessage(), 2 );
+				if ( $message == '' ) {
+					$message = $exc->getMessage();
+				}
 				Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new PhpTagsException( PhpTagsException::FATAL_OBJECT_NOT_CREATED, array( $name, $message ) );
 			}
 		}

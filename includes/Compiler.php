@@ -511,7 +511,7 @@ class Compiler {
 					if ( $this->id == '(' ) { // it is function
 						$this->stepFunction( $result, array(PHPTAGS_STACK_COMMAND=>false, PHPTAGS_STACK_RESULT=>$text), $owner );
 					} elseif ( $owner !== false ) { // it is an objects property. Example: it's 'bar' for FOO::bar
-						$result[PHPTAGS_STACK_HOOK_TYPE] = $owner[1] === true ? PHPTAGS_HOOK_GET_STATIC_PROPERTY : PHPTAGS_HOOK_GET_OBJECT_PROPERTY;
+						$result[PHPTAGS_STACK_HOOK_TYPE] = $owner[1] === true ? PHPTAGS_HOOK_GET_OBJECT_CONSTANT : PHPTAGS_HOOK_GET_OBJECT_PROPERTY;
 						$this->addValueIntoStack( $owner[0], $result, PHPTAGS_STACK_PARAM_3 );
 					} elseif ( $this->id == T_DOUBLE_COLON ) { // it is static constant or method of an object. Examples: FOO::property or FOO::method()
 						$result[PHPTAGS_STACK_COMMAND] = false;
@@ -546,7 +546,6 @@ class Compiler {
 				$result = array( PHPTAGS_STACK_COMMAND=>'"', PHPTAGS_STACK_PARAM=>&$strings, PHPTAGS_STACK_RESULT=>null, PHPTAGS_STACK_TOKEN_LINE=>$this->tokenLine, PHPTAGS_STACK_DEBUG=>$text );
 				break;
 			case T_VARIABLE:
-				static $assignOpers = array( '=', T_PLUS_EQUAL, T_MINUS_EQUAL, T_MUL_EQUAL, T_DIV_EQUAL, T_CONCAT_EQUAL, T_MOD_EQUAL, T_AND_EQUAL, T_OR_EQUAL, T_XOR_EQUAL, T_SL_EQUAL, T_SR_EQUAL );
 				$cannotRead = false;
 
 				$variable = array( PHPTAGS_STACK_COMMAND=>PHPTAGS_T_VARIABLE, PHPTAGS_STACK_PARAM=>substr($text, 1), PHPTAGS_STACK_PARAM_2=>null, PHPTAGS_STACK_RESULT=>null, PHPTAGS_STACK_TOKEN_LINE=>$this->tokenLine, PHPTAGS_STACK_DEBUG=>$text );
@@ -579,7 +578,7 @@ checkOperators:
 
 				$id = $this->id;
 				$text = $this->text;
-				if ( in_array($id, $assignOpers) ) { // There is assignment operator @todo isset( $assignOpers[$id] )
+				if ( in_array($id, self::$operatorsPrecedence[13]) ) { // It is assignment operator
 					$this->stepUP();
 					$val =& $this->getNextValue( '=' );
 					if ( $val == false ) { // Example: $foo=;
@@ -603,7 +602,7 @@ checkOperators:
 							case PHPTAGS_HOOK_GET_OBJECT_PROPERTY: // Example: $foo = new FOO(); $foo->bar =
 								$variable[PHPTAGS_STACK_HOOK_TYPE] = PHPTAGS_HOOK_SET_OBJECT_PROPERTY;
 								break;
-							case PHPTAGS_HOOK_GET_STATIC_PROPERTY: // Example: $foo = new FOO(); $foo::bar =
+							case PHPTAGS_HOOK_GET_STATIC_PROPERTY: // Example: $foo = new FOO(); $foo::$bar =
 								$variable[PHPTAGS_STACK_HOOK_TYPE] = PHPTAGS_HOOK_SET_STATIC_PROPERTY;
 								break;
 							default :  // Example: FOO->$bar() =
@@ -612,18 +611,20 @@ checkOperators:
 						}
 						$this->addValueIntoStack( $val, $variable, PHPTAGS_STACK_PARAM_2 );
 						return $variable; // *********** EXIT ***********
-					} else { // Property name as variable. Example: $foo = new FOO(); $bar='anyproperty'; $foo->$bar =
+					} else {
 						$return = array( // define hook
 							PHPTAGS_STACK_COMMAND => PHPTAGS_T_HOOK,
 							PHPTAGS_STACK_HOOK_TYPE => $owner[1] === true ? PHPTAGS_HOOK_SET_STATIC_PROPERTY : PHPTAGS_HOOK_SET_OBJECT_PROPERTY,
-							PHPTAGS_STACK_PARAM => false,  // function or method
+							PHPTAGS_STACK_PARAM => $owner[1] === true ? $variable[PHPTAGS_STACK_PARAM] : false,  // function or method
 							PHPTAGS_STACK_PARAM_2 => false, // &$functionParameters
 							PHPTAGS_STACK_PARAM_3 => false, // false or &object
 							PHPTAGS_STACK_RESULT => null,
 							PHPTAGS_STACK_TOKEN_LINE => $this->tokenLine,
 							PHPTAGS_STACK_DEBUG => $text,
 						);
-						$this->addValueIntoStack( $variable, $return, PHPTAGS_STACK_PARAM ); // property name
+						if ( $owner[1] !== true ) { // Property name as variable. Example: $foo = new FOO(); $bar='anyproperty'; $foo->$bar =
+							$this->addValueIntoStack( $variable, $return, PHPTAGS_STACK_PARAM ); // property name
+						}
 						$this->addValueIntoStack( $val, $return, PHPTAGS_STACK_PARAM_2 ); // value
 						$this->addValueIntoStack( $owner[0], $return, PHPTAGS_STACK_PARAM_3 ); // object
 						return $return;
@@ -653,14 +654,16 @@ checkOperators:
 					$return = array( // define hook
 						PHPTAGS_STACK_COMMAND => PHPTAGS_T_HOOK,
 						PHPTAGS_STACK_HOOK_TYPE => $owner[1] === true ? PHPTAGS_HOOK_GET_STATIC_PROPERTY : PHPTAGS_HOOK_GET_OBJECT_PROPERTY,
-						PHPTAGS_STACK_PARAM => false,  // function or method
+						PHPTAGS_STACK_PARAM => $owner[1] === true ? $variable[PHPTAGS_STACK_PARAM] : false,  // function or method
 						PHPTAGS_STACK_PARAM_2 => false, // &$functionParameters
 						PHPTAGS_STACK_PARAM_3 => false, // false or &object
 						PHPTAGS_STACK_RESULT => null,
 						PHPTAGS_STACK_TOKEN_LINE => $this->tokenLine,
 						PHPTAGS_STACK_DEBUG => $text,
 					);
-					$this->addValueIntoStack( $variable, $return, PHPTAGS_STACK_PARAM ); // property name
+					if ( $owner[1] !== true ) { // Property name as variable. Example: $foo = new FOO(); $bar='anyproperty'; echo $foo->$bar;
+						$this->addValueIntoStack( $variable, $return, PHPTAGS_STACK_PARAM ); // property name
+					}
 					$this->addValueIntoStack( $owner[0], $return, PHPTAGS_STACK_PARAM_3 ); // object
 
 					$id = $this->id;
