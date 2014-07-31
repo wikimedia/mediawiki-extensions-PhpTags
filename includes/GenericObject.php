@@ -75,6 +75,10 @@ class GenericObject {
 		return $this->name;
 	}
 
+	public function getParser() {
+		return \PhpTags\Runtime::getParser();
+	}
+
 	/**
 	 * It is alias for PHP __toString()
 	 * @return string
