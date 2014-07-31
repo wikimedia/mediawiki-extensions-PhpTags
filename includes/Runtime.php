@@ -278,7 +278,7 @@ class Runtime {
 												$value[PHPTAGS_STACK_PARAM_2][$aim] =& $value[PHPTAGS_STACK_PARAM_2][$aim][$v];
 											} else {
 												// PHP Notice:  Undefined offset: $1
-												$return[] = new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_INDEX, $v, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
+												$return[] = (string) new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_INDEX, $v, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
 												unset( $value[PHPTAGS_STACK_PARAM_2][$aim] );
 												$value[PHPTAGS_STACK_PARAM_2][$aim] = null;
 											}
@@ -288,7 +288,7 @@ class Runtime {
 												$value[PHPTAGS_STACK_PARAM_2][$aim] = $value[PHPTAGS_STACK_PARAM_2][$aim][$v];
 											} else {
 												// PHP Notice:  Uninitialized string offset: $1
-												$return[] = new PhpTagsException( PhpTagsException::NOTICE_UNINIT_STRING_OFFSET, (int)$v, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
+												$return[] = (string) new PhpTagsException( PhpTagsException::NOTICE_UNINIT_STRING_OFFSET, (int)$v, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
 												unset( $value[PHPTAGS_STACK_PARAM_2][$aim] );
 												$value[PHPTAGS_STACK_PARAM_2][$aim] = null;
 											}
@@ -298,7 +298,7 @@ class Runtime {
 							} else {
 								unset( $value[PHPTAGS_STACK_PARAM_2][$aim] );
 								$value[PHPTAGS_STACK_PARAM_2][$aim] = null;
-								$return[] = new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_VARIABLE, $value[PHPTAGS_STACK_PARAM], $value[PHPTAGS_STACK_TOKEN_LINE], $place );
+								$return[] = (string) new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_VARIABLE, $value[PHPTAGS_STACK_PARAM], $value[PHPTAGS_STACK_TOKEN_LINE], $place );
 							}
 							break;
 						case '?':
@@ -345,7 +345,7 @@ class Runtime {
 							break;
 						case PHPTAGS_T_FOREACH:
 							if ( !is_array($value[PHPTAGS_STACK_PARAM]) ) {
-								$return[] = new PhpTagsException( PhpTagsException::WARNING_INVALID_ARGUMENT_FOR_FOREACH, null, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
+								$return[] = (string) new PhpTagsException( PhpTagsException::WARNING_INVALID_ARGUMENT_FOR_FOREACH, null, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
 								break; // **** EXIT ****
 							}
 							reset( $value[PHPTAGS_STACK_PARAM] );
@@ -359,7 +359,7 @@ class Runtime {
 							break;
 						case PHPTAGS_T_AS:
 							if ( !is_array($value[PHPTAGS_STACK_RESULT]) ) {
-								$return[] = new PhpTagsException( PhpTagsException::WARNING_INVALID_ARGUMENT_FOR_FOREACH, null, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
+								$return[] = (string) new PhpTagsException( PhpTagsException::WARNING_INVALID_ARGUMENT_FOR_FOREACH, null, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
 								break; // **** EXIT ****
 							}
 							if ( isset($value[PHPTAGS_STACK_PARAM_2]) ) { // T_DOUBLE_ARROW Example: while ( $foo as $key=>$value )
@@ -380,7 +380,7 @@ class Runtime {
 							break 2; // go to one level down
 						case PHPTAGS_T_CONTINUE:
 							if( self::$loopsLimit-- <= 0 ) {
-								$return[] = new PhpTagsException( PhpTagsException::FATAL_LOOPS_LIMIT_REACHED, null, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
+								$return[] = (string) new PhpTagsException( PhpTagsException::FATAL_LOOPS_LIMIT_REACHED, null, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
 								return $return;
 							}
 							$break = $value[PHPTAGS_STACK_RESULT]-1;
@@ -444,7 +444,7 @@ class Runtime {
 								$value[PHPTAGS_STACK_RESULT][$i] = $t;
 							} elseif ( $value[PHPTAGS_STACK_PARAM_2] === false && $reference_info === true ) {
 								// Param is not variable and it's need reference
-								$return[] = new PhpTagsException( PhpTagsException::FATAL_VALUE_PASSED_BY_REFERENCE, null, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
+								$return[] = (string) new PhpTagsException( PhpTagsException::FATAL_VALUE_PASSED_BY_REFERENCE, null, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
 								return $return;
 							}
 							break;
@@ -465,7 +465,7 @@ class Runtime {
 							if ( is_object($value[PHPTAGS_STACK_RESULT]) && !($value[PHPTAGS_STACK_RESULT] instanceof iRawOutput || $value[PHPTAGS_STACK_RESULT] instanceof GenericObject) ) {
 								// @todo
 								$value[PHPTAGS_STACK_RESULT] = null;
-								$return[] = new PhpTagsException( PhpTagsException::WARNING_RETURNED_INVALID_VALUE, $value[PHPTAGS_STACK_PARAM], $value[PHPTAGS_STACK_TOKEN_LINE], $place );
+								$return[] = (string) new PhpTagsException( PhpTagsException::WARNING_RETURNED_INVALID_VALUE, $value[PHPTAGS_STACK_PARAM], $value[PHPTAGS_STACK_TOKEN_LINE], $place );
 							}
 							break;
 						case PHPTAGS_T_NEW:
@@ -495,7 +495,7 @@ class Runtime {
 										unset( $thisVariables[$vn] );
 									}
 								} elseif ( isset($val[PHPTAGS_STACK_ARRAY_INDEX]) ) { // undefined variable with array index. Example: unset($foo[1])
-									$return[] = new PhpTagsException( PHPTAGS_NOTICE_UNDEFINED_VARIABLE, $vn, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
+									$return[] = (string) new PhpTagsException( PHPTAGS_NOTICE_UNDEFINED_VARIABLE, $vn, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
 								}
 							}
 							break;
@@ -574,7 +574,7 @@ class Runtime {
 									$thisVariables[$variableName] = null;
 								}
 								if( $value[PHPTAGS_STACK_COMMAND] != '=' ) {
-									$return[] = new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_VARIABLE, $variableName, $variable[PHPTAGS_STACK_TOKEN_LINE], $place );
+									$return[] = (string) new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_VARIABLE, $variableName, $variable[PHPTAGS_STACK_TOKEN_LINE], $place );
 								}
 							}
 							$ref = &$thisVariables[$variableName];
@@ -589,7 +589,7 @@ class Runtime {
 										if ( $ref === null ) {
 											if( $value[PHPTAGS_STACK_COMMAND] != '=' ) {
 												// PHP Notice:  Undefined offset: $1
-												$return[] = new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_OFFSET, $v[PHPTAGS_STACK_RESULT], $value[PHPTAGS_STACK_TOKEN_LINE], $place );
+												$return[] = (string) new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_OFFSET, $v[PHPTAGS_STACK_RESULT], $value[PHPTAGS_STACK_TOKEN_LINE], $place );
 											}
 											$ref[$v] = null;
 											$ref = &$ref[$v];
@@ -598,7 +598,7 @@ class Runtime {
 												$ref[$v] = null;
 												if( $value[PHPTAGS_STACK_COMMAND] != '=' ) {
 													// PHP Notice:  Undefined offset: $1
-													$return[] = new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_INDEX, $v, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
+													$return[] = (string) new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_INDEX, $v, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
 												}
 											}
 											$ref = &$ref[$v];
@@ -606,7 +606,7 @@ class Runtime {
 											// PHP Fatal error:  Cannot use string offset as an array
 											throw new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_OFFSET, $v, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
 										} else {
-											$return[] = new PhpTagsException( PhpTagsException::FATAL_STRING_OFFSET_AS_ARRAY, $v, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
+											$return[] = (string) new PhpTagsException( PhpTagsException::FATAL_STRING_OFFSET_AS_ARRAY, $v, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
 											unset( $variable );
 											break 2;
 											// PHP Warning:  Cannot use a scalar value as an array
@@ -674,7 +674,7 @@ class Runtime {
 							if ( $exc instanceof PhpTagsException ) {
 								$exc->tokenLine = $value[PHPTAGS_STACK_TOKEN_LINE];
 								$exc->place = $place;
-								$return[] = $exc;
+								$return[] = (string) $exc;
 							}
 						}
 						self::$transit[PHPTAGS_TRANSIT_EXCEPTION] = array();
@@ -688,11 +688,11 @@ class Runtime {
 				if ( $exc instanceof PhpTagsException ) {
 					$exc->tokenLine = $value[PHPTAGS_STACK_TOKEN_LINE];
 					$exc->place = $place;
-					$return[] = $exc;
+					$return[] = (string) $exc;
 				}
 			}
 			self::$transit[PHPTAGS_TRANSIT_EXCEPTION] = array();
-			$return[] = $e;
+			$return[] = (string) $e;
 			$value[PHPTAGS_STACK_RESULT] = null;
 		}
 		restore_error_handler();
