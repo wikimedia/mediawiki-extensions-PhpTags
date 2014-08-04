@@ -286,7 +286,7 @@ class Hooks {
 			$object = $object->getName();
 		}
 		$className = self::getClassNameByObjectName( $object );
-		return call_user_func( array($className, "d_$name"), $object, $value );
+		return call_user_func( array($className, "d_$name"), $value, $object );
 	}
 
 	/**
