@@ -48,8 +48,8 @@ class GenericObject {
 		switch ( $callType ) {
 			case 's_': // static method
 				throw new PhpTagsException( PhpTagsException::FATAL_CALL_TO_UNDEFINED_METHOD, array($object, $subname) );
-			case 'q': // static property
-			case 'd':
+			case 'q_': // static property
+			case 'd_':
 				throw new PhpTagsException( PhpTagsException::FATAL_ACCESS_TO_UNDECLARED_STATIC_PROPERTY, array($object, $subname) );
 			case 'c_': // constant
 				Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_CLASS_CONSTANT, array($object, $subname) );
