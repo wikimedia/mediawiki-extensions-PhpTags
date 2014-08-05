@@ -13,6 +13,7 @@ class PhpTags {
 	static $DebugLoops = false;
 	static $compileTime = 0;
 
+	private static $bytecodeNeedsUpdate = array();
 	private static $frames=array();
 	private static $needInitRuntime = true;
 
@@ -52,30 +53,23 @@ class PhpTags {
 			$command = "echo $command;";
 		}
 
+		$frameTitle = $frame->getTitle();
+		$titleText = $frameTitle->getPrefixedText();
+		$arguments = array( $titleText ) + $frame->getArguments();
+		$scope = self::getScope( $frame );
+
 		try {
-			$titleText = $frame->getTitle()->getPrefixedText();
-			$compiler = new PhpTags\Compiler();
-			$bytecode = $compiler->compile($command, $titleText);
-
-			// self::$compileTime += microtime(true) - $time;
-			self::$compileTime += $parser->mOutput->getTimeSinceStart('cpu') - $time;
-
-			$arguments = array( $titleText ) + $frame->getArguments();
-
-			$result = \PhpTags\Runtime::run(
-					$bytecode,
-					$arguments,
-					self::getScope( $frame )
-				);
+			$bytecode = self::getBytecode( $frameTitle, $command, $time, $parser );
+			$result = \PhpTags\Runtime::run( $bytecode, $arguments, $scope );
 			$return = implode( $result );
-		} catch (\PhpTags\PhpTagsException $exc) {
+		} catch ( \PhpTags\PhpTagsException $exc ) {
 			$return = (string) $exc;
-		} catch (Exception $exc) {
+		} catch ( Exception $exc ) {
 			$return = $exc->getTraceAsString();
 		}
 
 		// $wgPhpTagsTime += microtime(true) - $time;
-		$wgPhpTagsTime += $parser->mOutput->getTimeSinceStart('cpu') - $time;
+		$wgPhpTagsTime += $parser->mOutput->getTimeSinceStart( 'cpu' ) - $time;
 
 		return \UtfNormal::cleanUp($return);
 	}
@@ -84,10 +78,10 @@ class PhpTags {
 		global $wgPhpTagsTime, $wgPhpTagsMaxLoops;
 
 		//$time = microtime(true);
-		$time = $parser->mOutput->getTimeSinceStart('cpu');
+		$time = $parser->mOutput->getTimeSinceStart( 'cpu' );
 
-		$is_banned = self::isBanned($frame);
-		if ( $is_banned ) {
+		$is_banned = self::isBanned( $frame );
+		if ( false !== $is_banned ) {
 			return $is_banned;
 		}
 
@@ -101,21 +95,14 @@ class PhpTags {
 		\PhpTags\Runtime::$transit[PHPTAGS_TRANSIT_PPFRAME] = $frame;
 		$return = false;
 
+		$frameTitle = $frame->getTitle();
+		$titleText = $frameTitle->getPrefixedText();
+		$arguments = array( $titleText ) + $frame->getArguments();
+		$scope = self::getScope( $frame );
+
 		try {
-			$titleText = $frame->getTitle()->getPrefixedText();
-			$compiler = new PhpTags\Compiler();
-			$bytecode = $compiler->compile($input, $titleText);
-
-			// self::$compileTime += microtime(true) - $time;
-			self::$compileTime += $parser->mOutput->getTimeSinceStart('cpu') - $time;
-
-			$arguments = array( $titleText ) + $frame->getArguments();
-
-			$result = \PhpTags\Runtime::run(
-					$bytecode,
-					$arguments,
-					self::getScope( $frame )
-				);
+			$bytecode = self::getBytecode( $frameTitle, $input, $time, $parser );
+			$result = \PhpTags\Runtime::run( $bytecode, $arguments, $scope );
 		} catch ( \PhpTags\PhpTagsException $exc ) {
 			// $wgPhpTagsTime += microtime(true) - $time;
 			$wgPhpTagsTime += $parser->mOutput->getTimeSinceStart('cpu') - $time;
@@ -129,7 +116,7 @@ class PhpTags {
 		// $wgPhpTagsTime += microtime(true) - $time;
 		$wgPhpTagsTime += $parser->mOutput->getTimeSinceStart('cpu') - $time;
 
-		if( count($result) > 0 ) {
+		if( true === isset( $result[0] ) ) {
 			//$return .= Sanitizer::removeHTMLtags(implode($result));
 			$return .= self::insertGeneral(
 					$parser,
@@ -140,11 +127,71 @@ class PhpTags {
 		return \UtfNormal::cleanUp($return);
 	}
 
+	private static function getBytecode( $frameTitle, $source, $time, $parser ) {
+		global $wgPhpTagsBytecodeExptime;
+		static $bytecodeCache = array();
+		static $bytecodeLoaded = array();
+
+		$titleText = $frameTitle->getPrefixedText();
+		$frameID = $frameTitle->getArticleID();
+		$md5Source = md5( $source );
+
+		if ( true === isset( $bytecodeCache[$frameID][$md5Source] ) ) {
+			return $bytecodeCache[$frameID][$md5Source];
+		}
+
+		if ( $wgPhpTagsBytecodeExptime > 0 && $frameID > 0 && false === isset( $bytecodeLoaded[$frameID] ) ) {
+			$cache = wfGetCache( CACHE_ANYTHING );
+			$key = wfMemcKey( 'phptags', $frameID, PHPTAGS_RUNTIME_RELEASE );
+			$data = $cache->get( $key );
+			$bytecodeLoaded[$frameID] = true;
+			if ( false !== $data ) {
+				$arrayData = unserialize( $data );
+				$bytecodeCache[$frameID] = $arrayData;
+				if ( true === isset( $bytecodeCache[$frameID][$md5Source] ) ) {
+					return $bytecodeCache[$frameID][$md5Source];
+				}
+			}
+		}
+
+		$compiler = new PhpTags\Compiler();
+		$bytecode = $compiler->compile( $source, $titleText );
+		$bytecodeCache[$frameID][$md5Source] = $bytecode;
+		self::$bytecodeNeedsUpdate[$frameID] =& $bytecodeCache[$frameID];
+
+		self::$compileTime += $parser->mOutput->getTimeSinceStart( 'cpu' ) - $time;
+		return $bytecode;
+	}
+
+	public static function updateBytecodeCache() {
+		global $wgPhpTagsBytecodeExptime;
+		if ( $wgPhpTagsBytecodeExptime && self::$bytecodeNeedsUpdate ) {
+			$cache = wfGetCache( CACHE_ANYTHING );
+			foreach ( self::$bytecodeNeedsUpdate as $frameID => $dataArray ) {
+				$key = wfMemcKey( 'phptags', $frameID, PHPTAGS_RUNTIME_RELEASE );
+				$data = serialize( $dataArray );
+				$cache->set( $key, $data, $wgPhpTagsBytecodeExptime );
+			}
+			self::$bytecodeNeedsUpdate = array();
+		}
+	}
+
+	/**
+	 *
+	 * @param Article $article
+	 */
+	public static function clearBytecodeCache( &$article ) {
+		$frameID = $article->getTitle()->getArticleID();
+		$key = wfMemcKey( 'phptags', $frameID, PHPTAGS_RUNTIME_RELEASE );
+		$cache = wfGetCache( CACHE_ANYTHING );
+		$cache->delete( $key );
+	}
+
 	/**
 	 *
 	 * @global type $wgPhpTagsNamespaces
 	 * @param PPFrame $frame
-	 * @return boolean
+	 * @return mixed
 	 */
 	public static function isBanned( PPFrame $frame ) {
 		global $wgPhpTagsNamespaces;
@@ -189,14 +236,14 @@ class PhpTags {
 		return $rnd;
 	}
 
-	private static function getScope(PPFrame $frame) {
-		foreach (self::$frames as &$value) {
-			if( $value[0] === $frame ) {
+	private static function getScope( PPFrame $frame ) {
+		foreach ( self::$frames as &$value ) {
+			if ( $value[0] === $frame ) {
 				return $value[1];
 			}
 		}
-		$scope=count(self::$frames);
-		self::$frames[] = array($frame, $scope);
+		$scope=count( self::$frames );
+		self::$frames[] = array( $frame, $scope );
 		return $scope;
 	}
 

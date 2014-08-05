@@ -15,9 +15,9 @@ if ( !defined( 'MEDIAWIKI' ) ) {
 	die( 'This file is an extension to MediaWiki and thus not a valid entry point.' );
 }
 
-define( 'PHPTAGS_MAJOR_VERSION', 2 );
-define( 'PHPTAGS_MINOR_VERSION', 8 );
-define( 'PHPTAGS_RELEASE_VERSION', 5 );
+define( 'PHPTAGS_MAJOR_VERSION', 3 );
+define( 'PHPTAGS_MINOR_VERSION', 0 );
+define( 'PHPTAGS_RELEASE_VERSION', 0 );
 define( 'PHPTAGS_VERSION', PHPTAGS_MAJOR_VERSION . '.' . PHPTAGS_MINOR_VERSION . '.' . PHPTAGS_RELEASE_VERSION );
 
 define( 'PHPTAGS_HOOK_RELEASE', 4 );
@@ -58,6 +58,9 @@ $wgHooks['PhpTagsRuntimeFirstInit'][] = function() {
 		);
 	return true;
 };
+$wgHooks['OutputPageParserOutput'][]	= 'PhpTags::updateBytecodeCache';
+$wgHooks['ArticleDeleteComplete'][]		= 'PhpTags::clearBytecodeCache';
+$wgHooks['PageContentSaveComplete'][]	= 'PhpTags::clearBytecodeCache';
 
 $wgPhpTagsTime = 0;
 /**
@@ -65,7 +68,7 @@ $wgPhpTagsTime = 0;
  */
 $wgHooks['ParserLimitReport'][] = function( $parser, &$limitReport ) {
 	global $wgPhpTagsTime;
-			if ( $wgPhpTagsTime != 0 ) {
+			if ( $wgPhpTagsTime > 0 ) {
 		$limitReport .= sprintf( "PhpTags time usage: %.3f sec\n          Compiler: %.3f sec\n           Runtime: %.3f sec\n", $wgPhpTagsTime, PhpTags::$compileTime, $wgPhpTagsTime-PhpTags::$compileTime );
 	}
 	return true;
@@ -122,3 +125,9 @@ $wgPhpTagsNamespaces = true; // By default, this is unlimited namespaces
  * Maximum number of allowed loops
  */
 $wgPhpTagsMaxLoops = 1000;
+
+/**
+ * Storage time of the compiled bytecode at cache
+ * By default is 30 days
+ */
+$wgPhpTagsBytecodeExptime = 86400 * 30;
