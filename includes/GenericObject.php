@@ -131,12 +131,23 @@ class GenericObject {
 								break 2;
 							}
 							break;
+						case Hooks::TYPE_STRING:
+							if ( false === is_string( $arguments[$i] ) ) {
+								$error = 'string';
+								break 2;
+							}
+							break;
 						case Hooks::TYPE_ARRAY:
 							if ( false === is_array( $arguments[$i] ) ) {
 								$error = 'array';
 								break 2;
 							}
 							break;
+						case Hooks::TYPE_SCALAR:
+							if ( false === is_scalar( $arguments[$i] ) ) {
+								$error = 'scalar';
+								break 2;
+							}
 					}
 				} elseif ( false === $arguments[$i] instanceof GenericObject || $arguments[$i]->name != $expects[$i] ) {
 					$error = $expects[$i];

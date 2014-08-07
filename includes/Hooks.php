@@ -18,6 +18,8 @@ class Hooks {
 	const TYPE_MIXED = 2;
 	const TYPE_CALLBACK = 3;
 	const TYPE_ARRAY = 4;
+	const TYPE_STRING = 5;
+	const TYPE_SCALAR = 6;
 
 	/**
 	 * Array of constant's values
