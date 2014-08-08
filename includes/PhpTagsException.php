@@ -165,6 +165,9 @@ class PhpTagsException extends \Exception {
 			case self::WARNING_EXPECTS_AT_MOST_PARAMETERS:
 				$message = "$arguments[0]() expects at most $arguments[1] parameters, $arguments[2] given";
 				break;
+			case self::FATAL_DENIED_FOR_NAMESPACE:
+				$message = wfMessage( 'phptags-disabled-for-namespace', $arguments )->text();
+				break;
 			default:
 				$message = "Undefined error, code {$this->code}";
 				$this->code = self::EXCEPTION_FATAL * 1000;
@@ -246,6 +249,8 @@ class PhpTagsException extends \Exception {
 	const FATAL_CALLED_MANY_EXPENSIVE_FUNCTION = 4018;
 	const FATAL_CALL_FUNCTION_ON_NON_OBJECT = 4019; // PHP Fatal error:  Call to a member function doo() on a non-object
 	const FATAL_ACCESS_TO_UNDECLARED_STATIC_PROPERTY = 4020; // PHP Fatal error:  Access to undeclared static property: F::$rsrr
+
+	const FATAL_DENIED_FOR_NAMESPACE = 4500;
 
 	const EXCEPTION_CATCHABLE_FATAL = 5;
 	const FATAL_OBJECT_COULD_NOT_BE_CONVERTED = 5001;  //PHP Catchable fatal error:  Object of class stdClass could not be converted to string

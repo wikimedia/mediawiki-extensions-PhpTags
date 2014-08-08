@@ -16,8 +16,8 @@ if ( !defined( 'MEDIAWIKI' ) ) {
 }
 
 define( 'PHPTAGS_MAJOR_VERSION', 3 );
-define( 'PHPTAGS_MINOR_VERSION', 0 );
-define( 'PHPTAGS_RELEASE_VERSION', 1 );
+define( 'PHPTAGS_MINOR_VERSION', 1 );
+define( 'PHPTAGS_RELEASE_VERSION', 0 );
 define( 'PHPTAGS_VERSION', PHPTAGS_MAJOR_VERSION . '.' . PHPTAGS_MINOR_VERSION . '.' . PHPTAGS_RELEASE_VERSION );
 
 define( 'PHPTAGS_HOOK_RELEASE', 4 );
@@ -61,6 +61,7 @@ $wgHooks['PhpTagsRuntimeFirstInit'][] = function() {
 $wgHooks['OutputPageParserOutput'][]	= 'PhpTags::updateBytecodeCache';
 $wgHooks['ArticleDeleteComplete'][]		= 'PhpTags::clearBytecodeCache';
 $wgHooks['PageContentSaveComplete'][]	= 'PhpTags::clearBytecodeCache';
+$wgHooks['ParserClearState'][]			= 'PhpTags::onParserClearState';
 
 $wgPhpTagsTime = 0;
 /**
@@ -114,11 +115,11 @@ define( 'PHPTAGS_TRANSIT_EXCEPTION', '@' );
  * $wgExtraNamespaces[NS_PHPTAGS] = "PhpTags";
  * $wgExtraNamespaces[NS_PHPTAGS_TALK] = "PhpTags_Talk";
  *
- * $wgPhpTagsNamespaces = array( NS_PHPTAGS );
+ * $wgPhpTagsNamespaces = array( NS_PHPTAGS => true );
  * $wgNamespaceProtection[NS_PHPTAGS] = array( 'phptags_editor' );
  * $wgGroupPermissions['sysop']['phptags_editor'] = true;
  *
- * @var mixed Namespaces Array of namespaces in which allowed to use the extension PhpTags, and if boolean 'true' then it is unlimited namespaces
+ * @var mixed $wgPhpTagsNamespaces Array of namespaces in which allowed to use the extension PhpTags, and if boolean 'true' then it is unlimited namespaces
  */
 $wgPhpTagsNamespaces = true; // By default, this is unlimited namespaces
 

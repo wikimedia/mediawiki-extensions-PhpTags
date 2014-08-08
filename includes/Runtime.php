@@ -91,34 +91,20 @@ class Runtime {
 
 	public static $loopsLimit = 0;
 	public static $transit = array();
-//	static public $time = 0;
-//	static public $permittedTime = true;
-//	protected static $startTime = array();
 
 	private static $variables = array();
 	private static $staticVariables = array();
 	private static $globalVariables = array();
 
-	/*public function startTime($scope) {
-		self::$startTime[$scope] = microtime(true);
-		if( isset(self::$time[$scope]) ) {
-			return $this->checkExceedsTime();
-		}else{
-			self::$time[$scope] = 0;
-		}
-	}
+	public static function reset() {
+		global $wgPhpTagsMaxLoops;
 
-	public function stopTime($scope) {
-		self::$time[$scope] += microtime(true) - self::$startTime[$scope];
+		self::$variables = array();
+		self::$staticVariables = array();
+		self::$globalVariables = array();
+		self::$transit = array();
+		self::$loopsLimit = $wgPhpTagsMaxLoops;
 	}
-
-	public function checkExceedsTime() {
-		global $wgFoxway_max_execution_time_for_scope;
-		if( microtime(true) - self::$startTime[$this->scope] + self::$time[$this->scope] > $wgFoxway_max_execution_time_for_scope ) {
-			return new ErrorMessage( __LINE__, null, E_ERROR, array( 'foxway-php-fatal-error-max-execution-time-scope', $wgFoxway_max_execution_time_for_scope, isset($this->args[0])?$this->args[0]:'n\a' ) );
-		}
-		return null;
-	}*/
 
 	public static function runSource($code, array $args = array(), $scope = '' ) {
 		$compiler = new Compiler();

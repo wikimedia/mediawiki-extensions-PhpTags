@@ -16,6 +16,8 @@ class PhpTags {
 	private static $bytecodeNeedsUpdate = array();
 	private static $frames=array();
 	private static $needInitRuntime = true;
+	private static $bytecodeCache = array();
+	private static $bytecodeLoaded = array();
 
 	/**
 	 *
@@ -24,24 +26,10 @@ class PhpTags {
 	 * @param array $args
 	 */
 	public static function renderFunction( $parser, $frame, $args ) {
-		global $wgPhpTagsTime, $wgPhpTagsMaxLoops;
+		global $wgPhpTagsTime;
 
 		//$time = microtime(true);
 		$time = $parser->mOutput->getTimeSinceStart('cpu');
-
-		$is_banned = self::isBanned($frame);
-		if ( $is_banned ) {
-			return $is_banned;
-		}
-
-		if ( self::$needInitRuntime ) {
-			\wfRunHooks( 'PhpTagsRuntimeFirstInit' );
-			\PhpTags\Runtime::$loopsLimit = $wgPhpTagsMaxLoops;
-			self::$needInitRuntime = false;
-		}
-
-		\PhpTags\Runtime::$transit[PHPTAGS_TRANSIT_PARSER] = $parser;
-		\PhpTags\Runtime::$transit[PHPTAGS_TRANSIT_PPFRAME] = $frame;
 
 		$command = array_shift($args);
 		if ( count( $args ) > 0 ) {
@@ -54,12 +42,12 @@ class PhpTags {
 		}
 
 		$frameTitle = $frame->getTitle();
-		$titleText = $frameTitle->getPrefixedText();
-		$arguments = array( $titleText ) + $frame->getArguments();
+		$frameTitleText = $frameTitle->getPrefixedText();
+		$arguments = array( $frameTitleText ) + $frame->getArguments();
 		$scope = self::getScope( $frame );
 
 		try {
-			$bytecode = self::getBytecode( $frameTitle, $command, $time, $parser );
+			$bytecode = self::getBytecode( $command, $parser, $frame, $frameTitle, $frameTitleText, $time );
 			$result = \PhpTags\Runtime::run( $bytecode, $arguments, $scope );
 			$return = implode( $result );
 		} catch ( \PhpTags\PhpTagsException $exc ) {
@@ -74,34 +62,21 @@ class PhpTags {
 		return \UtfNormal::cleanUp($return);
 	}
 
-	public static function render($input, array $args, Parser $parser, PPFrame $frame) {
-		global $wgPhpTagsTime, $wgPhpTagsMaxLoops;
+	public static function render( $input, array $args, Parser $parser, PPFrame $frame ) {
+		global $wgPhpTagsTime;
 
 		//$time = microtime(true);
 		$time = $parser->mOutput->getTimeSinceStart( 'cpu' );
 
-		$is_banned = self::isBanned( $frame );
-		if ( false !== $is_banned ) {
-			return $is_banned;
-		}
-
-		if ( self::$needInitRuntime ) {
-			\wfRunHooks( 'PhpTagsRuntimeFirstInit' );
-			\PhpTags\Runtime::$loopsLimit = $wgPhpTagsMaxLoops;
-			self::$needInitRuntime = false;
-		}
-
-		\PhpTags\Runtime::$transit[PHPTAGS_TRANSIT_PARSER] = $parser;
-		\PhpTags\Runtime::$transit[PHPTAGS_TRANSIT_PPFRAME] = $frame;
 		$return = false;
 
 		$frameTitle = $frame->getTitle();
-		$titleText = $frameTitle->getPrefixedText();
-		$arguments = array( $titleText ) + $frame->getArguments();
+		$frameTitleText = $frameTitle->getPrefixedText();
+		$arguments = array( $frameTitleText ) + $frame->getArguments();
 		$scope = self::getScope( $frame );
 
 		try {
-			$bytecode = self::getBytecode( $frameTitle, $input, $time, $parser );
+			$bytecode = self::getBytecode( $input, $parser, $frame, $frameTitle, $frameTitleText, $time );
 			$result = \PhpTags\Runtime::run( $bytecode, $arguments, $scope );
 		} catch ( \PhpTags\PhpTagsException $exc ) {
 			// $wgPhpTagsTime += microtime(true) - $time;
@@ -127,40 +102,73 @@ class PhpTags {
 		return \UtfNormal::cleanUp($return);
 	}
 
-	private static function getBytecode( $frameTitle, $source, $time, $parser ) {
+	/**
+	 *
+	 * @global int $wgPhpTagsBytecodeExptime
+	 * @param string $source
+	 * @param Parser $parser
+	 * @param PPFrame $frame
+	 * @param Title $frameTitle
+	 * @param string $frameTitleText
+	 * @param int $time
+	 * @return array
+	 */
+	private static function getBytecode( $source, $parser, $frame, $frameTitle, $frameTitleText, $time ) {
 		global $wgPhpTagsBytecodeExptime;
-		static $bytecodeCache = array();
-		static $bytecodeLoaded = array();
 
-		$titleText = $frameTitle->getPrefixedText();
 		$frameID = $frameTitle->getArticleID();
 		$md5Source = md5( $source );
 
-		if ( true === isset( $bytecodeCache[$frameID][$md5Source] ) ) {
-			return $bytecodeCache[$frameID][$md5Source];
+		self::initialize( $parser, $frame, $frameTitle );
+
+		if ( true === isset( self::$bytecodeCache[$frameID][$md5Source] ) ) {
+			return self::$bytecodeCache[$frameID][$md5Source];
 		}
 
-		if ( $wgPhpTagsBytecodeExptime > 0 && $frameID > 0 && false === isset( $bytecodeLoaded[$frameID] ) ) {
+		if ( $wgPhpTagsBytecodeExptime > 0 && $frameID > 0 && false === isset( self::$bytecodeLoaded[$frameID] ) ) {
 			$cache = wfGetCache( CACHE_ANYTHING );
 			$key = wfMemcKey( 'phptags', $frameID, PHPTAGS_RUNTIME_RELEASE );
 			$data = $cache->get( $key );
-			$bytecodeLoaded[$frameID] = true;
+			self::$bytecodeLoaded[$frameID] = true;
 			if ( false !== $data ) {
 				$arrayData = unserialize( $data );
-				$bytecodeCache[$frameID] = $arrayData;
-				if ( true === isset( $bytecodeCache[$frameID][$md5Source] ) ) {
-					return $bytecodeCache[$frameID][$md5Source];
+				self::$bytecodeCache[$frameID] = $arrayData;
+				if ( true === isset( self::$bytecodeCache[$frameID][$md5Source] ) ) {
+					return self::$bytecodeCache[$frameID][$md5Source];
 				}
 			}
 		}
 
 		$compiler = new PhpTags\Compiler();
-		$bytecode = $compiler->compile( $source, $titleText );
-		$bytecodeCache[$frameID][$md5Source] = $bytecode;
-		self::$bytecodeNeedsUpdate[$frameID] =& $bytecodeCache[$frameID];
+		$bytecode = $compiler->compile( $source, $frameTitleText );
+		self::$bytecodeCache[$frameID][$md5Source] = $bytecode;
+		self::$bytecodeNeedsUpdate[$frameID] =& self::$bytecodeCache[$frameID];
 
 		self::$compileTime += $parser->mOutput->getTimeSinceStart( 'cpu' ) - $time;
 		return $bytecode;
+	}
+
+	/**
+	 *
+	 * @param Parser $parser
+	 * @param PPFrame $frame
+	 * @throws \PhpTags\PhpTagsException
+	 * @return null
+	 */
+	private static function initialize( $parser, $frame, $frameTitle ) {
+		global $wgPhpTagsNamespaces, $wgPhpTagsMaxLoops;
+		if ( true !== $wgPhpTagsNamespaces && false === isset( $wgPhpTagsNamespaces[$frameTitle->getNamespace()] ) ) {
+			throw new \PhpTags\PhpTagsException( \PhpTags\PhpTagsException::FATAL_DENIED_FOR_NAMESPACE, $frameTitle->getNsText() );
+		}
+
+		if ( true === self::$needInitRuntime ) {
+			\wfRunHooks( 'PhpTagsRuntimeFirstInit' );
+			\PhpTags\Runtime::$loopsLimit = $wgPhpTagsMaxLoops;
+			self::$needInitRuntime = false;
+		}
+
+		\PhpTags\Runtime::$transit[PHPTAGS_TRANSIT_PARSER] = $parser;
+		\PhpTags\Runtime::$transit[PHPTAGS_TRANSIT_PPFRAME] = $frame;
 	}
 
 	public static function updateBytecodeCache() {
@@ -187,29 +195,10 @@ class PhpTags {
 		$cache->delete( $key );
 	}
 
-	/**
-	 *
-	 * @global type $wgPhpTagsNamespaces
-	 * @param PPFrame $frame
-	 * @return mixed
-	 */
-	public static function isBanned( PPFrame $frame ) {
-		global $wgPhpTagsNamespaces;
-		if ( $wgPhpTagsNamespaces !== true && !in_array($frame->getTitle()->getNamespace(), $wgPhpTagsNamespaces) ) {
-			return Html::element(
-					'span', array( 'class'=>'error' ),
-					wfMessage( 'phptags-disabled-for-namespace', $frame->getTitle()->getNsText() )->text()
-				);
-		}
-//		if ( $wgPhpTagsPermittedTime !== true && self::$time >= \PhpTags\Runtime::$permittedTime ) {
-//			return Html::element( 'span', array('class'=>'error'),
-//				wfMessage( 'phptags-fatal-error-max-execution-time' )
-//					->numParams( \PhpTags\Runtime::$permittedTime )
-//					->params( $frame->getTitle()->getPrefixedText() )
-//					->text()
-//			);
-//		}
-		return false;
+	public static function onParserClearState() {
+		PhpTags\Runtime::reset();
+		self::$bytecodeCache = array();
+		self::$bytecodeLoaded = array();
 	}
 
 	/**
