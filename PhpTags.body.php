@@ -12,6 +12,10 @@ class PhpTags {
 
 	static $DebugLoops = false;
 	static $compileTime = 0;
+	static $time = 0;
+	static $cacheHit = 0;
+	static $memoryHit = 0;
+	static $compileHit = 0;
 
 	private static $bytecodeNeedsUpdate = array();
 	private static $frames=array();
@@ -26,10 +30,8 @@ class PhpTags {
 	 * @param array $args
 	 */
 	public static function renderFunction( $parser, $frame, $args ) {
-		global $wgPhpTagsTime;
-
-		//$time = microtime(true);
-		$time = $parser->mOutput->getTimeSinceStart('cpu');
+		wfProfileIn( __METHOD__ );
+		$time = $parser->mOutput->getTimeSinceStart( 'cpu' );
 
 		$command = array_shift($args);
 		if ( count( $args ) > 0 ) {
@@ -56,18 +58,15 @@ class PhpTags {
 			$return = $exc->getTraceAsString();
 		}
 
-		// $wgPhpTagsTime += microtime(true) - $time;
-		$wgPhpTagsTime += $parser->mOutput->getTimeSinceStart( 'cpu' ) - $time;
+		self::$time += $parser->mOutput->getTimeSinceStart( 'cpu' ) - $time;
 
-		return \UtfNormal::cleanUp($return);
+		wfProfileOut( __METHOD__ );
+		return \UtfNormal::cleanUp( $return );
 	}
 
 	public static function render( $input, array $args, Parser $parser, PPFrame $frame ) {
-		global $wgPhpTagsTime;
-
-		//$time = microtime(true);
+		wfProfileIn( __METHOD__ );
 		$time = $parser->mOutput->getTimeSinceStart( 'cpu' );
-
 		$return = false;
 
 		$frameTitle = $frame->getTitle();
@@ -79,27 +78,23 @@ class PhpTags {
 			$bytecode = self::getBytecode( $input, $parser, $frame, $frameTitle, $frameTitleText, $time );
 			$result = \PhpTags\Runtime::run( $bytecode, $arguments, $scope );
 		} catch ( \PhpTags\PhpTagsException $exc ) {
-			// $wgPhpTagsTime += microtime(true) - $time;
-			$wgPhpTagsTime += $parser->mOutput->getTimeSinceStart('cpu') - $time;
+			self::$time += $parser->mOutput->getTimeSinceStart( 'cpu' ) - $time;
 			return (string) $exc;
 		} catch ( Exception $exc ) {
-			// $wgPhpTagsTime += microtime(true) - $time;
-			$wgPhpTagsTime += $parser->mOutput->getTimeSinceStart('cpu') - $time;
+			self::$time += $parser->mOutput->getTimeSinceStart( 'cpu' ) - $time;
 			return $exc->getTraceAsString();
 		}
-
-		// $wgPhpTagsTime += microtime(true) - $time;
-		$wgPhpTagsTime += $parser->mOutput->getTimeSinceStart('cpu') - $time;
+		self::$time += $parser->mOutput->getTimeSinceStart( 'cpu' ) - $time;
 
 		if( true === isset( $result[0] ) ) {
-			//$return .= Sanitizer::removeHTMLtags(implode($result));
-			$return .= self::insertGeneral(
+			$return = self::insertGeneral(
 					$parser,
 					$parser->recursiveTagParse( implode($result), $frame )
 				);
 		}
 
-		return \UtfNormal::cleanUp($return);
+		wfProfileOut( __METHOD__ );
+		return \UtfNormal::cleanUp( $return );
 	}
 
 	/**
@@ -114,7 +109,8 @@ class PhpTags {
 	 * @return array
 	 */
 	private static function getBytecode( $source, $parser, $frame, $frameTitle, $frameTitleText, $time ) {
-		global $wgPhpTagsBytecodeExptime;
+		global $wgPhpTagsBytecodeExptime, $wgPhpTagsCounter;
+		$wgPhpTagsCounter++;
 
 		$frameID = $frameTitle->getArticleID();
 		$md5Source = md5( $source );
@@ -122,6 +118,7 @@ class PhpTags {
 		self::initialize( $parser, $frame, $frameTitle );
 
 		if ( true === isset( self::$bytecodeCache[$frameID][$md5Source] ) ) {
+			self::$memoryHit++;
 			return self::$bytecodeCache[$frameID][$md5Source];
 		}
 
@@ -134,6 +131,7 @@ class PhpTags {
 				$arrayData = unserialize( $data );
 				self::$bytecodeCache[$frameID] = $arrayData;
 				if ( true === isset( self::$bytecodeCache[$frameID][$md5Source] ) ) {
+					self::$cacheHit++;
 					return self::$bytecodeCache[$frameID][$md5Source];
 				}
 			}
@@ -144,6 +142,7 @@ class PhpTags {
 		self::$bytecodeCache[$frameID][$md5Source] = $bytecode;
 		self::$bytecodeNeedsUpdate[$frameID] =& self::$bytecodeCache[$frameID];
 
+		self::$compileHit++;
 		self::$compileTime += $parser->mOutput->getTimeSinceStart( 'cpu' ) - $time;
 		return $bytecode;
 	}
@@ -171,17 +170,28 @@ class PhpTags {
 		\PhpTags\Runtime::$transit[PHPTAGS_TRANSIT_PPFRAME] = $frame;
 	}
 
-	public static function updateBytecodeCache() {
-		global $wgPhpTagsBytecodeExptime;
-		if ( $wgPhpTagsBytecodeExptime && self::$bytecodeNeedsUpdate ) {
-			$cache = wfGetCache( CACHE_ANYTHING );
-			foreach ( self::$bytecodeNeedsUpdate as $frameID => $dataArray ) {
-				$key = wfMemcKey( 'phptags', $frameID, PHPTAGS_RUNTIME_RELEASE );
-				$data = serialize( $dataArray );
-				$cache->set( $key, $data, $wgPhpTagsBytecodeExptime );
+	public static function onOutputPageParserOutput() {
+		wfProfileIn( __METHOD__ );
+		global $wgPhpTagsCounter, $wgPhpTagsBytecodeExptime;
+
+		if ( $wgPhpTagsCounter > 0 ) {
+			if ( $wgPhpTagsBytecodeExptime > 0 && self::$bytecodeNeedsUpdate ) {
+				self::updateBytecodeCache();
 			}
-			self::$bytecodeNeedsUpdate = array();
+			PhpTags::reset();
 		}
+
+		wfProfileOut( __METHOD__ );
+	}
+
+	private static function updateBytecodeCache() {
+		$cache = wfGetCache( CACHE_ANYTHING );
+		foreach ( self::$bytecodeNeedsUpdate as $frameID => $dataArray ) {
+			$key = wfMemcKey( 'phptags', $frameID, PHPTAGS_RUNTIME_RELEASE );
+			$data = serialize( $dataArray );
+			$cache->set( $key, $data, $wgPhpTagsBytecodeExptime );
+		}
+		self::$bytecodeNeedsUpdate = array();
 	}
 
 	/**
@@ -189,13 +199,19 @@ class PhpTags {
 	 * @param Article $article
 	 */
 	public static function clearBytecodeCache( &$article ) {
+		wfProfileIn( __METHOD__ );
+
 		$frameID = $article->getTitle()->getArticleID();
 		$key = wfMemcKey( 'phptags', $frameID, PHPTAGS_RUNTIME_RELEASE );
 		$cache = wfGetCache( CACHE_ANYTHING );
 		$cache->delete( $key );
+
+		wfProfileOut( __METHOD__ );
 	}
 
-	public static function onParserClearState() {
+	public static function reset() {
+		global $wgPhpTagsCounter;
+		$wgPhpTagsCounter = 0;
 		PhpTags\Runtime::reset();
 		self::$bytecodeCache = array();
 		self::$bytecodeLoaded = array();

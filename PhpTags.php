@@ -16,7 +16,7 @@ if ( !defined( 'MEDIAWIKI' ) ) {
 }
 
 define( 'PHPTAGS_MAJOR_VERSION', 3 );
-define( 'PHPTAGS_MINOR_VERSION', 1 );
+define( 'PHPTAGS_MINOR_VERSION', 2 );
 define( 'PHPTAGS_RELEASE_VERSION', 0 );
 define( 'PHPTAGS_VERSION', PHPTAGS_MAJOR_VERSION . '.' . PHPTAGS_MINOR_VERSION . '.' . PHPTAGS_RELEASE_VERSION );
 
@@ -58,19 +58,32 @@ $wgHooks['PhpTagsRuntimeFirstInit'][] = function() {
 		);
 	return true;
 };
-$wgHooks['OutputPageParserOutput'][]	= 'PhpTags::updateBytecodeCache';
+$wgHooks['OutputPageParserOutput'][]	= 'PhpTags::onOutputPageParserOutput';
 $wgHooks['ArticleDeleteComplete'][]		= 'PhpTags::clearBytecodeCache';
 $wgHooks['PageContentSaveComplete'][]	= 'PhpTags::clearBytecodeCache';
-$wgHooks['ParserClearState'][]			= 'PhpTags::onParserClearState';
 
-$wgPhpTagsTime = 0;
+$wgPhpTagsCounter = 0;
 /**
  * @codeCoverageIgnore
  */
-$wgHooks['ParserLimitReport'][] = function( $parser, &$limitReport ) {
-	global $wgPhpTagsTime;
-			if ( $wgPhpTagsTime > 0 ) {
-		$limitReport .= sprintf( "PhpTags time usage: %.3f sec\n          Compiler: %.3f sec\n           Runtime: %.3f sec\n", $wgPhpTagsTime, PhpTags::$compileTime, $wgPhpTagsTime-PhpTags::$compileTime );
+$wgHooks['ParserLimitReport'][] = function( $parser, &$limitReport ) use ( &$wgPhpTagsCounter ) {
+	if ( $wgPhpTagsCounter > 0 ) {
+		$time = PhpTags::$time;
+		$compileTime = PhpTags::$compileTime;
+		$limitReport .= sprintf(
+				'PhpTags usage count: %d
+    Runtime : %.3f sec
+    Compiler: %.3f sec ( usage: %d, cache: %d, memory: %d )
+	Total   : %.3f sec
+',
+				$wgPhpTagsCounter,
+				$time - $compileTime,
+				$compileTime,
+				PhpTags::$compileHit,
+				PhpTags::$cacheHit,
+				PhpTags::$memoryHit,
+				$time
+			);
 	}
 	return true;
 };
