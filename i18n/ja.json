@@ -1,0 +1,8 @@
+{
+	"@metadata": {
+		"authors": [
+			"Shirayuki"
+		]
+	},
+	"phptags-disabled-for-namespace": "PhpTags 拡張機能は名前空間「$1」では無効になっています。"
+}
