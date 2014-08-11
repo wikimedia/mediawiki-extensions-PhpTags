@@ -185,6 +185,8 @@ class PhpTags {
 	}
 
 	private static function updateBytecodeCache() {
+		global $wgPhpTagsBytecodeExptime;
+
 		$cache = wfGetCache( CACHE_ANYTHING );
 		foreach ( self::$bytecodeNeedsUpdate as $frameID => $dataArray ) {
 			$key = wfMemcKey( 'phptags', $frameID, PHPTAGS_RUNTIME_RELEASE );
