@@ -226,6 +226,7 @@ class Hooks {
 	 */
 	private static function callObjectsMethod( $arguments, $name, $object ) {
 		if ( $object instanceof GenericObject ) {
+			ksort( $arguments );
 			if ( true === $object->checkArguments( $object, $name, $arguments ) ) {
 				return call_user_func_array( array($object, "m_$name"), $arguments );
 			} else {
@@ -240,6 +241,7 @@ class Hooks {
 			$object = $object->getName();
 		}
 		$className = self::getClassNameByObjectName( $object );
+		ksort( $arguments );
 		if ( true === $className::checkArguments( $object, $name, $arguments ) ) {
 			$arguments[] = $object;
 			return call_user_func_array( array($className, "s_$name"), $arguments );
