@@ -11,7 +11,7 @@ namespace PhpTags;
 /**
  * This class is generic phptags object in the extension PhpTags
  *
- * @file AnyObject.php
+ * @file GenericObject.php
  * @ingroup PhpTags
  * @author Pavel Astakhov <pastakhov@yandex.ru>
  * @licence GNU General Public Licence 2.0 or later
@@ -27,31 +27,29 @@ class GenericObject {
 	}
 
 	public function __call( $name, $arguments ) {
-		$callType = substr( $name, 0, 2 );
-		$subname = substr($name, 2);
+		list ( $callType, $subname ) = explode( '_', $name, 2 );
 		switch ( $callType ) {
-			case 'm_': // method
+			case 'm': // method
 				throw new PhpTagsException( PhpTagsException::FATAL_CALL_TO_UNDEFINED_METHOD, array($this->name, $subname) );
-			case 'p_': // property
+			case 'p': // property
+			case 'b':
 				Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_PROPERTY, array($this->name, $subname) );
 				break;
-			// case 'b_': @todo
 			default:
 				throw new \Exception( $this->name . ': Call to undefined method ' . __CLASS__ . "::$name()" );
 		}
 	}
 
 	public static function __callStatic( $name, $arguments ) {
-		$object = array_pop( $arguments );
-		$callType = substr( $name, 0, 2 );
-		$subname = substr($name, 2);
+		$object = \PhpTags\Hooks::$objectName;
+		list ( $callType, $subname ) = explode( '_', $name, 2 );
 		switch ( $callType ) {
-			case 's_': // static method
+			case 's': // static method
 				throw new PhpTagsException( PhpTagsException::FATAL_CALL_TO_UNDEFINED_METHOD, array($object, $subname) );
-			case 'q_': // static property
-			case 'd_':
+			case 'q': // static property
+			case 'd':
 				throw new PhpTagsException( PhpTagsException::FATAL_ACCESS_TO_UNDECLARED_STATIC_PROPERTY, array($object, $subname) );
-			case 'c_': // constant
+			case 'c': // constant
 				Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_CLASS_CONSTANT, array($object, $subname) );
 				break;
 			default:
@@ -75,6 +73,10 @@ class GenericObject {
 		return $this->name;
 	}
 
+	/**
+	 * @deprecated since version 3.3.0
+	 * @return \Parser
+	 */
 	public function getParser() {
 		return \PhpTags\Runtime::getParser();
 	}

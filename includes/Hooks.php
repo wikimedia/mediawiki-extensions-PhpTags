@@ -22,6 +22,13 @@ class Hooks {
 	const TYPE_SCALAR = 6;
 
 	/**
+	 * When accessing static objects, the object name is placed here.
+	 * It is necessary to be able to get the name of the object in the call handler
+	 * @var string
+	 */
+	public static $objectName;
+
+	/**
 	 * Array of constant's values
 	 * self::$constantValues[ constant_name ] = constant_value
 	 * @var array
@@ -237,23 +244,19 @@ class Hooks {
 	}
 
 	private static function callStaticMethod( $arguments, $name, $object ) {
-		if ( $object instanceof GenericObject ) {
-			$object = $object->getName();
-		}
+		self::$objectName = $object;
 		$className = self::getClassNameByObjectName( $object );
 		ksort( $arguments );
 		if ( true === $className::checkArguments( $object, $name, $arguments ) ) {
-			$arguments[] = $object;
 			return call_user_func_array( array($className, "s_$name"), $arguments );
 		}
 	}
 
 	public static function callGetObjectsConstant( $name, $object ) {
-		if ( $object instanceof GenericObject ) {
-			$object = $object->getName();
-		}
+		self::$objectName = $object;
 		$className = self::getClassNameByObjectName( $object );
-		return call_user_func( array($className, "c_$name"), $object );
+		$handler = "c_$name";
+		return $className::$handler();
 	}
 
 	/**
@@ -265,32 +268,32 @@ class Hooks {
 	 */
 	public static function callGetObjectsProperty( $name, $object ) {
 		if ( $object instanceof GenericObject ) {
-			return call_user_func( array($object, "p_$name") );
+			$handler = "p_$name";
+			return $object->$handler();
 		}
 		Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new PhpTagsException( PhpTagsException::NOTICE_GET_PROPERTY_OF_NON_OBJECT, null );
 	}
 
 	public static function callGetStaticProperty( $name, $object ) {
-		if ( $object instanceof GenericObject ) {
-			$object = $object->getName();
-		}
+		self::$objectName = $object;
 		$className = self::getClassNameByObjectName( $object );
-		return call_user_func( array($className, "q_$name"), $object );
+		$handler = "q_$name";
+		return $className::$handler();
 	}
 
 	public static function callSetObjectsProperty( $name, $object, $value ) {
 		if ( $object instanceof GenericObject ) {
-			return call_user_func( array($object, "b_$name"), $value );
+			$handler = "b_$name";
+			return $object->$handler( $value );
 		}
 		Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new PhpTagsException( PhpTagsException::WARNING_ATTEMPT_TO_ASSIGN_PROPERTY, null );
 	}
 
 	public static function callSetStaticProperty( $name, $object, $value ) {
-		if ( $object instanceof GenericObject ) {
-			$object = $object->getName();
-		}
+		self::$objectName = $object;
 		$className = self::getClassNameByObjectName( $object );
-		return call_user_func( array($className, "d_$name"), $value, $object );
+		$handler = "d_$name";
+		return $className::$handler( $value );
 	}
 
 	/**
@@ -303,6 +306,7 @@ class Hooks {
 	public static function createObject( $arguments, $name, $showException = true ) {
 		$className = self::getClassNameByObjectName( $name );
 		$object = new $className( $name );
+		ksort( $arguments );
 
 		try {
 			if ( true === $object->checkArguments( $name, '__construct', $arguments )
