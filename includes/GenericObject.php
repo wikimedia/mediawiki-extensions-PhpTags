@@ -93,7 +93,7 @@ class GenericObject {
 		Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new PhpTagsException( $exception, $arguments );
 	}
 
-	public static function checkArguments( $object, $method, $arguments, $expects = false ) {
+	public static function checkArguments( $object, $method, &$arguments, $expects = false ) {
 		if ( false === $expects ) {
 			return true;
 		}
@@ -127,11 +127,29 @@ class GenericObject {
 			if ( true === isset( $expects[$i] ) ) {
 				if ( is_numeric( $expects[$i] ) ) {
 					switch ( $expects[$i] ) {
-						case Hooks::TYPE_NUMBER:
-							if ( false === is_numeric( $arguments[$i] ) ) {
-								$error = 'number';
+						case Hooks::TYPE_NUMERIC:
+							if ( true === is_float( $arguments[$i] ) ) {
+								$arguments[$i] = floatval( $arguments[$i] );
+							} elseif( true === is_int( $arguments[$i] ) ) {
+								$arguments[$i] = intval( $arguments[$i] );
+							} else {
+								$error = 'numeric';
 								break 2;
 							}
+							break;
+						case Hooks::TYPE_INT:
+							if ( false === is_numeric($arguments[$i]) ) {
+								$error = 'integer';
+								break 2;
+							}
+							$arguments[$i] = (int)$arguments[$i];
+							break;
+						case Hooks::TYPE_FLOAT:
+							if ( false === is_numeric($arguments[$i]) ) {
+								$error = 'float';
+								break 2;
+							}
+							$arguments[$i] = (float)$arguments[$i];
 							break;
 						case Hooks::TYPE_STRING:
 							if ( false === is_string( $arguments[$i] ) ) {
@@ -148,6 +166,11 @@ class GenericObject {
 						case Hooks::TYPE_SCALAR:
 							if ( false === is_scalar( $arguments[$i] ) ) {
 								$error = 'scalar';
+								break 2;
+							}
+						case Hooks::TYPE_NOT_OBJECT:
+							if ( true === is_object( $arguments[$i] ) ) {
+								$error = 'not object';
 								break 2;
 							}
 					}

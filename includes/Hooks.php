@@ -14,12 +14,16 @@ class Hooks {
 	const EXPECTS_EXACTLY_PARAMETERS = '=';
 	const EXPECTS_MAXIMUM_PARAMETERS = '<';
 	const EXPECTS_MINIMUM_PARAMETERS = '>';
-	const TYPE_NUMBER = 1;
+	const TYPE_NUMBER = 1; // Deprecated since version 3.4.0. You must use TYPE_NUMERIC
+	const TYPE_NUMERIC = 1;
 	const TYPE_MIXED = 2;
 	const TYPE_CALLBACK = 3;
 	const TYPE_ARRAY = 4;
 	const TYPE_STRING = 5;
 	const TYPE_SCALAR = 6;
+	const TYPE_INT = 7;
+	const TYPE_FLOAT = 8;
+	const TYPE_NOT_OBJECT = 9;
 
 	/**
 	 * When accessing static objects, the object name is placed here.
