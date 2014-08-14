@@ -2,6 +2,10 @@
 namespace PhpTags;
 require_once 'Runtime.php';
 
+if ( false === defined( 'T_ONUMBER' ) ) { // T_ONUMBER defined in HHVM only
+	define( 'T_ONUMBER', -20140814094314 );
+}
+
 /**
  * The compiler class of the extension PhpTags.
  * This class converts a php code as data for the class Runtime
@@ -441,6 +445,7 @@ class Compiler {
 		$text = $this->text;
 		switch ( $id ) {
 			case T_LNUMBER:
+			case T_ONUMBER:
 			case T_NUM_STRING:
 				if ( isset($text[0]) && $text[0] == 0 ) {
 					if ( isset($text[1]) && ($text[1] == 'x' || $text[1] == 'X') ) {
