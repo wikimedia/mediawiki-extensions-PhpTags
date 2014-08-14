@@ -137,8 +137,7 @@ class PhpTags {
 			}
 		}
 
-		$compiler = new PhpTags\Compiler();
-		$bytecode = $compiler->compile( $source, $frameTitleText );
+		$bytecode = \PhpTags\Compiler::compile( $source, $frameTitleText );
 		self::$bytecodeCache[$frameID][$md5Source] = $bytecode;
 		self::$bytecodeNeedsUpdate[$frameID] =& self::$bytecodeCache[$frameID];
 

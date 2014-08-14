@@ -147,7 +147,15 @@ class Compiler {
 		$this->stepUP();
 	}
 
-	public function compile( $source, $place = 'Command line code' ) {
+	public static function compile( $source, $place = 'Command line code' ) {
+		static $instance = null;
+		if ( null === $instance ) {
+			$instance = new self();
+		}
+		return $instance->getBytecode( $source, $place );
+	}
+
+	private function getBytecode( $source, $place ) {
 		$this->place = $place;
 		$this->setTokensFromSource( $source );
 
@@ -1567,7 +1575,7 @@ checkOperators:
 	 * @return array Hook
 	 * @throws PhpTagsException
 	 */
-	public function & stepFunctionFromVariable( $variable, $text, $owner ) {
+	private function & stepFunctionFromVariable( $variable, $text, $owner ) {
 		$hook = array( // define the blank hook
 			PHPTAGS_STACK_COMMAND => PHPTAGS_T_HOOK,
 			PHPTAGS_STACK_HOOK_TYPE => false,

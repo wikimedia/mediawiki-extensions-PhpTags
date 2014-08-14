@@ -107,8 +107,7 @@ class Runtime {
 	}
 
 	public static function runSource($code, array $args = array(), $scope = '' ) {
-		$compiler = new Compiler();
-		return self::run( $compiler->compile($code), $args, $scope );
+		return self::run( Compiler::compile($code), $args, $scope );
 	}
 
 	public static function run( $code, array $args, $scope = '' ) {
