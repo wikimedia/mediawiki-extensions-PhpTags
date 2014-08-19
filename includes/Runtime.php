@@ -666,7 +666,7 @@ class Runtime {
 					}
 				}
 			} while( list($code[$codeIndex][PHPTAGS_STACK_RESULT], $code, $codeIndex, $c, $loopsOwner) = array_pop($memory) );
-		}  catch ( PhpTagsException $e ) {
+		} catch ( PhpTagsException $e ) {
 			$e->tokenLine = $value[PHPTAGS_STACK_TOKEN_LINE];
 			$e->place = $place;
 			foreach ( self::$transit[PHPTAGS_TRANSIT_EXCEPTION] as $exc ) {
