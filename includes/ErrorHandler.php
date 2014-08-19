@@ -10,15 +10,9 @@ class ErrorHandler {
 
 	public static function onError( $errno, $errstr, $errfile, $errline, $errcontext, $object = false ) {
 		if ( $object === false ) {
-			self::$oldErrorHandler = null;
-			$return = self::onPhpError( $errno, $errstr, $errfile, $errline, $errcontext );
-		} else {
-			$return = self::onHhvmError( $errno, $errstr, $errfile, $errline, $object );
+			return self::onPhpError( $errno, $errstr, $errfile, $errline, $errcontext );
 		}
-		if ( false === $return && self::$oldErrorHandler !== null ) {
-			$return = call_user_func_array( self::$oldErrorHandler, func_get_args() );
-		}
-		return $return;
+		return self::onHhvmError( $errno, $errstr, $errfile, $errline, $object );
 	}
 
 	private static function onPhpError( $errno, $errstr, $errfile, $errline, $object) {
