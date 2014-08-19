@@ -139,7 +139,7 @@ class PhpTags {
 
 		$bytecode = \PhpTags\Compiler::compile( $source, $frameTitleText );
 		self::$bytecodeCache[$frameID][$md5Source] = $bytecode;
-		self::$bytecodeNeedsUpdate[$frameID] =& self::$bytecodeCache[$frameID];
+		self::$bytecodeNeedsUpdate[$frameID][$md5Source] = unserialize( serialize( $bytecode ) );
 
 		self::$compileHit++;
 		self::$compileTime += $parser->mOutput->getTimeSinceStart( 'cpu' ) - $time;
