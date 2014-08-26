@@ -1,0 +1,9 @@
+{
+	"@metadata": {
+		"authors": [
+			"Beta16"
+		]
+	},
+	"phptags-desc": "Consente agli utenti di utilizzare le espressioni Magic con la sintassi del linguaggio PHP",
+	"phptags-disabled-for-namespace": "L'estensione PhpTags è disabilitata per il namespace \"$1\"."
+}
