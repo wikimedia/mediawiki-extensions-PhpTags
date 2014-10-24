@@ -253,4 +253,8 @@ class PhpTags {
 		return $scope;
 	}
 
+	public static function getCodeMirrorMode( &$mode, &$module ) {
+		$mode['tag']['phptag'] = 'text/x-php';
+	}
+
 }
