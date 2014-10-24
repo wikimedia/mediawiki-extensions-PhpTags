@@ -17,7 +17,7 @@ if ( !defined( 'MEDIAWIKI' ) ) {
 
 const PHPTAGS_MAJOR_VERSION = 3;
 const PHPTAGS_MINOR_VERSION = 5;
-const PHPTAGS_RELEASE_VERSION = 0;
+const PHPTAGS_RELEASE_VERSION = 1;
 define( 'PHPTAGS_VERSION', PHPTAGS_MAJOR_VERSION . '.' . PHPTAGS_MINOR_VERSION . '.' . PHPTAGS_RELEASE_VERSION );
 
 const PHPTAGS_HOOK_RELEASE = 5;
@@ -34,9 +34,9 @@ $wgExtensionCredits['parserhook'][] = array(
 );
 
 // Allow translations for this extension
-$wgMessagesDirs['PhpTags'] =				__DIR__ . '/i18n';
-$wgExtensionMessagesFiles['PhpTags'] =		__DIR__ . '/PhpTags.i18n.php';
-$wgExtensionMessagesFiles['PhpTagsMagic'] =	__DIR__ . '/PhpTags.i18n.magic.php';
+$wgMessagesDirs['PhpTags'] = __DIR__ . '/i18n';
+$wgExtensionMessagesFiles['PhpTags'] = __DIR__ . '/PhpTags.i18n.php';
+$wgExtensionMessagesFiles['PhpTagsMagic'] = __DIR__ . '/PhpTags.i18n.magic.php';
 
 // Specify the function that will initialize the parser function.
 /**
@@ -58,9 +58,10 @@ $wgHooks['PhpTagsRuntimeFirstInit'][] = function() {
 		);
 	return true;
 };
-$wgHooks['OutputPageParserOutput'][]	= 'PhpTags::onOutputPageParserOutput';
-$wgHooks['ArticleDeleteComplete'][]		= 'PhpTags::clearBytecodeCache';
-$wgHooks['PageContentSaveComplete'][]	= 'PhpTags::clearBytecodeCache';
+$wgHooks['OutputPageParserOutput'][] = 'PhpTags::onOutputPageParserOutput';
+$wgHooks['ArticleDeleteComplete'][] = 'PhpTags::clearBytecodeCache';
+$wgHooks['PageContentSaveComplete'][] = 'PhpTags::clearBytecodeCache';
+$wgHooks['CodeMirrorGetExtensionMode'][] = 'PhpTags::getCodeMirrorMode';
 
 $wgPhpTagsCounter = 0;
 /**
@@ -89,18 +90,28 @@ $wgHooks['ParserLimitReport'][] = function( $parser, &$limitReport ) use ( &$wgP
 };
 
 // Preparing classes for autoloading
-$wgAutoloadClasses['PhpTags']					= __DIR__ . '/PhpTags.body.php';
+$wgAutoloadClasses['PhpTags'] = __DIR__ . '/PhpTags.body.php';
 
-$wgAutoloadClasses['PhpTags\\iRawOutput']		= __DIR__ . '/includes/iRawOutput.php';
-$wgAutoloadClasses['PhpTags\\outPrint']			= __DIR__ . '/includes/outPrint.php';
-$wgAutoloadClasses['PhpTags\\ErrorHandler']		= __DIR__ . '/includes/ErrorHandler.php';
-$wgAutoloadClasses['PhpTags\\PhpTagsException']	= __DIR__ . '/includes/PhpTagsException.php';
-$wgAutoloadClasses['PhpTags\\HookException']	= __DIR__ . '/includes/HookException.php';
-$wgAutoloadClasses['PhpTags\\Compiler']			= __DIR__ . '/includes/Compiler.php';
-$wgAutoloadClasses['PhpTags\\Runtime']			= __DIR__ . '/includes/Runtime.php';
-$wgAutoloadClasses['PhpTags\\GenericObject']	= __DIR__ . '/includes/GenericObject.php';
-$wgAutoloadClasses['PhpTags\\GenericFunction']	= __DIR__ . '/includes/GenericFunction.php';
-$wgAutoloadClasses['PhpTags\\Hooks']			= __DIR__ . '/includes/Hooks.php';
+$wgAutoloadClasses['PhpTags\\iRawOutput'] = __DIR__ . '/includes/iRawOutput.php';
+$wgAutoloadClasses['PhpTags\\outPrint'] = __DIR__ . '/includes/outPrint.php';
+$wgAutoloadClasses['PhpTags\\ErrorHandler'] = __DIR__ . '/includes/ErrorHandler.php';
+$wgAutoloadClasses['PhpTags\\PhpTagsException'] = __DIR__ . '/includes/PhpTagsException.php';
+$wgAutoloadClasses['PhpTags\\HookException'] = __DIR__ . '/includes/HookException.php';
+$wgAutoloadClasses['PhpTags\\Compiler'] = __DIR__ . '/includes/Compiler.php';
+$wgAutoloadClasses['PhpTags\\Runtime'] = __DIR__ . '/includes/Runtime.php';
+$wgAutoloadClasses['PhpTags\\GenericObject'] = __DIR__ . '/includes/GenericObject.php';
+$wgAutoloadClasses['PhpTags\\GenericFunction'] = __DIR__ . '/includes/GenericFunction.php';
+$wgAutoloadClasses['PhpTags\\Hooks'] = __DIR__ . '/includes/Hooks.php';
+
+if ( false === isset( $wgCodeMirrorResources ) ) {
+	$wgCodeMirrorResources = array();
+}
+$wgCodeMirrorResources['scripts']['lib/codemirror/mode/php/php.js'] = true;
+$wgCodeMirrorResources['scripts']['lib/codemirror/mode/htmlmixed/htmlmixed.js'] = true;
+$wgCodeMirrorResources['scripts']['lib/codemirror/mode/xml/xml.js'] = true;
+$wgCodeMirrorResources['scripts']['lib/codemirror/mode/javascript/javascript.js'] = true;
+$wgCodeMirrorResources['scripts']['lib/codemirror/mode/css/css.js'] = true;
+$wgCodeMirrorResources['scripts']['lib/codemirror/mode/clike/clike.js'] = true;
 
 /**
  * Add files to phpunit test
