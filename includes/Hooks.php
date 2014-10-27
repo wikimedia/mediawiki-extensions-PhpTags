@@ -24,6 +24,7 @@ class Hooks {
 	const TYPE_INT = 7;
 	const TYPE_FLOAT = 8;
 	const TYPE_NOT_OBJECT = 9;
+	const TYPE_BOOL = 10;
 
 	/**
 	 * When accessing static objects, the object name is placed here.
