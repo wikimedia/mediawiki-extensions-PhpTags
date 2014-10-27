@@ -168,11 +168,16 @@ class GenericObject {
 								$error = 'scalar';
 								break 2;
 							}
+							break;
 						case Hooks::TYPE_NOT_OBJECT:
 							if ( true === is_object( $arguments[$i] ) ) {
 								$error = 'not object';
 								break 2;
 							}
+							break;
+						case Hooks::TYPE_BOOL:
+							$arguments[$i] = (bool)$arguments[$i];
+							break;
 					}
 				} elseif ( false === $arguments[$i] instanceof GenericObject || $arguments[$i]->name != $expects[$i] ) {
 					$error = $expects[$i];
