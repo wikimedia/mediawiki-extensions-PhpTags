@@ -239,11 +239,14 @@ class Hooks {
 	private static function callObjectsMethod( $arguments, $name, $object ) {
 		if ( $object instanceof GenericObject ) {
 			ksort( $arguments );
-			if ( true === $object->checkArguments( $object, $name, $arguments ) ) {
+			$e = $object->checkArguments( $object->getName(), $name, $arguments );
+			if ( $e === true ) {
 				return call_user_func_array( array($object, "m_$name"), $arguments );
-			} else {
-				return;
 			}
+			if ( $e instanceof \PhpTags\PhpTagsException ) {
+				Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = $e;
+			}
+			return null;
 		}
 		throw new PhpTagsException( PhpTagsException::FATAL_CALL_FUNCTION_ON_NON_OBJECT, $name );
 	}
@@ -252,9 +255,14 @@ class Hooks {
 		self::$objectName = $object;
 		$className = self::getClassNameByObjectName( $object );
 		ksort( $arguments );
-		if ( true === $className::checkArguments( $object, $name, $arguments ) ) {
+		$e = $className::checkArguments( $object, $name, $arguments );
+		if ( $e === true ) {
 			return call_user_func_array( array($className, "s_$name"), $arguments );
 		}
+		if ( $e instanceof \PhpTags\PhpTagsException ) {
+			Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = $e;
+		}
+		return null;
 	}
 
 	public static function callGetObjectsConstant( $name, $object ) {
@@ -314,12 +322,15 @@ class Hooks {
 		ksort( $arguments );
 
 		try {
-			if ( true === $object->checkArguments( $name, '__construct', $arguments )
-					&& true === call_user_func_array( array($object, 'm___construct'), $arguments ) ) {
+			$e = $object->checkArguments( $name, '__construct', $arguments );
+			if ( $e === true && call_user_func_array( array($object, 'm___construct'), $arguments ) === true ) {
 				return $object;
-			} else {
-				return false;
 			}
+			if ( $e instanceof \PhpTags\PhpTagsException ) {
+				Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = $e;
+			}
+		} catch ( \PhpTags\PhpTagsException $exc) {
+			Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = $exc;
 		} catch ( \Exception $exc ) {
 			if ( $showException ) {
 				list(, $message) = explode( ': ', $exc->getMessage(), 2 );
@@ -329,6 +340,7 @@ class Hooks {
 				Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new PhpTagsException( PhpTagsException::FATAL_OBJECT_NOT_CREATED, array( $name, $message ) );
 			}
 		}
+		return false;
 	}
 
 	private static function getClassNameByObjectName( $name ) {

@@ -80,6 +80,9 @@ class PhpTagsException extends \Exception {
 			case self::WARNING_EXPECTS_PARAMETER:
 				$message = "{$arguments[0]}() expects parameter {$arguments[1]} to be {$arguments[2]}, {$arguments[3]} given";
 				break;
+			case self::NOTICE_EXPECTS_PROPERTY:
+				$message = "{$arguments[0]} expects property to be {$arguments[2]}, {$arguments[3]} given";
+				break;
 			case self::FATAL_UNEXPECTED_OBJECT_TYPE; // = 4021; // Fatal error: Unexpected object type stdClass. in
 				$message = "{$arguments[0]}() Unexpected object type {$arguments[1]}";
 				break;
@@ -216,6 +219,7 @@ class PhpTagsException extends \Exception {
 	const NOTICE_UNDEFINED_CLASS_CONSTANT = 2007;  // PHP Fatal error:  Undefined class constant 'EXCLUDE_START_DATEqqqq'
 	const NOTICE_OBJECT_CONVERTED = 2008;  // PHP Notice:  Object of class Exception could not be converted to int
 	const NOTICE_GET_PROPERTY_OF_NON_OBJECT = 2009; // PHP Notice:  Trying to get property of non-object
+	const NOTICE_EXPECTS_PROPERTY = 2010;
 
 	const EXCEPTION_WARNING = 3;
 	const WARNING_DIVISION_BY_ZERO = 3001;  // PHP Warning:  Division by zero

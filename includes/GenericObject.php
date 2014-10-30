@@ -100,25 +100,22 @@ class GenericObject {
 
 		$argCount = count( $arguments );
 		if( true === isset( $expects[Hooks::EXPECTS_EXACTLY_PARAMETERS] ) && $argCount != $expects[Hooks::EXPECTS_EXACTLY_PARAMETERS] ) {
-			Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new PhpTagsException(
+			return new PhpTagsException(
 					PhpTagsException::WARNING_EXPECTS_EXACTLY_PARAMETER,
 					array( "$object::$method", $expects[Hooks::EXPECTS_EXACTLY_PARAMETERS], $argCount )
 				);
-			return false;
 		} else {
 			if ( true == isset( $expects[Hooks::EXPECTS_MAXIMUM_PARAMETERS] ) && $argCount > $expects[Hooks::EXPECTS_MAXIMUM_PARAMETERS] ) {
-				Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new PhpTagsException(
+				return new PhpTagsException(
 					PhpTagsException::WARNING_EXPECTS_AT_MOST_PARAMETERS,
 					array( "$object::$method", $expects[Hooks::EXPECTS_MAXIMUM_PARAMETERS], $argCount )
 				);
-				return false;
 			}
 			if ( true == isset( $expects[Hooks::EXPECTS_MINIMUM_PARAMETERS] ) && $argCount < $expects[Hooks::EXPECTS_MINIMUM_PARAMETERS] ) {
-				Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new PhpTagsException(
+				return new PhpTagsException(
 					PhpTagsException::WARNING_EXPECTS_AT_LEAST_PARAMETERS,
 					array( "$object::$method", $expects[Hooks::EXPECTS_MINIMUM_PARAMETERS], $argCount )
 				);
-				return false;
 			}
 		}
 
@@ -190,11 +187,10 @@ class GenericObject {
 			return true;
 		}
 
-		Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new PhpTagsException(
+		return new PhpTagsException(
 				PhpTagsException::WARNING_EXPECTS_PARAMETER,
 				array( "$object::$method", $i+1, $error, gettype( $arguments[$i] ) )
 			);
-		return false;
 	}
 
 }

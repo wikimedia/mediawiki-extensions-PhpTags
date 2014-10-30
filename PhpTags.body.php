@@ -17,6 +17,8 @@ class PhpTags {
 	static $memoryHit = 0;
 	static $compileHit = 0;
 
+	static $globalVariablesScript = array();
+
 	private static $bytecodeNeedsUpdate = array();
 	private static $frames=array();
 	private static $needInitRuntime = true;
@@ -255,6 +257,12 @@ class PhpTags {
 
 	public static function getCodeMirrorMode( &$mode, &$module ) {
 		$mode['tag']['phptag'] = 'text/x-php';
+	}
+
+	public static function onMakeGlobalVariablesScript( array &$vars ) {
+		foreach ( self::$globalVariablesScript as $key=> $value ) {
+			$vars["ext.phptags.$key"] = $value;
+		}
 	}
 
 }

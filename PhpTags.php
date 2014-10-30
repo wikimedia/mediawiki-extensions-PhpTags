@@ -16,8 +16,8 @@ if ( !defined( 'MEDIAWIKI' ) ) {
 }
 
 const PHPTAGS_MAJOR_VERSION = 3;
-const PHPTAGS_MINOR_VERSION = 5;
-const PHPTAGS_RELEASE_VERSION = 2;
+const PHPTAGS_MINOR_VERSION = 6;
+const PHPTAGS_RELEASE_VERSION = 0;
 define( 'PHPTAGS_VERSION', PHPTAGS_MAJOR_VERSION . '.' . PHPTAGS_MINOR_VERSION . '.' . PHPTAGS_RELEASE_VERSION );
 
 const PHPTAGS_HOOK_RELEASE = 5;
@@ -62,6 +62,7 @@ $wgHooks['OutputPageParserOutput'][] = 'PhpTags::onOutputPageParserOutput';
 $wgHooks['ArticleDeleteComplete'][] = 'PhpTags::clearBytecodeCache';
 $wgHooks['PageContentSaveComplete'][] = 'PhpTags::clearBytecodeCache';
 $wgHooks['CodeMirrorGetExtensionMode'][] = 'PhpTags::getCodeMirrorMode';
+$wgHooks['MakeGlobalVariablesScript'][] = 'PhpTags::onMakeGlobalVariablesScript';
 
 $wgPhpTagsCounter = 0;
 /**
