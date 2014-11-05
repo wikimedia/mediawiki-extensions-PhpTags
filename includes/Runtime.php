@@ -737,6 +737,26 @@ class Runtime {
 	}
 
 	/**
+	 * Set a flag in the output object indicating that the content is dynamic and
+	 * shouldn't be cached.
+	 * @global \OutputPage $wgOut
+	 * @staticvar boolean $done
+	 * @return null
+	 */
+	public static function disableParserCache() {
+		global $wgOut;
+		static $done = false;
+
+		if ( $done ) {
+			return;
+		}
+
+		self::getParser()->disableCache();
+		$wgOut->enableClientCache( false );
+		$done = true;
+	}
+
+	/**
 	 * Increment the expensive function count
 	 * @param string $functionName
 	 * @return null
