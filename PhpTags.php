@@ -16,7 +16,7 @@ if ( !defined( 'MEDIAWIKI' ) ) {
 }
 
 const PHPTAGS_MAJOR_VERSION = 3;
-const PHPTAGS_MINOR_VERSION = 8;
+const PHPTAGS_MINOR_VERSION = 9;
 const PHPTAGS_RELEASE_VERSION = 0;
 define( 'PHPTAGS_VERSION', PHPTAGS_MAJOR_VERSION . '.' . PHPTAGS_MINOR_VERSION . '.' . PHPTAGS_RELEASE_VERSION );
 
@@ -47,45 +47,36 @@ $wgHooks['ParserFirstCallInit'][] = function( Parser &$parser ) {
 	$parser->setHook( 'phptag', 'PhpTags::render' );
 	return true;
 };
-$wgHooks['PhpTagsRuntimeFirstInit'][] = function() {
-	\PhpTags\Hooks::setConstantValues(
-			array(
-				'PHPTAGS_MAJOR_VERSION' => PHPTAGS_MAJOR_VERSION,
-				'PHPTAGS_MINOR_VERSION' => PHPTAGS_MINOR_VERSION,
-				'PHPTAGS_RELEASE_VERSION' => PHPTAGS_RELEASE_VERSION,
-				'PHPTAGS_VERSION' => PHPTAGS_VERSION,
-			)
-		);
-	return true;
-};
-$wgHooks['OutputPageParserOutput'][] = 'PhpTags::onOutputPageParserOutput';
+
+$wgHooks['PhpTagsRuntimeFirstInit'][] = 'PhpTags::onPhpTagsRuntimeFirstInit';
 $wgHooks['ArticleDeleteComplete'][] = 'PhpTags::clearBytecodeCache';
 $wgHooks['PageContentSaveComplete'][] = 'PhpTags::clearBytecodeCache';
 $wgHooks['CodeMirrorGetExtensionMode'][] = 'PhpTags::getCodeMirrorMode';
-$wgHooks['MakeGlobalVariablesScript'][] = 'PhpTags::onMakeGlobalVariablesScript';
 
 $wgPhpTagsCounter = 0;
+
+/**
+ * @codeCoverageIgnore
+ */
+$wgHooks['OutputPageParserOutput'][] = function () use ( &$wgPhpTagsCounter ) {
+	if ( $wgPhpTagsCounter > 0 ) {
+		\PhpTags::onOutputPageParserOutput();
+	}
+};
+
 /**
  * @codeCoverageIgnore
  */
 $wgHooks['ParserLimitReport'][] = function( $parser, &$limitReport ) use ( &$wgPhpTagsCounter ) {
 	if ( $wgPhpTagsCounter > 0 ) {
-		$time = PhpTags::$time;
-		$compileTime = PhpTags::$compileTime;
-		$limitReport .= sprintf(
-				'PhpTags usage count: %d
-    Runtime : %.3f sec
-    Compiler: %.3f sec ( usage: %d, cache: %d, memory: %d )
-	Total   : %.3f sec
-',
-				$wgPhpTagsCounter,
-				$time - $compileTime,
-				$compileTime,
-				PhpTags::$compileHit,
-				PhpTags::$cacheHit,
-				PhpTags::$memoryHit,
-				$time
-			);
+		\PhpTags::onParserLimitReport( $parser, $limitReport );
+	}
+	return true;
+};
+
+$wgHooks['ParserAfterTidy'][] = function ( &$parser, &$text ) use ( &$wgPhpTagsCounter ) {
+	if ( $wgPhpTagsCounter > 0 ) {
+		\PhpTags::onParserAfterTidy( $parser, $text );
 	}
 	return true;
 };

@@ -265,4 +265,53 @@ class PhpTags {
 		}
 	}
 
+	public static function onPhpTagsRuntimeFirstInit() {
+		\PhpTags\Hooks::setConstantValues(
+				array(
+					'PHPTAGS_MAJOR_VERSION' => PHPTAGS_MAJOR_VERSION,
+					'PHPTAGS_MINOR_VERSION' => PHPTAGS_MINOR_VERSION,
+					'PHPTAGS_RELEASE_VERSION' => PHPTAGS_RELEASE_VERSION,
+					'PHPTAGS_VERSION' => PHPTAGS_VERSION,
+				)
+			);
+		return true;
+	}
+
+	public static function onParserLimitReport( $parser, &$limitReport ) {
+		global $wgPhpTagsCounter;
+
+		$time = self::$time;
+		$compileTime = self::$compileTime;
+		$limitReport .= sprintf(
+				'PhpTags usage count: %d
+Runtime : %.3f sec
+Compiler: %.3f sec ( usage: %d, cache: %d, memory: %d )
+Total   : %.3f sec
+',
+				$wgPhpTagsCounter,
+				$time - $compileTime,
+				$compileTime,
+				self::$compileHit,
+				self::$cacheHit,
+				self::$memoryHit,
+				$time
+			);
+		return true;
+	}
+
+	public static function onParserAfterTidy( &$parser, &$text ) {
+		if ( self::$globalVariablesScript ) {
+			$vars = array();
+			foreach ( self::$globalVariablesScript as $key=> $value ) {
+				$vars["ext.phptags.$key"] = $value;
+			}
+			$text .= Html::inlineScript(
+				ResourceLoader::makeLoaderConditionalScript(
+					ResourceLoader::makeConfigSetScript( $vars )
+				)
+			);
+		}
+		return true;
+	}
+
 }
