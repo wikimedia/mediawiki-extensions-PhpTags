@@ -88,7 +88,7 @@ class PhpTags {
 		}
 		self::$time += $parser->mOutput->getTimeSinceStart( 'cpu' ) - $time;
 
-		if( true === isset( $result[0] ) ) {
+		if( $result ) {
 			$return = self::insertGeneral(
 					$parser,
 					$parser->recursiveTagParse( implode($result), $frame )

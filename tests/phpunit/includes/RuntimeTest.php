@@ -3,6 +3,30 @@ namespace PhpTags;
 
 class RuntimeTest extends \PHPUnit_Framework_TestCase {
 
+	public function testRun_echo_null_1() {
+		$this->assertEquals(
+				Runtime::runSource('echo null;'),
+				array( null )
+			);
+	}
+	public function testRun_echo_true_1() {
+		$this->assertEquals(
+				Runtime::runSource('echo true;'),
+				array( true )
+			);
+	}
+	public function testRun_echo_false_1() {
+		$this->assertEquals(
+				Runtime::runSource('echo false;'),
+				array( false )
+			);
+	}
+	public function testRun_no_echo_1() {
+		$this->assertEquals(
+				Runtime::runSource(';'),
+				array()
+			);
+	}
 	public function testRun_echo_apostrophe_1() {
 		$this->assertEquals(
 				Runtime::runSource('echo "Hello!";'),

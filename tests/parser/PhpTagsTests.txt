@@ -58,3 +58,19 @@ argv foo test
 <p>bar
 </p>
 !! end
+
+!! test
+echo null true false
+!! input
+<phptag> echo null, true, false; </phptag>
+!! result
+<p>1
+</p>
+!! end
+
+!! test
+echo nothing
+!! input
+<phptag> ; </phptag>
+!! result
+!! end
