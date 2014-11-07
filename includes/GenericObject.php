@@ -16,7 +16,7 @@ namespace PhpTags;
  * @author Pavel Astakhov <pastakhov@yandex.ru>
  * @licence GNU General Public Licence 2.0 or later
  */
-class GenericObject {
+class GenericObject implements \Iterator {
 
 	protected $name;
 	protected $value;
@@ -192,5 +192,12 @@ class GenericObject {
 				array( "$object::$method", $i+1, $error, gettype( $arguments[$i] ) )
 			);
 	}
+
+	// do not allow illegal access to public properties from inside phptag code by using foreach operator
+	public function current() {}
+	public function key() {}
+	public function next() {}
+	public function rewind() {}
+	public function valid() { return false; }
 
 }
