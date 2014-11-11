@@ -171,20 +171,6 @@ class PhpTags {
 		\PhpTags\Runtime::$transit[PHPTAGS_TRANSIT_PPFRAME] = $frame;
 	}
 
-	public static function onOutputPageParserOutput() {
-		wfProfileIn( __METHOD__ );
-		global $wgPhpTagsCounter, $wgPhpTagsBytecodeExptime;
-
-		if ( $wgPhpTagsCounter > 0 ) {
-			if ( $wgPhpTagsBytecodeExptime > 0 && self::$bytecodeNeedsUpdate ) {
-				self::updateBytecodeCache();
-			}
-			PhpTags::reset();
-		}
-
-		wfProfileOut( __METHOD__ );
-	}
-
 	private static function updateBytecodeCache() {
 		global $wgPhpTagsBytecodeExptime;
 
@@ -295,6 +281,9 @@ Total   : %.3f sec
 	}
 
 	public static function onParserAfterTidy( &$parser, &$text ) {
+		global $wgPhpTagsBytecodeExptime;
+		wfProfileIn( __METHOD__ );
+
 		if ( self::$globalVariablesScript ) {
 			$vars = array();
 			foreach ( self::$globalVariablesScript as $key=> $value ) {
@@ -306,6 +295,12 @@ Total   : %.3f sec
 				)
 			);
 		}
+		if ( $wgPhpTagsBytecodeExptime > 0 && self::$bytecodeNeedsUpdate ) {
+			self::updateBytecodeCache();
+		}
+		self::reset();
+
+		wfProfileOut( __METHOD__ );
 		return true;
 	}
 
