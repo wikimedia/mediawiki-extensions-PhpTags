@@ -93,7 +93,7 @@ class GenericObject implements \Iterator {
 		Runtime::$transit[PHPTAGS_TRANSIT_EXCEPTION][] = new PhpTagsException( $exception, $arguments );
 	}
 
-	public static function checkArguments( $object, $method, &$arguments, $expects = false ) {
+	public static function checkArguments( $object, $method, $arguments, $expects = false ) {
 		if ( false === $expects ) {
 			return true;
 		}
