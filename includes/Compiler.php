@@ -1468,6 +1468,9 @@ checkOperators:
 		do {
 			$this->stepUP();
 			$val =& $this->stepValue( array(&$result, $isStatic) );
+			if ( $isStatic ) { // Static is the first calls only
+				$isStatic = false;
+			}
 			if ( $val == false ) { // Example: FOO::bar-> ;
 				// PHP Parse error:  syntax error, unexpected $id
 				throw new PhpTagsException( PhpTagsException::PARSE_SYNTAX_ERROR_UNEXPECTED, array( $this->id ), $this->tokenLine, $this->place );
