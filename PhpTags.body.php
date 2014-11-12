@@ -199,6 +199,8 @@ class PhpTags {
 	}
 
 	public static function reset() {
+		self::writeLimitReport();
+
 		global $wgPhpTagsCounter;
 		$wgPhpTagsCounter = 0;
 		PhpTags\Runtime::reset();
@@ -258,12 +260,12 @@ class PhpTags {
 		return true;
 	}
 
-	public static function onParserLimitReport( $parser, &$limitReport ) {
-		global $wgPhpTagsCounter;
+	public static function writeLimitReport() {
+		global $wgPhpTagsCounter, $wgPhpTagsLimitReport;
 
 		$time = self::$time;
 		$compileTime = self::$compileTime;
-		$limitReport .= sprintf(
+		$wgPhpTagsLimitReport = sprintf(
 				'PhpTags usage count: %d
 Runtime : %.3f sec
 Compiler: %.3f sec ( usage: %d, cache: %d, memory: %d )

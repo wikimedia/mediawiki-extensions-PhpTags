@@ -17,7 +17,7 @@ if ( !defined( 'MEDIAWIKI' ) ) {
 
 const PHPTAGS_MAJOR_VERSION = 3;
 const PHPTAGS_MINOR_VERSION = 11;
-const PHPTAGS_RELEASE_VERSION = 0;
+const PHPTAGS_RELEASE_VERSION = 1;
 define( 'PHPTAGS_VERSION', PHPTAGS_MAJOR_VERSION . '.' . PHPTAGS_MINOR_VERSION . '.' . PHPTAGS_RELEASE_VERSION );
 
 const PHPTAGS_HOOK_RELEASE = 5;
@@ -53,14 +53,16 @@ $wgHooks['ArticleDeleteComplete'][] = 'PhpTags::clearBytecodeCache';
 $wgHooks['PageContentSaveComplete'][] = 'PhpTags::clearBytecodeCache';
 $wgHooks['CodeMirrorGetExtensionMode'][] = 'PhpTags::getCodeMirrorMode';
 
+$wgPhpTagsLimitReport = false;
 $wgPhpTagsCounter = 0;
 
 /**
  * @codeCoverageIgnore
  */
-$wgHooks['ParserLimitReport'][] = function( $parser, &$limitReport ) use ( &$wgPhpTagsCounter ) {
-	if ( $wgPhpTagsCounter > 0 ) {
-		\PhpTags::onParserLimitReport( $parser, $limitReport );
+$wgHooks['ParserLimitReport'][] = function( $parser, &$limitReport ) use ( &$wgPhpTagsLimitReport ) {
+	if ( $wgPhpTagsLimitReport !== false ) {
+		$limitReport .= $wgPhpTagsLimitReport;
+		$wgPhpTagsLimitReport = false;
 	}
 	return true;
 };
