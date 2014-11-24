@@ -9,7 +9,7 @@ namespace PhpTags;
 class ErrorHandler {
 
 	public static function onError( $errno, $errstr, $errfile, $errline, $errcontext, $object = false ) {
-		if ( $object === false ) {
+		if ( $object === false ) { // @todo wfIsHHVM()
 			return self::onPhpError( $errno, $errstr, $errfile, $errline, $errcontext );
 		}
 		return self::onHhvmError( $errno, $errstr, $errfile, $errline, $object );

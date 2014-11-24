@@ -69,8 +69,36 @@ echo null true false
 !! end
 
 !! test
-echo nothing
+tag nothing
+!! input
+<phptag></phptag>
+!! result
+!! end
+
+!! test
+tag empty
+!! input
+<phptag>  </phptag>
+!! result
+!! end
+
+!! test
+tag empty and ;
 !! input
 <phptag> ; </phptag>
+!! result
+!! end
+
+!! test
+pf nothing
+!! input
+{{#phptag:}}
+!! result
+!! end
+
+!! test
+pf empty
+!! input
+{{#phptag:  }}
 !! result
 !! end

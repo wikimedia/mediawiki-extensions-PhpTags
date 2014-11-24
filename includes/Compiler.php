@@ -144,7 +144,7 @@ class Compiler {
 		$this->tokens = $tokens;
 		reset( $this->tokens );
 		$this->tokenLine = 0;
-		$this->stepUP();
+		$this->stepUP( false );
 	}
 
 	public static function compile( $source, $place = 'Command line code' ) {
@@ -168,28 +168,7 @@ class Compiler {
 
 	private function stepBlockOperators( $endToken, $throwEndTag = true ) {
 		while ( $this->id != $endToken ) {
-			$result = $this->stepFirstOperator( $throwEndTag );
-			if ( !$result ) {
-				if ( $this->id == ';' ) { // Example: ;;;;
-					$this->stepUP( $throwEndTag ); // @todo fix it
-				} else {
-					$value =& $this->getNextValue();
-					if ( $value ) { // Example: $foo=1;
-						$dummy = array( PHPTAGS_STACK_RESULT=>null );
-						$this->addValueIntoStack( $value, $dummy, PHPTAGS_STACK_RESULT );
-						unset( $dummy );
-						//$this->stack[] =& $value;
-						if ( $this->id != ';' ) { // Example: $foo=1,
-							// PHP Parse error:  syntax error, unexpected $id, expecting ';'
-							throw new PhpTagsException( PhpTagsException::PARSE_SYNTAX_ERROR_UNEXPECTED, array( $this->id, "';'" ), $this->tokenLine, $this->place );
-						}
-						$this->stepUP( $throwEndTag );
-					} else {
-						// PHP Parse error:  syntax error, unexpected $id
-						throw new PhpTagsException( PhpTagsException::PARSE_SYNTAX_ERROR_UNEXPECTED, array( $this->id ), $this->tokenLine, $this->place );
-					}
-				}
-			}
+			$this->stepFirstOperator( $throwEndTag ) ||	$this->stepFirsValue( $throwEndTag );
 		}
 	}
 
@@ -198,7 +177,7 @@ class Compiler {
 		$text = $this->text;
 		switch ( $id ) {
 			case T_ECHO:
-				$this->stepUP();
+				$this->stepUP( true );
 				$value =& $this->getNextValue();
 				if( !$value ) { // Example: echo ;
 					// PHP Parse error:  syntax error, unexpected $id
@@ -218,7 +197,7 @@ class Compiler {
 					if ( current($this->tokens) != ',' ) {
 						break;
 					}
-					$this->stepUP();
+					$this->stepUP( true );
 				} while ( $value =& $this->getNextValue() );
 
 				if ( $this->id != ';' ) { // Example echo "foo"%
@@ -241,7 +220,7 @@ class Compiler {
 				return true;
 			case T_CONTINUE:
 			case T_BREAK:
-				$this->stepUP();
+				$this->stepUP( true );
 				$value =& $this->getNextValue();
 
 				if ( $this->id != ';' ) { // Example: continue 5#
@@ -259,7 +238,7 @@ class Compiler {
 			case T_GLOBAL:
 				$variables = array();
 				do {
-					$this->stepUP();
+					$this->stepUP( true );
 					$value =& $this->getNextValue();
 
 					if ( $this->id != ',' && $this->id != ';' ) { // Example: global $foo#
@@ -290,7 +269,7 @@ class Compiler {
 			case T_STATIC:
 				$this->stack_push_memory();
 				do {
-					$this->stepUP();
+					$this->stepUP( true );
 					$value =& $this->getNextValue();
 
 					if ( $this->id != ',' && $this->id != ';' ) { // Example: static $foo#
@@ -333,6 +312,9 @@ class Compiler {
 				} while ( $this->id == ',' );
 				$this->stepUP( $throwEndTag );
 				$this->stack_pop_memory();
+				return true;
+			case ';': // Example: ;;;;
+				$this->stepUP( $throwEndTag );
 				return true;
 		}
 		return false;
@@ -1217,7 +1199,7 @@ checkOperators:
 			$this->stepBlockOperators( '}' );
 			$this->stepUP( $throwEndTag );
 		} else {
-			$this->stepFirstOperator( $throwEndTag );
+			$this->stepFirstOperator( $throwEndTag ) ||	$this->stepFirsValue( $throwEndTag );
 		}
 		if ( $this->stack ) {
 			$if[PHPTAGS_STACK_DO_TRUE] = $this->stack;
@@ -1232,7 +1214,7 @@ checkOperators:
 					$this->stepBlockOperators( '}' );
 					$this->stepUP( $throwEndTag );
 				} else {
-					$this->stepFirstOperator( $throwEndTag );
+					$this->stepFirstOperator( $throwEndTag ) ||	$this->stepFirsValue( $throwEndTag );
 				}
 				if ( $this->stack ) {
 					$if[PHPTAGS_STACK_DO_FALSE] = $this->stack;
@@ -1447,7 +1429,7 @@ checkOperators:
 			$this->stepBlockOperators( '}' );
 			$this->stepUP( $throwEndTag );
 		} else {
-			$this->stepFirstOperator( $throwEndTag );
+			$this->stepFirstOperator( $throwEndTag ) ||	$this->stepFirsValue( $throwEndTag );
 		}
 
 		$this->stack[] = array( PHPTAGS_STACK_COMMAND=>PHPTAGS_T_CONTINUE, PHPTAGS_STACK_RESULT=>1, PHPTAGS_STACK_TOKEN_LINE=>$tokenLine ); // Add operator T_CONTINUE to the end of the cycle
@@ -1593,6 +1575,22 @@ checkOperators:
 		$return =& $this->stepFunction( $hook, $variable, $owner );
 		$this->addValueIntoStack( $variable, $return, PHPTAGS_STACK_PARAM ); // Add function or method name to hook
 		return $return;
+	}
+
+	private function stepFirsValue( $throwEndTag ) {
+		$value =& $this->getNextValue();
+		if ( $value ) { // Example: $foo=1;
+			$dummy = array( PHPTAGS_STACK_RESULT=>null );
+			$this->addValueIntoStack( $value, $dummy, PHPTAGS_STACK_RESULT );
+			if ( $this->id != ';' ) { // Example: $foo=1,
+				// PHP Parse error:  syntax error, unexpected $id, expecting ';'
+				throw new PhpTagsException( PhpTagsException::PARSE_SYNTAX_ERROR_UNEXPECTED, array( $this->id, "';'" ), $this->tokenLine, $this->place );
+			}
+			$this->stepUP( $throwEndTag );
+		} else if ( $this->id !== T_CLOSE_TAG ) {
+			// PHP Parse error:  syntax error, unexpected $id
+			throw new PhpTagsException( PhpTagsException::PARSE_SYNTAX_ERROR_UNEXPECTED, array( $this->id ), $this->tokenLine, $this->place );
+		}
 	}
 
 }

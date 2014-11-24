@@ -187,7 +187,7 @@ class PhpTags {
 	 *
 	 * @param Article $article
 	 */
-	public static function clearBytecodeCache( &$article ) {
+	public static function clearBytecodeCache( $article ) {
 		wfProfileIn( __METHOD__ );
 
 		$frameID = $article->getTitle()->getArticleID();
