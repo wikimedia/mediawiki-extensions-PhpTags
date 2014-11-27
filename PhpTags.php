@@ -43,7 +43,7 @@ $wgExtensionMessagesFiles['PhpTagsMagic'] = __DIR__ . '/PhpTags.i18n.magic.php';
  * @codeCoverageIgnore
  */
 $wgHooks['ParserFirstCallInit'][] = function( Parser &$parser ) {
-	$parser->setFunctionHook( 'phptag', 'PhpTags::renderFunction', SFH_OBJECT_ARGS );
+	$parser->setFunctionHook( 'phptag', 'PhpTags::renderFunction', Parser::SFH_OBJECT_ARGS );
 	$parser->setHook( 'phptag', 'PhpTags::render' );
 	return true;
 };
