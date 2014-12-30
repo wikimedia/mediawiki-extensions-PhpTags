@@ -4,6 +4,6 @@
 			"Liuxinyu970226"
 		]
 	},
-	"phptags-desc": "允许用户使用带PHP语法的魔术字拓展",
+	"phptags-desc": "允许用户使用带PHP语法的魔术字扩展",
 	"phptags-disabled-for-namespace": "扩展PhpTags在“$1”名字空间禁用。"
 }
