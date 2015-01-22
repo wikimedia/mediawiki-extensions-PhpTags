@@ -1,0 +1,9 @@
+{
+	"@metadata": {
+		"authors": [
+			"Joetaras"
+		]
+	},
+	"phptags-desc": "Permette a l'utinde de ausà le espressiune Maggeche cu 'a sindasse d'u linguagge PHP",
+	"phptags-disabled-for-namespace": "Estenzione PhpTags jè disabbilitate pe stu namespace \"$1\"."
+}
