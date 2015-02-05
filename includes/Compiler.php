@@ -125,6 +125,7 @@ class Compiler {
 	private $place;
 	private $debug = array();
 	private $stackMemory = array();
+	private $ignoreErrors = false;
 
 	function __construct() {
 		if ( !self::$precedencesMatrix ) {
@@ -895,6 +896,15 @@ checkOperators:
 					$result[PHPTAGS_STACK_PARAM_2] = null;
 				}
 				return $result;
+			case '@': // Error Control Operator
+				$this->stepUP();
+				if ( $this->ignoreErrors === false ) {
+					$this->stack[] = array( PHPTAGS_STACK_COMMAND => '@', PHPTAGS_STACK_PARAM => true );
+					$this->ignoreErrors = true;
+				}
+				$result =& $this->stepValue( $owner );
+				$this->ignoreErrors = null;
+				return $result;
 		}
 		if ( $result !== false ) {
 			$this->stepUP();
@@ -1509,6 +1519,10 @@ checkOperators:
 				$tmp = array( PHPTAGS_STACK_COMMAND => PHPTAGS_T_RETURN, PHPTAGS_STACK_PARAM => &$command[PHPTAGS_STACK_RESULT] );
 				$runtimeReturn = Runtime::run( array($command, $tmp),	array('PhpTags\\Compiler') );
 				if ( $runtimeReturn instanceof PhpTagsException ) {
+					if ( $this->ignoreErrors === null ) {
+						$this->stack[] = array( PHPTAGS_STACK_COMMAND => '@', PHPTAGS_STACK_PARAM => false );
+						$this->ignoreErrors = false;
+					}
 					return false;
 				}
 				$command = array(
@@ -1521,6 +1535,10 @@ checkOperators:
 			$this->stack[] =& $value;
 		}
 
+		if ( $this->ignoreErrors === null ) {
+			$this->stack[] = array( PHPTAGS_STACK_COMMAND => '@', PHPTAGS_STACK_PARAM => false );
+			$this->ignoreErrors = false;
+		}
 		return false;
 	}
 

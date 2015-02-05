@@ -16,12 +16,12 @@ class PhpTags {
 	static $cacheHit = 0;
 	static $memoryHit = 0;
 	static $compileHit = 0;
+	static $needInitRuntime = true;
 
 	static $globalVariablesScript = array();
 
 	private static $bytecodeNeedsUpdate = array();
 	private static $frames=array();
-	private static $needInitRuntime = true;
 	private static $bytecodeCache = array();
 	private static $bytecodeLoaded = array();
 
@@ -56,6 +56,8 @@ class PhpTags {
 			$return = implode( $result );
 		} catch ( \PhpTags\PhpTagsException $exc ) {
 			$return = (string) $exc;
+		} catch ( MWException $exc ) {
+			throw $exc;
 		} catch ( Exception $exc ) {
 			$return = $exc->getTraceAsString();
 		}
@@ -69,7 +71,6 @@ class PhpTags {
 	public static function render( $input, array $args, Parser $parser, PPFrame $frame ) {
 		wfProfileIn( __METHOD__ );
 		$time = $parser->mOutput->getTimeSinceStart( 'cpu' );
-		$return = false;
 
 		$frameTitle = $frame->getTitle();
 		$frameTitleText = $frameTitle->getPrefixedText();
@@ -80,23 +81,18 @@ class PhpTags {
 			$bytecode = self::getBytecode( $input, $parser, $frame, $frameTitle, $frameTitleText, $time );
 			$result = \PhpTags\Runtime::run( $bytecode, $arguments, $scope );
 		} catch ( \PhpTags\PhpTagsException $exc ) {
-			self::$time += $parser->mOutput->getTimeSinceStart( 'cpu' ) - $time;
-			return (string) $exc;
+			$result = array( (string) $exc );
+			$parser->addTrackingCategory( 'phptags-compiler-error-category' );
+		} catch ( MWException $exc ) {
+			throw $exc;
 		} catch ( Exception $exc ) {
-			self::$time += $parser->mOutput->getTimeSinceStart( 'cpu' ) - $time;
-			return $exc->getTraceAsString();
+			$result = array( $exc->getTraceAsString() );
 		}
+
 		self::$time += $parser->mOutput->getTimeSinceStart( 'cpu' ) - $time;
-
-		if( $result ) {
-			$return = self::insertGeneral(
-					$parser,
-					$parser->recursiveTagParse( implode($result), $frame )
-				);
-		}
-
+		$return = self::insertGeneral( $parser, $parser->recursiveTagParse( implode($result), $frame ) );
 		wfProfileOut( __METHOD__ );
-		return \UtfNormal::cleanUp( $return );
+		return $return;
 	}
 
 	/**
@@ -126,12 +122,11 @@ class PhpTags {
 
 		if ( $wgPhpTagsBytecodeExptime > 0 && $frameID > 0 && false === isset( self::$bytecodeLoaded[$frameID] ) ) {
 			$cache = wfGetCache( CACHE_ANYTHING );
-			$key = wfMemcKey( 'phptags', $frameID, PHPTAGS_RUNTIME_RELEASE );
+			$key = wfMemcKey( 'phptags', $frameID );
 			$data = $cache->get( $key );
 			self::$bytecodeLoaded[$frameID] = true;
-			if ( false !== $data ) {
-				$arrayData = unserialize( $data );
-				self::$bytecodeCache[$frameID] = $arrayData;
+			if ( $data !== false && $data[0] === PHPTAGS_RUNTIME_RELEASE ) {
+				self::$bytecodeCache[$frameID] = $data[1];
 				if ( true === isset( self::$bytecodeCache[$frameID][$md5Source] ) ) {
 					self::$cacheHit++;
 					return self::$bytecodeCache[$frameID][$md5Source];
@@ -162,23 +157,24 @@ class PhpTags {
 		}
 
 		if ( true === self::$needInitRuntime ) {
+			\wfDebug( __METHOD__ . '() runs hook PhpTagsRuntimeFirstInit' );
 			\wfRunHooks( 'PhpTagsRuntimeFirstInit' );
+			\PhpTags\Hooks::loadData();
 			\PhpTags\Runtime::$loopsLimit = $wgPhpTagsMaxLoops;
 			self::$needInitRuntime = false;
 		}
 
-		\PhpTags\Runtime::$transit[PHPTAGS_TRANSIT_PARSER] = $parser;
-		\PhpTags\Runtime::$transit[PHPTAGS_TRANSIT_PPFRAME] = $frame;
+		\PhpTags\Runtime::$parser = $parser;
+		\PhpTags\Runtime::$frame = $frame;
 	}
 
 	private static function updateBytecodeCache() {
 		global $wgPhpTagsBytecodeExptime;
 
 		$cache = wfGetCache( CACHE_ANYTHING );
-		foreach ( self::$bytecodeNeedsUpdate as $frameID => $dataArray ) {
-			$key = wfMemcKey( 'phptags', $frameID, PHPTAGS_RUNTIME_RELEASE );
-			$data = serialize( $dataArray );
-			$cache->set( $key, $data, $wgPhpTagsBytecodeExptime );
+		foreach ( self::$bytecodeNeedsUpdate as $frameID => $data ) {
+			$key = wfMemcKey( 'phptags', $frameID );
+			$cache->set( $key, array(PHPTAGS_RUNTIME_RELEASE, $data), $wgPhpTagsBytecodeExptime );
 		}
 		self::$bytecodeNeedsUpdate = array();
 	}
@@ -191,7 +187,7 @@ class PhpTags {
 		wfProfileIn( __METHOD__ );
 
 		$frameID = $article->getTitle()->getArticleID();
-		$key = wfMemcKey( 'phptags', $frameID, PHPTAGS_RUNTIME_RELEASE );
+		$key = wfMemcKey( 'phptags', $frameID );
 		$cache = wfGetCache( CACHE_ANYTHING );
 		$cache->delete( $key );
 
@@ -219,20 +215,6 @@ class PhpTags {
 		return $parser->insertStripItem( $text );
 	}
 
-	/**
-	 * @see Parser::insertStripItem()
-	 * @param Parser $parser
-	 * @param string $text
-	 * @return string
-	 */
-	private static function insertNoWiki( $parser, $text ) {
-		// @see Parser::insertStripItem()
-		$rnd = "{$parser->mUniqPrefix}-item-{$parser->mMarkerIndex}-" . Parser::MARKER_SUFFIX;
-		$parser->mMarkerIndex++;
-		$parser->mStripState->addNoWiki( $rnd, $text );
-		return $rnd;
-	}
-
 	private static function getScope( PPFrame $frame ) {
 		foreach ( self::$frames as &$value ) {
 			if ( $value[0] === $frame ) {
@@ -249,14 +231,7 @@ class PhpTags {
 	}
 
 	public static function onPhpTagsRuntimeFirstInit() {
-		\PhpTags\Hooks::setConstantValues(
-				array(
-					'PHPTAGS_MAJOR_VERSION' => PHPTAGS_MAJOR_VERSION,
-					'PHPTAGS_MINOR_VERSION' => PHPTAGS_MINOR_VERSION,
-					'PHPTAGS_RELEASE_VERSION' => PHPTAGS_RELEASE_VERSION,
-					'PHPTAGS_VERSION' => PHPTAGS_VERSION,
-				)
-			);
+		\PhpTags\Hooks::addJsonFile( __DIR__ . '/PhpTags.json', PHPTAGS_VERSION );
 		return true;
 	}
 

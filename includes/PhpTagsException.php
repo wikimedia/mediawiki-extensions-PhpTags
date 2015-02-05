@@ -14,7 +14,7 @@ class PhpTagsException extends \Exception {
 	public $tokenLine;
 	public $place;
 
-	function __construct( $code = 0, $arguments = null, $tokenLine = 0, $place = '' ) {
+	function __construct( $code = 0, $arguments = null, $tokenLine = null, $place = '' ) {
 		parent::__construct('', $code);
 		$this->params = $arguments;
 		$this->tokenLine = $tokenLine;
@@ -81,7 +81,7 @@ class PhpTagsException extends \Exception {
 				$message = "{$arguments[0]}() expects parameter {$arguments[1]} to be {$arguments[2]}, {$arguments[3]} given";
 				break;
 			case self::NOTICE_EXPECTS_PROPERTY:
-				$message = "{$arguments[0]} expects property to be {$arguments[2]}, {$arguments[3]} given";
+				$message = "{$arguments[0]} expects property to be {$arguments[1]}, {$arguments[2]} given";
 				break;
 			case self::FATAL_UNEXPECTED_OBJECT_TYPE; // = 4021; // Fatal error: Unexpected object type stdClass. in
 				$message = "{$arguments[0]}() Unexpected object type {$arguments[1]}";
@@ -104,6 +104,9 @@ class PhpTagsException extends \Exception {
 			case self::NOTICE_OBJECT_CONVERTED:
 				$message = "Object of class {$arguments[0]} could not be converted to {$arguments[1]}";
 				break;
+			case self::NOTICE_ARRAY_TO_STRING:
+				$message = "Array to string conversion";
+				break;
 			case self::FATAL_CALL_TO_UNDEFINED_FUNCTION:
 				$message = "Call to undefined function $arguments()";
 				break;
@@ -125,10 +128,10 @@ class PhpTagsException extends \Exception {
 			case self::FATAL_INVALID_CONSTANT_CLASS:
 				$message = "For the constant {$arguments[0]} was registered invalid hook class {$arguments[1]}";
 				break;
-			case self::WARNING_CALLFUNCTION_INVALID_HOOK:
+			case self::FATAL_CALLFUNCTION_INVALID_HOOK:
 				$message = "Class {$arguments[0]} has registered hook for function {$arguments[1]}, but one has no information about how to process it.";
 				break;
-			case self::WARNING_CALLCONSTANT_INVALID_HOOK:
+			case self::FATAL_CALLCONSTANT_INVALID_HOOK:
 				$message = "Class {$arguments[0]} has registered hook for constant {$arguments[1]}, but one has no information about how to process it.";
 				break;
 			case self::FATAL_CREATEOBJECT_INVALID_CLASS:
@@ -177,6 +180,9 @@ class PhpTagsException extends \Exception {
 			case self::FATAL_DENIED_FOR_NAMESPACE:
 				$message = wfMessage( 'phptags-disabled-for-namespace', $arguments )->text();
 				break;
+			case self::WARNING_INVALID_TYPE;
+				$message = $arguments . ': Invalid type';
+				break;
 			default:
 				$message = "Undefined error, code {$this->code}";
 				$this->code = self::EXCEPTION_FATAL * 1000;
@@ -220,6 +226,7 @@ class PhpTagsException extends \Exception {
 	const NOTICE_OBJECT_CONVERTED = 2008;  // PHP Notice:  Object of class Exception could not be converted to int
 	const NOTICE_GET_PROPERTY_OF_NON_OBJECT = 2009; // PHP Notice:  Trying to get property of non-object
 	const NOTICE_EXPECTS_PROPERTY = 2010;
+	const NOTICE_ARRAY_TO_STRING = 2011; // PHP Notice:  Array to string conversion
 
 	const EXCEPTION_WARNING = 3;
 	const WARNING_DIVISION_BY_ZERO = 3001;  // PHP Warning:  Division by zero
@@ -235,9 +242,7 @@ class PhpTagsException extends \Exception {
 	const WARNING_ATTEMPT_TO_ASSIGN_PROPERTY = 3012; // PHP Warning:  Attempt to assign property of non-object
 	const WARNING_EXPECTS_AT_MOST_PARAMETERS = 3013; // PHP Warning:  round() expects at most 3 parameters, 4 given
 	const WARNING_TOO_MANY_ARGUMENTS = 3014; //Warning: Too many arguments for date_format(), expected 2
-
-	const WARNING_CALLFUNCTION_INVALID_HOOK = 3900;
-	const WARNING_CALLCONSTANT_INVALID_HOOK = 3901;
+	const WARNING_INVALID_TYPE = 3015; // PHP Warning:  settype(): Invalid type
 
 	const EXCEPTION_FATAL = 4;
 	const FATAL_CANNOT_USE_FOR_READING = 4001;  // PHP Fatal error:  Cannot use [] for reading in Command line code on line 1
@@ -263,6 +268,8 @@ class PhpTagsException extends \Exception {
 	const FATAL_UNEXPECTED_OBJECT_TYPE = 4021; // Fatal error: Unexpected object type stdClass. in
 
 	const FATAL_DENIED_FOR_NAMESPACE = 4500;
+	const FATAL_CALLFUNCTION_INVALID_HOOK = 4501;
+	const FATAL_CALLCONSTANT_INVALID_HOOK = 4502;
 
 	const EXCEPTION_CATCHABLE_FATAL = 5;
 	const FATAL_OBJECT_COULD_NOT_BE_CONVERTED = 5001;  //PHP Catchable fatal error:  Object of class stdClass could not be converted to string
