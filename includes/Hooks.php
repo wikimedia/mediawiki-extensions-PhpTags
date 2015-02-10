@@ -335,10 +335,6 @@ class Hooks {
 	public static function callGetObjectsProperty( $name, $object ) {
 		if ( $object instanceof GenericObject ) {
 			$objectName = $object->getName();
-			if ( false === isset( self::$objects[ strtolower($objectName) ][3][ strtolower($name) ] ) ) {
-				Runtime::pushException( new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_PROPERTY, array($objectName, $name) ) );
-				return null;
-			}
 			$handler = "p_$name";
 			return $object->$handler();
 		}
@@ -348,9 +344,6 @@ class Hooks {
 	public static function callGetStaticProperty( $name, $object ) {
 		self::$objectName = $object;
 		$className = self::getClassNameByObjectName( $object );
-		if ( false === isset( self::$objects[ strtolower($object) ][4][strtolower($name)] ) ) {
-			throw new PhpTagsException( PhpTagsException::FATAL_ACCESS_TO_UNDECLARED_STATIC_PROPERTY, array($object, $name) );
-		}
 		$handler = "q_$name";
 		return $className::$handler();
 	}
