@@ -651,4 +651,10 @@ class Hooks {
 		return self::$objects[$object][5];
 	}
 
+	public static function hasProperty( $objectName, $propertyName ) {
+		$object = strtolower( $objectName );
+		$property = strtolower( $propertyName );
+		return isset( self::$objects[$object][3][$property] );
+	}
+
 }
