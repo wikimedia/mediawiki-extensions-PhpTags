@@ -4,6 +4,10 @@
 			"Liuxinyu970226"
 		]
 	},
+	"phptags-compiler-error-category": "带有错误PHP标签代码的页面",
+	"phptags-compiler-error-category-desc": "PHP标签代码中有错误。",
+	"phptags-runtime-error-category": "带PHP标签错误的页面",
+	"phptags-runtime-error-category-desc": "处理页面上的PHP标签代码时出错。",
 	"phptags-desc": "允许用户使用带PHP语法的魔术字扩展",
 	"phptags-disabled-for-namespace": "扩展PhpTags在“$1”名字空间禁用。"
 }

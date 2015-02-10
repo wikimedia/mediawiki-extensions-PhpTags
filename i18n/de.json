@@ -4,6 +4,10 @@
 			"Metalhead64"
 		]
 	},
+	"phptags-compiler-error-category": "Seiten mit falschem PhpTags-Code",
+	"phptags-compiler-error-category-desc": "Der PhpTags-Code enthält einen Fehler.",
+	"phptags-runtime-error-category": "Seiten mit PhpTags-Fehlern",
+	"phptags-runtime-error-category-desc": "Beim Verarbeiten des PhpTags-Codes auf der Seite gab es einen Fehler.",
 	"phptags-desc": "Ermöglicht es Benutzern, die Magic-Ausdrücke mit PHP-Sprachsyntax zu nutzen",
 	"phptags-disabled-for-namespace": "Die Erweiterung „PhpTags“ ist für den Namensraum „$1“ deaktiviert."
 }
