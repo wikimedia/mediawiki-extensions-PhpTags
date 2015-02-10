@@ -90,11 +90,26 @@ define( 'PHPTAGS_T_COPY', 500 );
 class Runtime {
 
 	public static $loopsLimit = 0;
-	public static $transit = array();
+
+	/**
+	 * PPFrame
+	 * @var \PPFrame
+	 */
+	static $frame;
+
+	/**
+	 * Parser
+	 * @var \Parser
+	 */
+	static $parser;
 
 	private static $variables = array();
 	private static $staticVariables = array();
 	private static $globalVariables = array();
+	private static $exceptions = array();
+	private static $scope;
+	private static $parserDisabled = false;
+	private static $errorCategoryAdded = false;
 
 	public static function reset() {
 		global $wgPhpTagsMaxLoops;
@@ -102,11 +117,12 @@ class Runtime {
 		self::$variables = array();
 		self::$staticVariables = array();
 		self::$globalVariables = array();
-		self::$transit = array();
 		self::$loopsLimit = $wgPhpTagsMaxLoops;
+		self::$parserDisabled = false;
+		self::$errorCategoryAdded = false;
 	}
 
-	public static function runSource($code, array $args = array(), $scope = '' ) {
+	public static function runSource( $code, array $args = array(), $scope = '' ) {
 		return self::run( Compiler::compile($code), $args, $scope );
 	}
 
@@ -116,13 +132,12 @@ class Runtime {
 			if( !isset(self::$variables[$scope]) ) {
 				self::$variables[$scope] = array();
 			}
-			$thisVariables = &self::$variables[$scope];
+			self::$scope = $scope;
+			$thisVariables =& self::$variables[$scope];
 			$thisVariables['argv'] = $args;
 			$thisVariables['argc'] = count($args);
 			$thisVariables['GLOBALS'] = &self::$globalVariables;
-			self::$transit[PHPTAGS_TRANSIT_VARIABLES] = &$thisVariables;
-			self::$transit[PHPTAGS_TRANSIT_EXCEPTION] = array();
-			$exceptions =& self::$transit[PHPTAGS_TRANSIT_EXCEPTION];
+			$exceptions =& self::$exceptions;
 			$memory=array();
 			$return = array();
 			$break = 0; // used for T_BREAK
@@ -130,7 +145,7 @@ class Runtime {
 			$loopsOwner = null;
 			$place = isset($args[0]) ? $args[0] : ''; // Page name for static variables and error messages
 
-			$c=count($code);
+			$c = count( $code );
 			$codeIndex=-1;
 
 			do {
@@ -150,7 +165,7 @@ class Runtime {
 				}
 				$codeIndex++;
 				for ( ; $codeIndex < $c; $codeIndex++ ) {
-					$value = &$code[$codeIndex];
+					$value =& $code[$codeIndex];
 					switch ( $value[PHPTAGS_STACK_COMMAND] ) {
 						case '"': // Example: echo "abc$foo";
 							$value[PHPTAGS_STACK_RESULT] = implode( $value[PHPTAGS_STACK_PARAM] );
@@ -263,7 +278,7 @@ class Runtime {
 												$value[PHPTAGS_STACK_PARAM_2][$aim] =& $value[PHPTAGS_STACK_PARAM_2][$aim][$v];
 											} else {
 												// PHP Notice:  Undefined offset: $1
-												$return[] = (string) new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_INDEX, $v, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
+												self::pushException( new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_INDEX, $v ) );
 												unset( $value[PHPTAGS_STACK_PARAM_2][$aim] );
 												$value[PHPTAGS_STACK_PARAM_2][$aim] = null;
 											}
@@ -273,7 +288,7 @@ class Runtime {
 												$value[PHPTAGS_STACK_PARAM_2][$aim] = $value[PHPTAGS_STACK_PARAM_2][$aim][$v];
 											} else {
 												// PHP Notice:  Uninitialized string offset: $1
-												$return[] = (string) new PhpTagsException( PhpTagsException::NOTICE_UNINIT_STRING_OFFSET, (int)$v, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
+												self::pushException( new PhpTagsException( PhpTagsException::NOTICE_UNINIT_STRING_OFFSET, (int)$v ) );
 												unset( $value[PHPTAGS_STACK_PARAM_2][$aim] );
 												$value[PHPTAGS_STACK_PARAM_2][$aim] = null;
 											}
@@ -283,7 +298,7 @@ class Runtime {
 							} else {
 								unset( $value[PHPTAGS_STACK_PARAM_2][$aim] );
 								$value[PHPTAGS_STACK_PARAM_2][$aim] = null;
-								$return[] = (string) new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_VARIABLE, $value[PHPTAGS_STACK_PARAM], $value[PHPTAGS_STACK_TOKEN_LINE], $place );
+								self::pushException( new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_VARIABLE, $value[PHPTAGS_STACK_PARAM] ) );
 							}
 							break;
 						case '?':
@@ -330,7 +345,7 @@ class Runtime {
 							break;
 						case PHPTAGS_T_FOREACH:
 							if ( !is_array($value[PHPTAGS_STACK_PARAM]) ) {
-								$return[] = (string) new PhpTagsException( PhpTagsException::WARNING_INVALID_ARGUMENT_FOR_FOREACH, null, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
+								self::pushException( new PhpTagsException( PhpTagsException::WARNING_INVALID_ARGUMENT_FOR_FOREACH, null ) );
 								break; // **** EXIT ****
 							}
 							reset( $value[PHPTAGS_STACK_PARAM] );
@@ -344,7 +359,7 @@ class Runtime {
 							break;
 						case PHPTAGS_T_AS:
 							if ( !is_array($value[PHPTAGS_STACK_RESULT]) ) {
-								$return[] = (string) new PhpTagsException( PhpTagsException::WARNING_INVALID_ARGUMENT_FOR_FOREACH, null, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
+								self::pushException( new PhpTagsException( PhpTagsException::WARNING_INVALID_ARGUMENT_FOR_FOREACH, null ) );
 								break; // **** EXIT ****
 							}
 							if ( isset($value[PHPTAGS_STACK_PARAM_2]) ) { // T_DOUBLE_ARROW Example: while ( $foo as $key=>$value )
@@ -365,8 +380,7 @@ class Runtime {
 							break 2; // go to one level down
 						case PHPTAGS_T_CONTINUE:
 							if( self::$loopsLimit-- <= 0 ) {
-								$return[] = (string) new PhpTagsException( PhpTagsException::FATAL_LOOPS_LIMIT_REACHED, null, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
-								return $return;
+								throw new PhpTagsException( PhpTagsException::FATAL_LOOPS_LIMIT_REACHED, null, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
 							}
 							$break = $value[PHPTAGS_STACK_RESULT]-1;
 							if( $loopsOwner == T_WHILE && $break == 0 ) { // Example: while(true) continue;
@@ -416,21 +430,20 @@ class Runtime {
 						case PHPTAGS_T_HOOK_CHECK_PARAM:
 							$i = $value[PHPTAGS_STACK_AIM];
 							$reference_info = Hooks::getReferenceInfo(
-									$i + 1, // ordinal number of the argument
+									$i, // ordinal number of the argument, zero is first
 									$value[PHPTAGS_STACK_HOOK_TYPE],
 									$value[PHPTAGS_STACK_PARAM], // name of function or method
 									$value[PHPTAGS_STACK_PARAM_3] === false ? false : $value[PHPTAGS_STACK_PARAM_3][PHPTAGS_STACK_PARAM_3] // $object or false
 								);
 
 							if ( $value[PHPTAGS_STACK_PARAM_2] === true && $reference_info === false ) {
-								// Param is variable and it's need to clone
+								// Param is variable and it needs to clone
 								$t = $value[PHPTAGS_STACK_RESULT][$i];
 								unset( $value[PHPTAGS_STACK_RESULT][$i] );
 								$value[PHPTAGS_STACK_RESULT][$i] = $t;
 							} elseif ( $value[PHPTAGS_STACK_PARAM_2] === false && $reference_info === true ) {
 								// Param is not variable and it's need reference
-								$return[] = (string) new PhpTagsException( PhpTagsException::FATAL_VALUE_PASSED_BY_REFERENCE, null, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
-								return $return;
+								throw new PhpTagsException( PhpTagsException::FATAL_VALUE_PASSED_BY_REFERENCE, null, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
 							}
 							break;
 						case PHPTAGS_T_HOOK:
@@ -450,7 +463,7 @@ class Runtime {
 							if ( is_object($value[PHPTAGS_STACK_RESULT]) && !($value[PHPTAGS_STACK_RESULT] instanceof iRawOutput || $value[PHPTAGS_STACK_RESULT] instanceof GenericObject) ) {
 								// @todo
 								$value[PHPTAGS_STACK_RESULT] = null;
-								$return[] = (string) new PhpTagsException( PhpTagsException::WARNING_RETURNED_INVALID_VALUE, $value[PHPTAGS_STACK_PARAM], $value[PHPTAGS_STACK_TOKEN_LINE], $place );
+								self::pushException( new PhpTagsException( PhpTagsException::WARNING_RETURNED_INVALID_VALUE, $value[PHPTAGS_STACK_PARAM] ) );
 							}
 							break;
 						case PHPTAGS_T_NEW:
@@ -480,7 +493,7 @@ class Runtime {
 										unset( $thisVariables[$vn] );
 									}
 								} elseif ( isset($val[PHPTAGS_STACK_ARRAY_INDEX]) ) { // undefined variable with array index. Example: unset($foo[1])
-									$return[] = (string) new PhpTagsException( PHPTAGS_NOTICE_UNDEFINED_VARIABLE, $vn, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
+									self::pushException( new PhpTagsException( PHPTAGS_NOTICE_UNDEFINED_VARIABLE, $vn ) );
 								}
 							}
 							break;
@@ -543,6 +556,13 @@ class Runtime {
 						case PHPTAGS_T_COPY:
 							$value[PHPTAGS_STACK_RESULT] = $value[PHPTAGS_STACK_PARAM];
 							break;
+						case '@':
+							if ( $value[PHPTAGS_STACK_PARAM] === true ) {
+								$exceptions = false;
+							} else {
+								$exceptions = array();
+							}
+							break;
 						default: // ++, --, =, +=, -=, *=, etc...
 							$variable = &$value[PHPTAGS_STACK_PARAM];
 							$variableName = $variable[PHPTAGS_STACK_PARAM];
@@ -559,7 +579,7 @@ class Runtime {
 									$thisVariables[$variableName] = null;
 								}
 								if( $value[PHPTAGS_STACK_COMMAND] != '=' ) {
-									$return[] = (string) new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_VARIABLE, $variableName, $variable[PHPTAGS_STACK_TOKEN_LINE], $place );
+									self::pushException( new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_VARIABLE, $variableName ) );
 								}
 							}
 							$ref = &$thisVariables[$variableName];
@@ -574,7 +594,7 @@ class Runtime {
 										if ( $ref === null ) {
 											if( $value[PHPTAGS_STACK_COMMAND] != '=' ) {
 												// PHP Notice:  Undefined offset: $1
-												$return[] = (string) new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_OFFSET, $v[PHPTAGS_STACK_RESULT], $value[PHPTAGS_STACK_TOKEN_LINE], $place );
+												self::pushException( new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_OFFSET, $v[PHPTAGS_STACK_RESULT] ) );
 											}
 											$ref[$v] = null;
 											$ref = &$ref[$v];
@@ -583,7 +603,7 @@ class Runtime {
 												$ref[$v] = null;
 												if( $value[PHPTAGS_STACK_COMMAND] != '=' ) {
 													// PHP Notice:  Undefined offset: $1
-													$return[] = (string) new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_INDEX, $v, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
+													self::pushException( new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_INDEX, $v ) );
 												}
 											}
 											$ref = &$ref[$v];
@@ -591,7 +611,7 @@ class Runtime {
 											// PHP Fatal error:  Cannot use string offset as an array
 											throw new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_OFFSET, $v, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
 										} else {
-											$return[] = (string) new PhpTagsException( PhpTagsException::FATAL_STRING_OFFSET_AS_ARRAY, $v, $value[PHPTAGS_STACK_TOKEN_LINE], $place );
+											self::pushException( new PhpTagsException( PhpTagsException::FATAL_STRING_OFFSET_AS_ARRAY, $v ) );
 											unset( $variable );
 											break 2;
 											// PHP Warning:  Cannot use a scalar value as an array
@@ -651,34 +671,38 @@ class Runtime {
 									$value[PHPTAGS_STACK_RESULT] = $ref >>= $value[PHPTAGS_STACK_PARAM_2];
 									break;
 							}
-							unset( $value );
 							break;
 					}
 					if ( $exceptions ) {
 						foreach ( $exceptions as $exc ) {
-							if ( $exc instanceof PhpTagsException ) {
-								$exc->tokenLine = $value[PHPTAGS_STACK_TOKEN_LINE];
-								$exc->place = $place;
-								$return[] = (string) $exc;
-							}
+							$exc->tokenLine = $value[PHPTAGS_STACK_TOKEN_LINE];
+							$exc->place = $place;
+							$return[] = (string) $exc;
 						}
-						self::$transit[PHPTAGS_TRANSIT_EXCEPTION] = array();
+						$exceptions = array();
+						self::addRuntimeErrorCategory();
 					}
 				}
 			} while( list($code[$codeIndex][PHPTAGS_STACK_RESULT], $code, $codeIndex, $c, $loopsOwner) = array_pop($memory) );
 		} catch ( PhpTagsException $e ) {
 			$e->tokenLine = $value[PHPTAGS_STACK_TOKEN_LINE];
 			$e->place = $place;
-			foreach ( self::$transit[PHPTAGS_TRANSIT_EXCEPTION] as $exc ) {
-				if ( $exc instanceof PhpTagsException ) {
+			if ( $exceptions ) {
+				foreach ( $exceptions as $exc ) {
 					$exc->tokenLine = $value[PHPTAGS_STACK_TOKEN_LINE];
 					$exc->place = $place;
 					$return[] = (string) $exc;
 				}
 			}
-			self::$transit[PHPTAGS_TRANSIT_EXCEPTION] = array();
+			$exceptions = array();
+			self::addRuntimeErrorCategory();
 			$return[] = (string) $e;
 			$value[PHPTAGS_STACK_RESULT] = null;
+		} catch ( \Exception $e ) {
+			$exceptions = array();
+			self::addRuntimeErrorCategory();
+			restore_error_handler();
+			throw $e;
 		}
 		restore_error_handler();
 		return $return;
@@ -729,14 +753,6 @@ class Runtime {
 	}
 
 	/**
-	 * Get Parser
-	 * @return \Parser
-	 */
-	public static function getParser() {
-		return self::$transit[PHPTAGS_TRANSIT_PARSER];
-	}
-
-	/**
 	 * Set a flag in the output object indicating that the content is dynamic and
 	 * shouldn't be cached.
 	 * @global \OutputPage $wgOut
@@ -744,16 +760,23 @@ class Runtime {
 	 * @return null
 	 */
 	public static function disableParserCache() {
-		global $wgOut;
-		static $done = false;
-
-		if ( $done ) {
+		if ( self::$parserDisabled === true ) {
 			return;
 		}
 
-		self::getParser()->disableCache();
+		global $wgOut;
+		self::$parser->disableCache();
 		$wgOut->enableClientCache( false );
-		$done = true;
+		self::$parserDisabled = true;
+	}
+
+	private static function addRuntimeErrorCategory() {
+		if ( self::$errorCategoryAdded === true || self::$parser === null ) {
+			return;
+		}
+
+		self::$parser->addTrackingCategory( 'phptags-runtime-error-category' );
+		self::$errorCategoryAdded = true;
 	}
 
 	/**
@@ -763,10 +786,24 @@ class Runtime {
 	 * @throws PhpTagsException
 	 */
 	public static function incrementExpensiveFunctionCount( $functionName ) {
-		if ( false === self::getParser()->incrementExpensiveFunctionCount() ) {
+		if ( false === self::$parser->incrementExpensiveFunctionCount() ) {
 			throw new PhpTagsException( PhpTagsException::FATAL_CALLED_MANY_EXPENSIVE_FUNCTION, $functionName );
 		}
 		return null;
+	}
+
+	public static function pushException( PhpTagsException $exc ) {
+		if ( self::$exceptions !== false ) {
+			self::$exceptions[] = $exc;
+		}
+	}
+
+	public static function getExceptions() {
+		return self::$exceptions;
+	}
+
+	public static function getVariables() {
+		return self::$variables[ self::$scope ];
 	}
 
 }

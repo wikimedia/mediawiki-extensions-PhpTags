@@ -15,13 +15,14 @@ if ( !defined( 'MEDIAWIKI' ) ) {
 	die( 'This file is an extension to MediaWiki and thus not a valid entry point.' );
 }
 
-const PHPTAGS_MAJOR_VERSION = 3;
-const PHPTAGS_MINOR_VERSION = 11;
-const PHPTAGS_RELEASE_VERSION = 3;
+const PHPTAGS_MAJOR_VERSION = 4;
+const PHPTAGS_MINOR_VERSION = 0;
+const PHPTAGS_RELEASE_VERSION = 0;
 define( 'PHPTAGS_VERSION', PHPTAGS_MAJOR_VERSION . '.' . PHPTAGS_MINOR_VERSION . '.' . PHPTAGS_RELEASE_VERSION );
 
-const PHPTAGS_HOOK_RELEASE = 5;
-const PHPTAGS_RUNTIME_RELEASE = 2;
+const PHPTAGS_HOOK_RELEASE = 6;
+const PHPTAGS_RUNTIME_RELEASE = 3;
+const PHPTAGS_JSONLOADER_RELEASE = 1;
 
 // Register this extension on Special:Version
 $wgExtensionCredits['parserhook'][] = array(
@@ -67,6 +68,9 @@ $wgHooks['ParserLimitReport'][] = function( $parser, &$limitReport ) use ( &$wgP
 	return true;
 };
 
+/**
+ * @codeCoverageIgnore
+ */
 $wgHooks['ParserAfterTidy'][] = function ( &$parser, &$text ) use ( &$wgPhpTagsCounter ) {
 	if ( $wgPhpTagsCounter > 0 ) {
 		\PhpTags::onParserAfterTidy( $parser, $text );
@@ -85,8 +89,8 @@ $wgAutoloadClasses['PhpTags\\HookException'] = __DIR__ . '/includes/HookExceptio
 $wgAutoloadClasses['PhpTags\\Compiler'] = __DIR__ . '/includes/Compiler.php';
 $wgAutoloadClasses['PhpTags\\Runtime'] = __DIR__ . '/includes/Runtime.php';
 $wgAutoloadClasses['PhpTags\\GenericObject'] = __DIR__ . '/includes/GenericObject.php';
-$wgAutoloadClasses['PhpTags\\GenericFunction'] = __DIR__ . '/includes/GenericFunction.php';
 $wgAutoloadClasses['PhpTags\\Hooks'] = __DIR__ . '/includes/Hooks.php';
+$wgAutoloadClasses['PhpTags\\JsonLoader'] = __DIR__ . '/includes/JsonLoader.php';
 
 if ( false === isset( $wgCodeMirrorResources ) ) {
 	$wgCodeMirrorResources = array();
@@ -97,6 +101,9 @@ $wgCodeMirrorResources['scripts']['lib/codemirror/mode/xml/xml.js'] = true;
 $wgCodeMirrorResources['scripts']['lib/codemirror/mode/javascript/javascript.js'] = true;
 $wgCodeMirrorResources['scripts']['lib/codemirror/mode/css/css.js'] = true;
 $wgCodeMirrorResources['scripts']['lib/codemirror/mode/clike/clike.js'] = true;
+
+$wgTrackingCategories[] = 'phptags-compiler-error-category';
+$wgTrackingCategories[] = 'phptags-runtime-error-category';
 
 /**
  * Add files to phpunit test
@@ -109,11 +116,6 @@ $wgHooks['UnitTestsList'][] = function ( &$files ) {
 };
 
 $wgParserTestFiles[] = __DIR__ . '/tests/parser/PhpTagsTests.txt';
-
-define( 'PHPTAGS_TRANSIT_VARIABLES', 'v' );
-define( 'PHPTAGS_TRANSIT_PARSER', 'p' );
-define( 'PHPTAGS_TRANSIT_PPFRAME', 'f' );
-define( 'PHPTAGS_TRANSIT_EXCEPTION', '@' );
 
 /**
  * You can specify the namespaces in which allowed to use this extension.

@@ -1,8 +1,8 @@
 <?php
 
-if ( ! defined( 'PhpTagsRuntimeFirstInit' ) ) {
+if ( PhpTags::$needInitRuntime ) {
 	wfRunHooks( 'PhpTagsRuntimeFirstInit' );
+	\PhpTags\Hooks::loadData();
 	\PhpTags\Runtime::$loopsLimit = 1000;
-	define( 'PhpTagsRuntimeFirstInit', true );
+	PhpTags::$needInitRuntime = false;
 }
-
