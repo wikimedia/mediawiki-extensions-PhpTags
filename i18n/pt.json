@@ -4,5 +4,8 @@
 			"Vitorvicentevalente"
 		]
 	},
+	"phptags-compiler-error-category": "Páginas com código PhpTags errado",
+	"phptags-compiler-error-category-desc": "Páginas com erros no código PhpTags.",
+	"phptags-runtime-error-category": "Páginas com erros PhpTags",
 	"phptags-disabled-for-namespace": "A extensão PhpTags está desativada para o domínio \"$1\"."
 }
