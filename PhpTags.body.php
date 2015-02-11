@@ -48,7 +48,7 @@ class PhpTags {
 		$frameTitle = $frame->getTitle();
 		$frameTitleText = $frameTitle->getPrefixedText();
 		$arguments = array( $frameTitleText ) + $frame->getArguments();
-		$scope = self::getScope( $frame );
+		$scope = self::getScopeID( $frame );
 
 		try {
 			$bytecode = self::getBytecode( $command, $parser, $frame, $frameTitle, $frameTitleText, $time );
@@ -75,7 +75,7 @@ class PhpTags {
 		$frameTitle = $frame->getTitle();
 		$frameTitleText = $frameTitle->getPrefixedText();
 		$arguments = array( $frameTitleText ) + $frame->getArguments();
-		$scope = self::getScope( $frame );
+		$scope = self::getScopeID( $frame );
 
 		try {
 			$bytecode = self::getBytecode( $input, $parser, $frame, $frameTitle, $frameTitleText, $time );
@@ -215,15 +215,15 @@ class PhpTags {
 		return $parser->insertStripItem( $text );
 	}
 
-	private static function getScope( PPFrame $frame ) {
-		foreach ( self::$frames as &$value ) {
+	private static function getScopeID( PPFrame $frame ) {
+		foreach ( self::$frames as $value ) {
 			if ( $value[0] === $frame ) {
 				return $value[1];
 			}
 		}
-		$scope=count( self::$frames );
+		static $scope = 0;
 		self::$frames[] = array( $frame, $scope );
-		return $scope;
+		return $scope++;
 	}
 
 	public static function getCodeMirrorMode( &$mode, &$module ) {

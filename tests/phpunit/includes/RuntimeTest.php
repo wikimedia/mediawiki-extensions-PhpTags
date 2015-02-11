@@ -2105,6 +2105,49 @@ if ( $foo + $bar ) echo "\$foo + \$bar";'),
 			);
 	}
 
+	public function testRun_do_while_1() {
+		$this->assertEquals(
+				Runtime::runSource('$foo = 5; do { echo $foo; $foo--; } while ( false ); echo "*$foo*";'),
+				array( '5', '*4*' )
+			);
+	}
+	public function testRun_do_while_2() {
+		$this->assertEquals(
+				Runtime::runSource('$foo = 5; do { echo $foo; $foo--; } while ($foo);'),
+				array( '5', '4', '3', '2', '1')
+			);
+	}
+	public function testRun_do_while_3() {
+		$this->assertEquals(
+				Runtime::runSource('$foo = 5; do { echo $foo; $foo--; } while ( $foo > -2 );'),
+				array( '5', '4', '3', '2', '1', '0', '-1' )
+			);
+	}
+	public function testRun_do_while_4() {
+		$this->assertEquals(
+				Runtime::runSource('$foo = 5; do { echo $foo; break; $foo--; } while ( false ); echo "*$foo*";'),
+				array( '5', '*5*' )
+			);
+	}
+	public function testRun_do_while_if_1() {
+		$this->assertEquals(
+				Runtime::runSource('$foo = 5; do { echo $foo; if ($foo === 2) echo "TwO"; $foo--; } while ($foo);'),
+				array( '5', '4', '3', '2', 'TwO', '1')
+			);
+	}
+	public function testRun_do_while_if_2() {
+		$this->assertEquals(
+				Runtime::runSource('$foo = 5; do { echo $foo; if ($foo === 2) { echo "TwO"; } $foo--; } while ($foo);'),
+				array( '5', '4', '3', '2', 'TwO', '1')
+			);
+	}
+	public function testRun_do_while_if_3() {
+		$this->assertEquals(
+				Runtime::runSource('$foo = 5; do { echo $foo; if ($foo === 2) { break; } $foo--; } while ($foo);'),
+				array( '5', '4', '3', '2' )
+			);
+	}
+
 	public function testRun_break_1() {
 		$this->assertEquals(
 				Runtime::runSource('echo "@@@@@@@@@";
