@@ -1,0 +1,11 @@
+{
+	"@metadata": {
+		"authors": [
+			"Anakmalaysia"
+		]
+	},
+	"phptags-compiler-error-category": "Laman tersalah kod PhpTags",
+	"phptags-compiler-error-category-desc": "Kod PhpTags-nya mengandungi ralat.",
+	"phptags-runtime-error-category": "Laman dengan ralat PhpTags",
+	"phptags-runtime-error-category-desc": "Ralat terjadi ketika memproseskan kod PhpTags pada halaman."
+}

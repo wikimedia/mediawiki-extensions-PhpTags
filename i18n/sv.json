@@ -1,9 +1,13 @@
 {
 	"@metadata": {
 		"authors": [
-			"Lokal Profil"
+			"Lokal Profil",
+			"Jenniesarina"
 		]
 	},
+	"phptags-compiler-error-category-desc": "PhpTags-koden har ett fel.",
+	"phptags-runtime-error-category": "Sidor med PhpTags-fel",
+	"phptags-runtime-error-category-desc": "Det uppstod ett fel vid bearbetningen av PhpTags-koden på sidan.",
 	"phptags-desc": "Tillåter användare att använda Magic-uttrycken med PHP-språksyntax",
 	"phptags-disabled-for-namespace": "Tillägget PhpTags är inaktiverat för namnrymden \"$1\"."
 }
