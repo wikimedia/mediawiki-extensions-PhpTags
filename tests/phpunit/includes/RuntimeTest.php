@@ -2148,6 +2148,55 @@ if ( $foo + $bar ) echo "\$foo + \$bar";'),
 			);
 	}
 
+	public function testRun_for_1() {
+		$this->assertEquals(
+				Runtime::runSource( 'for( $foo = 5; $foo; $foo-- ) echo $foo;' ),
+				array( '5', '4', '3', '2', '1' )
+			);
+	}
+	public function testRun_for_2() {
+		$this->assertEquals(
+				Runtime::runSource( 'for( $foo = 5; $foo; $foo-- ) echo $foo; echo "*$foo*";' ),
+				array( '5', '4', '3', '2', '1', '*0*' )
+			);
+	}
+	public function testRun_for_3() {
+		$this->assertEquals(
+				Runtime::runSource( 'for( $foo = 5; $foo; ) { echo $foo; $foo--; } echo "*$foo*";' ),
+				array( '5', '4', '3', '2', '1', '*0*' )
+			);
+	}
+	public function testRun_for_4() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo = 5; for( ; $foo; ) { echo $foo; $foo--; } echo "*$foo*";' ),
+				array( '5', '4', '3', '2', '1', '*0*' )
+			);
+	}
+	public function testRun_for_5() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo = 5; for( ; ; ) { echo $foo; $foo--; if( !$foo ) break; } echo "*$foo*";' ),
+				array( '5', '4', '3', '2', '1', '*0*' )
+			);
+	}
+	public function testRun_for_6() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo = 5; for( ; ; ) { echo $foo; $foo--; if( !$foo ) { break 1; } } echo "*$foo*";' ),
+				array( '5', '4', '3', '2', '1', '*0*' )
+			);
+	}
+	public function testRun_for_7() {
+		$this->assertEquals(
+				Runtime::runSource( 'for( $foo = 5; $foo > 0; $foo-- ) echo $foo;' ),
+				array( '5', '4', '3', '2', '1' )
+			);
+	}
+	public function testRun_for_8() {
+		$this->assertEquals(
+				Runtime::runSource( 'for( $foo = -2; $foo <= 2; $foo++ ) echo $foo;' ),
+				array( '-2', '-1', '0', '1', '2' )
+			);
+	}
+
 	public function testRun_break_1() {
 		$this->assertEquals(
 				Runtime::runSource('echo "@@@@@@@@@";

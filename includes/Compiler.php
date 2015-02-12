@@ -207,14 +207,13 @@ class Compiler {
 				}
 				return true;
 			case T_DO:
-				$this->stepDoConstruct( $throwEndTag );
-				return true;
+				return $this->stepDoConstruct( $throwEndTag ); // return true
 			case T_WHILE:
-				$this->stepWhileConstruct( $throwEndTag );
-				return true;
+				return $this->stepWhileConstruct( $throwEndTag ); // return true
 			case T_FOREACH:
-				$this->stepForeachConstruct( $throwEndTag );
-				return true;
+				return $this->stepForeachConstruct( $throwEndTag ); // return true
+			case T_FOR:
+				return $this->stepForConstruct( $throwEndTag ); // return true
 			case T_CONTINUE:
 			case T_BREAK:
 				$this->stepUP( true );
@@ -1387,8 +1386,92 @@ checkOperators:
 		return true;
 	}
 
+	private function stepForConstruct( $throwEndTag ) {
+		$text = $this->text; // for
+		$tokenLine = $this->tokenLine;
+		$this->stepUP();
+
+		if ( $this->id !== '(' ) {
+			// PHP Parse error:  syntax error, unexpected $id, expecting '('
+			throw new PhpTagsException( PhpTagsException::PARSE_SYNTAX_ERROR_UNEXPECTED, array( $this->id, "'('" ), $this->tokenLine, $this->place );
+		}
+		$this->stepUP();
+
+		// ***** cycle start *****
+		if ( $this->id !== ';' ) { // Example: for ( ...
+			self::stepForExpression( ';' );
+		} // else Example: for ( ;
+		$this->stepUP(); // eat ';'
+
+		// ***** cycle condition *****
+		$this->stack_push_memory();
+		if ( $this->id !== ';' ) { // Example: for ( ; ...
+			$value =& $this->getNextValue();
+			if ( $value === false || $this->id !== ';' ) {
+				// PHP Parse error:  syntax error, unexpected $id, expecting ';'
+				throw new PhpTagsException( PhpTagsException::PARSE_SYNTAX_ERROR_UNEXPECTED, array( $this->id, "';'" ), $this->tokenLine, $this->place );
+			}
+			$if = array(
+				PHPTAGS_STACK_COMMAND => PHPTAGS_T_IF,
+				PHPTAGS_STACK_PARAM => null,
+				PHPTAGS_STACK_RESULT => null,
+				PHPTAGS_STACK_DO_FALSE => array( array(PHPTAGS_STACK_COMMAND=>PHPTAGS_T_BREAK, PHPTAGS_STACK_RESULT=>1) ),
+				PHPTAGS_STACK_DO_TRUE => false,
+			);
+			$this->addValueIntoStack( $value, $if, PHPTAGS_STACK_PARAM, false );
+			$this->stack[] =& $if;
+		} // else Example: for ( ; ;
+		$this->stepUP(); // eat ';'
+
+		// ***** cycle end *****
+		if ( $this->id !== ')' ) { // Example: for ( ; ; ...
+			$this->stack_push_memory();
+			self::stepForExpression( ')' );
+			$stackEnd = $this->stack; // save cycle end
+			$this->stack_pop_memory();
+		} else { // Example: for ( ; ; )
+			$stackEnd = array();
+		}
+		$this->stepUP(); // eat ')'
+
+		// ***** cycle body *****
+		if ( $this->id === '{' ) {
+			$this->stepUP();
+			$this->stepBlockOperators( '}' );
+			$this->stepUP( $throwEndTag );
+		} else {
+			$this->stepFirstOperator( $throwEndTag ) ||	$this->stepFirsValue( $throwEndTag );
+		}
+		$cycleStack = array_merge( $this->stack, $stackEnd );
+		$cycleStack[] = array( PHPTAGS_STACK_COMMAND=>PHPTAGS_T_CONTINUE, PHPTAGS_STACK_RESULT=>1 ); // Add operator T_CONTINUE to the end of the cycle
+		$this->stack_pop_memory();
+		$this->stack[] = array( PHPTAGS_STACK_COMMAND=>PHPTAGS_T_WHILE, PHPTAGS_STACK_DO_TRUE=>$cycleStack );
+		return true;
+	}
+
+	private function stepForExpression( $end ) {
+		while ( true ) {
+			$value =& $this->getNextValue();
+			if( !$value ) { // Example: for ( $foo++,;
+				// PHP Parse error:  syntax error, unexpected $id
+				throw new PhpTagsException( PhpTagsException::PARSE_SYNTAX_ERROR_UNEXPECTED, array( $this->id ), $this->tokenLine, $this->place );
+			}
+			if ( $value[PHPTAGS_STACK_COMMAND] != false ) {
+				$this->stack[] =& $value;
+			}
+			if ( $this->id === ',' ) {
+				$this->stepUP();
+				continue;
+			}
+			if ( $this->id === $end ) {
+				break;
+			}
+			throw new PhpTagsException( PhpTagsException::PARSE_SYNTAX_ERROR_UNEXPECTED, array( $this->id, "',' or ';'" ), $this->tokenLine, $this->place );
+		}
+	}
+
 	private function stepForeachConstruct( $throwEndTag = true ) {
-		$text = $this->text;
+		$text = $this->text; // foreach
 		$tokenLine = $this->tokenLine;
 		$this->stepUP();
 

@@ -16,7 +16,7 @@ if ( !defined( 'MEDIAWIKI' ) ) {
 }
 
 const PHPTAGS_MAJOR_VERSION = 4;
-const PHPTAGS_MINOR_VERSION = 1;
+const PHPTAGS_MINOR_VERSION = 2;
 const PHPTAGS_RELEASE_VERSION = 0;
 define( 'PHPTAGS_VERSION', PHPTAGS_MAJOR_VERSION . '.' . PHPTAGS_MINOR_VERSION . '.' . PHPTAGS_RELEASE_VERSION );
 
@@ -92,6 +92,7 @@ $wgAutoloadClasses['PhpTags\\GenericObject'] = __DIR__ . '/includes/GenericObjec
 $wgAutoloadClasses['PhpTags\\Hooks'] = __DIR__ . '/includes/Hooks.php';
 $wgAutoloadClasses['PhpTags\\JsonLoader'] = __DIR__ . '/includes/JsonLoader.php';
 
+// Initialize resources of the CodeMirror extension
 if ( false === isset( $wgCodeMirrorResources ) ) {
 	$wgCodeMirrorResources = array();
 }
@@ -102,6 +103,7 @@ $wgCodeMirrorResources['scripts']['lib/codemirror/mode/javascript/javascript.js'
 $wgCodeMirrorResources['scripts']['lib/codemirror/mode/css/css.js'] = true;
 $wgCodeMirrorResources['scripts']['lib/codemirror/mode/clike/clike.js'] = true;
 
+// Add tracking categories
 $wgTrackingCategories[] = 'phptags-compiler-error-category';
 $wgTrackingCategories[] = 'phptags-runtime-error-category';
 
