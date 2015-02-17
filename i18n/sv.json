@@ -5,6 +5,7 @@
 			"Jenniesarina"
 		]
 	},
+	"phptags-compiler-error-category": "Sidor med fel PhpTags-kod",
 	"phptags-compiler-error-category-desc": "PhpTags-koden har ett fel.",
 	"phptags-runtime-error-category": "Sidor med PhpTags-fel",
 	"phptags-runtime-error-category-desc": "Det uppstod ett fel vid bearbetningen av PhpTags-koden på sidan.",
