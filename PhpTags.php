@@ -17,7 +17,7 @@ if ( !defined( 'MEDIAWIKI' ) ) {
 
 const PHPTAGS_MAJOR_VERSION = 4;
 const PHPTAGS_MINOR_VERSION = 2;
-const PHPTAGS_RELEASE_VERSION = 0;
+const PHPTAGS_RELEASE_VERSION = 1;
 define( 'PHPTAGS_VERSION', PHPTAGS_MAJOR_VERSION . '.' . PHPTAGS_MINOR_VERSION . '.' . PHPTAGS_RELEASE_VERSION );
 
 const PHPTAGS_HOOK_RELEASE = 6;
@@ -31,7 +31,8 @@ $wgExtensionCredits['parserhook'][] = array(
 	'version'			=> PHPTAGS_VERSION,
 	'url'				=> 'https://www.mediawiki.org/wiki/Extension:PhpTags',
 	'author'			=> '[https://www.mediawiki.org/wiki/User:Pastakhov Pavel Astakhov]',
-	'descriptionmsg'	=> 'phptags-desc'
+	'descriptionmsg'	=> 'phptags-desc',
+	'license-name'		=> 'GPL-2.0+'
 );
 
 // Allow translations for this extension
@@ -106,6 +107,14 @@ $wgCodeMirrorResources['scripts']['lib/codemirror/mode/clike/clike.js'] = true;
 // Add tracking categories
 $wgTrackingCategories[] = 'phptags-compiler-error-category';
 $wgTrackingCategories[] = 'phptags-runtime-error-category';
+
+// Register extension type for Special:Version used for PhpTags extensions
+/**
+ * @codeCoverageIgnore
+ */
+$wgHooks['ExtensionTypes'][] = function( &$extTypes ) {
+	$extTypes['phptags'] = wfMessage( 'phptags-extension-type' )->text();
+};
 
 /**
  * Add files to phpunit test

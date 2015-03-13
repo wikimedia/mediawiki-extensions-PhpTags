@@ -4,10 +4,11 @@
 			"pastakhov"
 		]
 	},
-	"phptags-compiler-error-category": "Name of [[mw:Help:Tracking categories|tracking category]] where pages saved with wrong phptags code",
+	"phptags-compiler-error-category": "Name of the [[mw:Help:Tracking categories|tracking category]] for pages saved with invalid PhpTags code",
 	"phptags-compiler-error-category-desc": "Description on [[Special:TrackingCategories]] for the {{msg-mw|phptags-compiler-error-category}} tracking category.",
-	"phptags-runtime-error-category": "Tracking category for pages with errors from phptags runtime",
+	"phptags-runtime-error-category": "Tracking category for pages with PhpTags runtime errors",
 	"phptags-runtime-error-category-desc": "Description on [[Special:TrackingCategories]] for the {{msg-mw|phptags-runtime-error-category}} tracking category.",
 	"phptags-desc": "{{desc|name=PhpTags|url=http://www.mediawiki.org/wiki/Extension:PhpTags}}",
-	"phptags-disabled-for-namespace": "Error message when is trying to use this extension in not allowed namespaces, parameters:\n* $1 - the namespace text"
+	"phptags-disabled-for-namespace": "Error message when is trying to use this extension in not allowed namespaces, parameters:\n* $1 - the namespace text",
+	"phptags-extension-type": "The heading used on [[Special:Version]] to group extensions for PhpTags together."
 }
