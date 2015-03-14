@@ -1,10 +1,11 @@
 {
 	"@metadata": {
 		"authors": [
-			"Fisterraeomar"
+			"Fisterraeomar",
+			"Elisardojm"
 		]
 	},
-	"phptags-compiler-error-category": "Páxinas con código PhpTags erróneo",
+	"phptags-compiler-error-category": "Páxinas con código PhpTags inválido",
 	"phptags-compiler-error-category-desc": "Hai un erro no código PhpTags.",
 	"phptags-runtime-error-category": "Páxinas con erros en PhpTags",
 	"phptags-runtime-error-category-desc": "Producíuse un erro ao procesar o código PhpTags da páxina."
