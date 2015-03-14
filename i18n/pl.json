@@ -1,0 +1,9 @@
+{
+	"@metadata": {
+		"authors": [
+			"Chrumps"
+		]
+	},
+	"phptags-compiler-error-category": "Strony z nieprawidłowym kodem PhpTags",
+	"phptags-extension-type": "Rozszerzenia PhpTags"
+}

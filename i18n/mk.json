@@ -4,10 +4,11 @@
 			"Bjankuloski06"
 		]
 	},
-	"phptags-compiler-error-category": "Страници со погрешен PhpTags-код",
+	"phptags-compiler-error-category": "Страници со неважечки PhpTags-код",
 	"phptags-compiler-error-category-desc": "PhpTags-кодот има грешка.",
 	"phptags-runtime-error-category": "Страници со грешки во PhpTags",
 	"phptags-runtime-error-category-desc": "Се појави грешка при обработката на PhpTags-кодот на страницата.",
 	"phptags-desc": "Им овозможува на корисниците да ги употребуваат изразите на Magic со јазичната синтакса на PHP",
-	"phptags-disabled-for-namespace": "Додатокот PhpTags е оневозможен во именскиот простор „$1“."
+	"phptags-disabled-for-namespace": "Додатокот PhpTags е оневозможен во именскиот простор „$1“.",
+	"phptags-extension-type": "Додатоци за PhpTags"
 }
