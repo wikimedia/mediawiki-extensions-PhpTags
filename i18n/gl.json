@@ -8,5 +8,8 @@
 	"phptags-compiler-error-category": "Páxinas con código PhpTags inválido",
 	"phptags-compiler-error-category-desc": "Hai un erro no código PhpTags.",
 	"phptags-runtime-error-category": "Páxinas con erros en PhpTags",
-	"phptags-runtime-error-category-desc": "Producíuse un erro ao procesar o código PhpTags da páxina."
+	"phptags-runtime-error-category-desc": "Producíuse un erro ao procesar o código PhpTags da páxina.",
+	"phptags-desc": "Permite que os usuarios utilicen expresións Máxicas coa sintaxe da linguaxe PHP",
+	"phptags-disabled-for-namespace": "A extensión PhpTags está desactivada no espazo de nomes \"$1\".",
+	"phptags-extension-type": "Extensións de PhpTags"
 }
