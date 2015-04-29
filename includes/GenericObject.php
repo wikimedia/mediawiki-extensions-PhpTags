@@ -18,44 +18,54 @@ namespace PhpTags;
  */
 class GenericObject implements \Iterator {
 
-	protected $name;
+	protected $objectName;
 	protected $value;
 
-	function __construct( $name, $value = null ) {
-		$this->name = $name;
+	/**
+	 * The object description key in \PhpTags\Hooks::$objects
+	 * @var string
+	 */
+	protected $objectKey;
+
+	/**
+	 * Constructor of new PhpTags object
+	 * @param string $objectName Original object name
+	 * @param string $objectKey The object description key in \PhpTags\Hooks::$objects
+	 * @param mixed $value The initial value for new object, default is NULL
+	 */
+	function __construct( $objectName, $objectKey, $value = null ) {
+		$this->objectName = $objectName;
+		$this->objectKey = $objectKey;
 		$this->value = $value;
 	}
 
 	public function __call( $name, $arguments ) {
-		list ( $callType, $subname ) = explode( '_', $name, 2 );
-		switch ( $callType ) {
+		switch ( $name[0] ) {
 			case 'm': // method
-				throw new PhpTagsException( PhpTagsException::FATAL_CALL_TO_UNDEFINED_METHOD, array($this->name, $subname) );
+				throw new PhpTagsException( PhpTagsException::FATAL_CALL_TO_UNDEFINED_METHOD );
 			case 'p': // property
 			case 'b':
-				Runtime::pushException( new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_PROPERTY, array($this->name, $subname) ) );
+				Runtime::pushException( new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_PROPERTY ) );
 				break;
 			default:
-				throw new \Exception( $this->name . ': Call to undefined method ' . __CLASS__ . "::$name()" );
+				throw new \Exception( $this->objectName . ': Call to undefined method ' . __CLASS__ . "::$name()" );
 		}
 	}
 
 	public static function __callStatic( $name, $arguments ) {
-		$object = \PhpTags\Hooks::$objectName;
-		list ( $callType, $subname ) = explode( '_', $name, 2 );
-		switch ( $callType ) {
+		switch ( $name[0] ) {
 			case 's': // static method
-				throw new PhpTagsException( PhpTagsException::FATAL_CALL_TO_UNDEFINED_METHOD, array($object, $subname) );
+				throw new PhpTagsException( PhpTagsException::FATAL_CALL_TO_UNDEFINED_METHOD );
 			case 'q': // static property
 			case 'd':
-				throw new PhpTagsException( PhpTagsException::FATAL_ACCESS_TO_UNDECLARED_STATIC_PROPERTY, array($object, $subname) );
+				throw new PhpTagsException( PhpTagsException::FATAL_ACCESS_TO_UNDECLARED_STATIC_PROPERTY );
 			case 'c': // constant
-				Runtime::pushException( new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_CLASS_CONSTANT, array($object, $subname) ) );
+				Runtime::pushException( new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_CLASS_CONSTANT ) );
 				break;
 			case 'f': // function
-				throw new PhpTagsException( PhpTagsException::FATAL_CALLFUNCTION_INVALID_HOOK, array( static::getClassName(), $subname) );
+				throw new PhpTagsException( PhpTagsException::FATAL_CALLFUNCTION_INVALID_HOOK, static::getClassName() );
 			default:
-				throw new \Exception( $object . 'Call to undefined method ' . __CLASS__ . "::$name()" );
+				throw new \Exception( Hooks::getCallInfo( Hooks::INFO_ORIGINAL_OBJECT_NAME ) . ': Call to undefined method ' . __CLASS__ . "::$name()" );
 		}
 	}
 
@@ -68,26 +78,41 @@ class GenericObject implements \Iterator {
 	}
 
 	public function getName() {
-		return $this->name;
+		return $this->objectName;
 	}
 
 	/**
-	 * It is alias for PHP __toString()
+	 * Retunrs key of object description in \PhpTags\Hooks::$objects
+	 * @return string
+	 */
+	public function getObjectKey() {
+		return $this->objectKey;
+	}
+
+	/**
+	 * It does same as native PHP method __toString()
 	 * @return string
 	 */
 	public function toString() {
-		throw new PhpTagsException( PhpTagsException::FATAL_OBJECT_COULD_NOT_BE_CONVERTED, array( $this->name, 'string' ) );
+		// By default PhpTags objects have no __toString() method
+		throw new PhpTagsException( PhpTagsException::FATAL_OBJECT_COULD_NOT_BE_CONVERTED, array($this->objectName, 'string') );
 	}
 
 	public static function getConstantValue( $constantName ) {
-		throw new PhpTagsException( PhpTagsException::FATAL_CALLCONSTANT_INVALID_HOOK, array(static::getClassName(), $constantName) );
+		throw new PhpTagsException( PhpTagsException::FATAL_CALLCONSTANT_INVALID_HOOK, $constantName );
 	}
 
 	public static function getClassName() {
 		return __CLASS__;
 	}
 
-	// do not allow illegal access to public properties from inside phptag code by using foreach operator
+	protected static function pushExceptionExpectsParameter( $index, $expect, $value) {
+		$type = $value instanceof self ? $value->getName() : gettype( $value );
+		Runtime::pushException(	new PhpTagsException( PhpTagsException::WARNING_EXPECTS_PARAMETER, array($index, $expect, $type) ) );
+		return \PhpTags\Hooks::getCallInfo( \PhpTags\Hooks::INFO_RETURNS_ON_FAILURE );
+	}
+
+	// It doesn't allow illegal access to public properties inside phptag code by using foreach operator
 	public function current() {}
 	public function key() {}
 	public function next() {}

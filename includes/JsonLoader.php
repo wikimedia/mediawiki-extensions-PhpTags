@@ -69,6 +69,7 @@ class JsonLoader {
 			}
 			$class = $value['class'];
 			self::loadObjectMethodsAndProperties( $value, $methods, $staticMethods, $properties, $staticProperties );
+			//                                      0       1         2               3            4                  5
 			$objects[ strtolower( $key ) ] = array( $class, $methods, $staticMethods, $properties, $staticProperties, $key );
 		}
 	}
@@ -104,7 +105,8 @@ class JsonLoader {
 	private static function loadObjectMethods( $data, &$methods ) {
 		foreach ( $data as $key => $value ) {
 			$expects = self::getExpects( $value, 'method' );
-			$methods[strtolower($key)] = array( $expects, $key );
+			$onfailure = self::getReturnsOnFailure( $value );
+			$methods[strtolower($key)] = array( $expects, $key, $onfailure );
 		}
 	}
 
@@ -201,8 +203,8 @@ class JsonLoader {
 				return Hooks::TYPE_INT;
 			case 'mixed':
 				return Hooks::TYPE_MIXED;
-			case 'not object':
-				return Hooks::TYPE_NOT_OBJECT;
+			case 'nonobject':
+				return Hooks::TYPE_NONOBJECT;
 			case 'scalar':
 				return Hooks::TYPE_SCALAR;
 			case 'string':

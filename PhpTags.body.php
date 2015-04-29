@@ -10,7 +10,6 @@
  */
 class PhpTags {
 
-	static $DebugLoops = false;
 	static $compileTime = 0;
 	static $time = 0;
 	static $cacheHit = 0;
@@ -110,33 +109,42 @@ class PhpTags {
 		global $wgPhpTagsBytecodeExptime, $wgPhpTagsCounter;
 		$wgPhpTagsCounter++;
 
-		$frameID = $frameTitle->getArticleID();
+		static $parserTitle = false;
+		if ( $parserTitle === false ) {
+			$parserTitle = $parser->getTitle();
+		}
+		$revID = $parserTitle === $frameTitle ? $parser->getRevisionId() : $frameTitle->getLatestRevID();
 		$md5Source = md5( $source );
 
 		self::initialize( $parser, $frame, $frameTitle );
 
-		if ( true === isset( self::$bytecodeCache[$frameID][$md5Source] ) ) {
+		if ( true === isset( self::$bytecodeCache[$revID][$md5Source] ) ) {
+			\wfDebug( "[phptags] Memory hiting with key $revID" );
 			self::$memoryHit++;
-			return self::$bytecodeCache[$frameID][$md5Source];
+			return self::$bytecodeCache[$revID][$md5Source];
 		}
 
-		if ( $wgPhpTagsBytecodeExptime > 0 && $frameID > 0 && false === isset( self::$bytecodeLoaded[$frameID] ) ) {
-			$cache = wfGetCache( CACHE_ANYTHING );
-			$key = wfMemcKey( 'phptags', $frameID );
+		if ( $wgPhpTagsBytecodeExptime > 0 && $revID > 0 && false === isset( self::$bytecodeLoaded[$revID] ) ) {
+			$cache = \wfGetCache( CACHE_ANYTHING );
+			$key = \wfMemcKey( 'PhpTags', $revID );
 			$data = $cache->get( $key );
-			self::$bytecodeLoaded[$frameID] = true;
+			self::$bytecodeLoaded[$revID] = true;
 			if ( $data !== false && $data[0] === PHPTAGS_RUNTIME_RELEASE ) {
-				self::$bytecodeCache[$frameID] = $data[1];
-				if ( true === isset( self::$bytecodeCache[$frameID][$md5Source] ) ) {
+				self::$bytecodeCache[$revID] = $data[1];
+				if ( true === isset( self::$bytecodeCache[$revID][$md5Source] ) ) {
+					\wfDebug( "[phptags] Cache hiting with key $revID" );
 					self::$cacheHit++;
-					return self::$bytecodeCache[$frameID][$md5Source];
+					return self::$bytecodeCache[$revID][$md5Source];
 				}
 			}
+			\wfDebug( "[phptags] Cache missing with key $revID" );
 		}
 
 		$bytecode = \PhpTags\Compiler::compile( $source, $frameTitleText );
-		self::$bytecodeCache[$frameID][$md5Source] = $bytecode;
-		self::$bytecodeNeedsUpdate[$frameID][$md5Source] = unserialize( serialize( $bytecode ) );
+		self::$bytecodeCache[$revID][$md5Source] = $bytecode;
+		if ( $revID > 0 ) { // Don't save bytecode of unsaved pages
+			self::$bytecodeNeedsUpdate[$revID][$md5Source] = unserialize( serialize( $bytecode ) );
+		}
 
 		self::$compileHit++;
 		self::$compileTime += $parser->mOutput->getTimeSinceStart( 'cpu' ) - $time;
@@ -157,7 +165,7 @@ class PhpTags {
 		}
 
 		if ( true === self::$needInitRuntime ) {
-			\wfDebug( __METHOD__ . '() runs hook PhpTagsRuntimeFirstInit' );
+			\wfDebug( '[phptags] ' . __METHOD__ . '() runs hook PhpTagsRuntimeFirstInit' );
 			\wfRunHooks( 'PhpTagsRuntimeFirstInit' );
 			\PhpTags\Hooks::loadData();
 			\PhpTags\Runtime::$loopsLimit = $wgPhpTagsMaxLoops;
@@ -171,27 +179,13 @@ class PhpTags {
 	private static function updateBytecodeCache() {
 		global $wgPhpTagsBytecodeExptime;
 
-		$cache = wfGetCache( CACHE_ANYTHING );
-		foreach ( self::$bytecodeNeedsUpdate as $frameID => $data ) {
-			$key = wfMemcKey( 'phptags', $frameID );
+		$cache = \wfGetCache( CACHE_ANYTHING );
+		foreach ( self::$bytecodeNeedsUpdate as $revID => $data ) {
+			$key = wfMemcKey( 'PhpTags', $revID );
 			$cache->set( $key, array(PHPTAGS_RUNTIME_RELEASE, $data), $wgPhpTagsBytecodeExptime );
+			\wfDebug( "[phptags] Save compiled bytecode to cache with key $revID" );
 		}
 		self::$bytecodeNeedsUpdate = array();
-	}
-
-	/**
-	 *
-	 * @param Article $article
-	 */
-	public static function clearBytecodeCache( $article ) {
-		wfProfileIn( __METHOD__ );
-
-		$frameID = $article->getTitle()->getArticleID();
-		$key = wfMemcKey( 'phptags', $frameID );
-		$cache = wfGetCache( CACHE_ANYTHING );
-		$cache->delete( $key );
-
-		wfProfileOut( __METHOD__ );
 	}
 
 	public static function reset() {
@@ -226,8 +220,22 @@ class PhpTags {
 		return $scope++;
 	}
 
-	public static function getCodeMirrorMode( &$mode, &$module ) {
-		$mode['tag']['phptag'] = 'text/x-php';
+	/**
+	 *
+	 * @param array $extResources
+	 * @param array $extMode
+	 */
+	public static function onCodeMirrorGetAdditionalResources( &$extResources, &$extMode ) {
+		$extResources['scripts']['lib/codemirror/mode/php/php.js'] = true;
+		$extResources['scripts']['lib/codemirror/mode/htmlmixed/htmlmixed.js'] = true;
+		$extResources['scripts']['lib/codemirror/mode/xml/xml.js'] = true;
+		$extResources['scripts']['lib/codemirror/mode/javascript/javascript.js'] = true;
+		$extResources['scripts']['lib/codemirror/mode/css/css.js'] = true;
+		$extResources['scripts']['lib/codemirror/mode/clike/clike.js'] = true;
+
+		$extMode['tag']['phptag'] = 'text/x-php';
+
+		return true;
 	}
 
 	public static function onPhpTagsRuntimeFirstInit() {

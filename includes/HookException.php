@@ -11,7 +11,7 @@ namespace PhpTags;
  */
 class HookException extends PhpTagsException {
 
-	function __construct( $code, $message ) {
+	function __construct( $message, $code = self::EXCEPTION_WARNING ) {
 		parent::__construct( parent::EXCEPTION_FROM_HOOK, array( $message, $code ) );
 	}
 
