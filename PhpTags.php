@@ -15,14 +15,14 @@ if ( !defined( 'MEDIAWIKI' ) ) {
 	die( 'This file is an extension to MediaWiki and thus not a valid entry point.' );
 }
 
-const PHPTAGS_MAJOR_VERSION = 4;
-const PHPTAGS_MINOR_VERSION = 2;
-const PHPTAGS_RELEASE_VERSION = 1;
+const PHPTAGS_MAJOR_VERSION = 5;
+const PHPTAGS_MINOR_VERSION = 0;
+const PHPTAGS_RELEASE_VERSION = 0;
 define( 'PHPTAGS_VERSION', PHPTAGS_MAJOR_VERSION . '.' . PHPTAGS_MINOR_VERSION . '.' . PHPTAGS_RELEASE_VERSION );
 
-const PHPTAGS_HOOK_RELEASE = 6;
-const PHPTAGS_RUNTIME_RELEASE = 3;
-const PHPTAGS_JSONLOADER_RELEASE = 1;
+const PHPTAGS_HOOK_RELEASE = 7;
+const PHPTAGS_RUNTIME_RELEASE = 4;
+const PHPTAGS_JSONLOADER_RELEASE = 3;
 
 // Register this extension on Special:Version
 $wgExtensionCredits['parserhook'][] = array(
@@ -32,12 +32,11 @@ $wgExtensionCredits['parserhook'][] = array(
 	'url'				=> 'https://www.mediawiki.org/wiki/Extension:PhpTags',
 	'author'			=> '[https://www.mediawiki.org/wiki/User:Pastakhov Pavel Astakhov]',
 	'descriptionmsg'	=> 'phptags-desc',
-	'license-name'		=> 'GPL-2.0+'
+	'license-name'		=> 'GPL-2.0+',
 );
 
 // Allow translations for this extension
 $wgMessagesDirs['PhpTags'] = __DIR__ . '/i18n';
-$wgExtensionMessagesFiles['PhpTags'] = __DIR__ . '/PhpTags.i18n.php';
 $wgExtensionMessagesFiles['PhpTagsMagic'] = __DIR__ . '/PhpTags.i18n.magic.php';
 
 // Specify the function that will initialize the parser function.
@@ -51,9 +50,7 @@ $wgHooks['ParserFirstCallInit'][] = function( Parser &$parser ) {
 };
 
 $wgHooks['PhpTagsRuntimeFirstInit'][] = 'PhpTags::onPhpTagsRuntimeFirstInit';
-$wgHooks['ArticleDeleteComplete'][] = 'PhpTags::clearBytecodeCache';
-$wgHooks['PageContentSaveComplete'][] = 'PhpTags::clearBytecodeCache';
-$wgHooks['CodeMirrorGetExtensionMode'][] = 'PhpTags::getCodeMirrorMode';
+$wgHooks['CodeMirrorGetAdditionalResources'][] = 'PhpTags::onCodeMirrorGetAdditionalResources';
 
 $wgPhpTagsLimitReport = false;
 $wgPhpTagsCounter = 0;
@@ -92,17 +89,6 @@ $wgAutoloadClasses['PhpTags\\Runtime'] = __DIR__ . '/includes/Runtime.php';
 $wgAutoloadClasses['PhpTags\\GenericObject'] = __DIR__ . '/includes/GenericObject.php';
 $wgAutoloadClasses['PhpTags\\Hooks'] = __DIR__ . '/includes/Hooks.php';
 $wgAutoloadClasses['PhpTags\\JsonLoader'] = __DIR__ . '/includes/JsonLoader.php';
-
-// Initialize resources of the CodeMirror extension
-if ( false === isset( $wgCodeMirrorResources ) ) {
-	$wgCodeMirrorResources = array();
-}
-$wgCodeMirrorResources['scripts']['lib/codemirror/mode/php/php.js'] = true;
-$wgCodeMirrorResources['scripts']['lib/codemirror/mode/htmlmixed/htmlmixed.js'] = true;
-$wgCodeMirrorResources['scripts']['lib/codemirror/mode/xml/xml.js'] = true;
-$wgCodeMirrorResources['scripts']['lib/codemirror/mode/javascript/javascript.js'] = true;
-$wgCodeMirrorResources['scripts']['lib/codemirror/mode/css/css.js'] = true;
-$wgCodeMirrorResources['scripts']['lib/codemirror/mode/clike/clike.js'] = true;
 
 // Add tracking categories
 $wgTrackingCategories[] = 'phptags-compiler-error-category';

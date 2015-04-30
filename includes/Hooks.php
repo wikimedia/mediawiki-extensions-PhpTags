@@ -23,28 +23,30 @@ class Hooks {
 	const TYPE_SCALAR = 6;
 	const TYPE_INT = 7;
 	const TYPE_FLOAT = 8;
-	const TYPE_NOT_OBJECT = 9;
+	const TYPE_NONOBJECT = 9;
 	const TYPE_BOOL = 10;
 
-	const INFO_OBJECT_CONSTANTS = 'c';
-	const INFO_OBJECT_PROPERTIES = 'p';
-	const INFO_STATIC_PROPERTIES = 'q';
-	const INFO_OBJECT_METHODS = 'm';
-	const INFO_STATIC_METHODS = 's';
+	const INFO_HOOK_TYPE = 0;
+	const INFO_CALLED_HOOK_NAME = 1;
+	const INFO_ORIGINAL_HOOK_NAME = 2;
+	const INFO_CALLED_OBJECT_NAME = 3;
+	const INFO_ORIGINAL_OBJECT_NAME = 4;
+	const INFO_ORIGINAL_FULL_NAME = 5;
+	const INFO_RETURNS_ON_FAILURE = 6;
 
 	/**
-	 * When accessing static objects, the object name is placed here.
-	 * It is necessary to be able to get the name of the object in the call handler
-	 * @var string
+	 * Value passed from class Runtime
+	 * Used for function getCallInfo()
+	 * @var array
 	 */
-	public static $objectName;
+	private static $value;
 
 	/**
 	 * Array of constant's values
 	 * self::$constantValues[ constant_name ] = constant_value
 	 * @var array
 	 */
-	 private static $constantValues = array();
+	private static $constantValues = array();
 
 	/**
 	 * Array of constant's hooks
@@ -105,11 +107,11 @@ class Hooks {
 				$cached['JSONLOADER'] === PHPTAGS_JSONLOADER_RELEASE  &&
 				$cached['jsonFiles'] === self::$jsonFiles &&
 				$cached['callbackConstants'] === self::$callbackConstants ) {
-			\wfDebug( __METHOD__ . '() using cache: yes' );
+			\wfDebug( '[phptags] ' . __METHOD__ . '() using cache: yes' );
 			$data = $cached;
 		}
 		if ( $data === false ) {
-			\wfDebug( __METHOD__ . '() using cache: NO' );
+			\wfDebug( '[phptags] ' .  __METHOD__ . '() using cache: NO' );
 			$data = JsonLoader::load( self::$jsonFiles );
 			$data['constantValues'] += self::loadConstantValues();
 			$data['jsonFiles'] = self::$jsonFiles;
@@ -135,22 +137,30 @@ class Hooks {
 
 	/**
 	 * Returns information about what is expected as argument, value or a variable reference.
-	 * @param integer $number Ordinal number of the argument
-	 * @param string $name Name of function or method
-	 * @param mixed $object Object, name of object or false for functions
+	 * Hook type in $value[PHPTAGS_STACK_HOOK_TYPE]
+	 * Function or method name in $value[PHPTAGS_STACK_PARAM]
+	 * Object name in $value[PHPTAGS_STACK_PARAM_3][PHPTAGS_STACK_PARAM_3] if [PHPTAGS_STACK_PARAM_3] is not FALSE
+	 * @param integer $number // ordinal number of the argument, zero based
+	 * @param array $value
 	 * @return mixed True if argument should be passed by reference, 1 if argument can be value
 	 * @throws PhpTagsException
 	 */
-	public static function getReferenceInfo( $number, $type, $name, $object ) {
-		if ( $type == PHPTAGS_HOOK_FUNCTION ) { // It is function
+	public static function getReferenceInfo( $number, $value ) {
+		self::$value = $value;
+		$name = $value[PHPTAGS_STACK_PARAM]; // Function or method name
+
+		if ( $value[PHPTAGS_STACK_HOOK_TYPE] === PHPTAGS_HOOK_FUNCTION ) { // Hook type is function
 			if ( isset( self::$functions[$name][0][self::EXPECTS_REFERENCE_PARAMETERS] ) ) {
 				$references = self::$functions[$name][0][self::EXPECTS_REFERENCE_PARAMETERS];
 			} else {
 				$references = false;
 			}
-		} else {
+		} else { // Hook type is object
+			$object = $value[PHPTAGS_STACK_PARAM_3] === false ? false : $value[PHPTAGS_STACK_PARAM_3][PHPTAGS_STACK_PARAM_3];
+			unset( self::$value[PHPTAGS_STACK_PARAM_3] ); // unlink reference before assign a value!!!
+			self::$value[PHPTAGS_STACK_PARAM_3] = $object; // self::getCallInfo() waits $object in PHPTAGS_STACK_PARAM_3
 			if ( $object instanceof GenericObject ) { // Object has been created
-				$className = self::getClassNameByObjectName( $object->getName() );
+				$className = self::getClassNameByObjectName( $object->getObjectKey() );
 			} else { // It is static method of object
 				$className = $object;
 			}
@@ -177,61 +187,65 @@ class Hooks {
 	/**
 	 * Get information about the function
 	 * @staticvar array $functions Cache of functions
-	 * @param string $name Name of function
+	 * @param string $funcKey Name of function
 	 * @return array 0 - name of class, 1 - references info
 	 * @throws PhpTagsException
 	 */
-	private static function getFunctionClass( $name, $originalName ) {
+	private static function getFunctionClass( $funcKey ) {
 		static $functions = array(); // cache of functions
-		if( true === isset( $functions[$name] )  ) { // it is exists in cache
-			return $functions[$name];
+		if( true === isset( $functions[$funcKey] )  ) { // it is exists in cache
+			return $functions[$funcKey];
 		}
 
-		if ( false === isset( self::$functions[$name][2] ) ) {
-			throw new PhpTagsException( PhpTagsException::FATAL_CALL_TO_UNDEFINED_FUNCTION, $originalName );
+		if ( false === isset( self::$functions[$funcKey][2] ) ) {
+			throw new PhpTagsException( PhpTagsException::FATAL_CALL_TO_UNDEFINED_FUNCTION );
 		}
 
-		$functionClassName = 'PhpTagsObjects\\' . self::$functions[$name][2];
+		$functionClassName = 'PhpTagsObjects\\' . self::$functions[$funcKey][2];
 		if( false === class_exists( $functionClassName ) ) {
-			throw new PhpTagsException( PhpTagsException::FATAL_NONEXISTENT_HOOK_CLASS, array($originalName, $functionClassName) );
+			throw new PhpTagsException( PhpTagsException::FATAL_NONEXISTENT_HOOK_CLASS, $functionClassName );
 		}
 		if ( false === is_subclass_of( $functionClassName, 'PhpTags\\GenericObject' ) ) {
-			throw new PhpTagsException( PhpTagsException::FATAL_INVALID_HOOK_CLASS, array($originalName, $functionClassName) );
+			throw new PhpTagsException( PhpTagsException::FATAL_INVALID_HOOK_CLASS, $functionClassName );
 		}
 
-		$functions[$name] = $functionClassName;
+		$functions[$funcKey] = $functionClassName;
 		return $functionClassName;
 	}
 
 	/**
 	 * Call a hook of PhpTags
-	 * @param int $type Hook type
-	 * @param mixed $arguments Array or boolean false for the constants
-	 * @param mixed $name Name of constant or function or method
-	 * @param mixed $object boolean false for the functions or the object or object's name
+	 * Hook type in $value[PHPTAGS_STACK_HOOK_TYPE]
+	 * Function or method name in $value[PHPTAGS_STACK_PARAM]
+	 * Function or method arguments in $value[PHPTAGS_STACK_PARAM_2]
+	 * Object or object name in $value[PHPTAGS_STACK_PARAM_3]
+	 * @param array $value
 	 * @return mixed
 	 * @throws PhpTagsException
 	 */
-	public static function callHook( $type, $arguments, $name, $object ) {
-		switch ( $type ) {
+	public static function callHook( $value ) {
+		self::$value = $value; // Remember to function getCallInfo
+		$name = $value[PHPTAGS_STACK_PARAM];
+
+		switch ( $value[PHPTAGS_STACK_HOOK_TYPE] ) {
 			case PHPTAGS_HOOK_GET_CONSTANT: // Hook is a constant. Example: echo M_PI;
 				return self::callGetConstant( $name );
 			case PHPTAGS_HOOK_FUNCTION: // Hook is a function. Example: echo foo();
-				return self::callFunction( $arguments, $name );
-			case PHPTAGS_HOOK_GET_OBJECT_CONSTANT:
-				return self::callGetObjectsConstant( $name, $object );
-			case PHPTAGS_HOOK_GET_STATIC_PROPERTY: // Hook is a static property of a method. Example: echo FOO::bar;
-				return self::callGetStaticProperty( $name, $object );
+				return self::callFunction( $value[PHPTAGS_STACK_PARAM_2], $name );
+			case PHPTAGS_HOOK_GET_OBJECT_CONSTANT: // Hook is a object constant. Example: Foo::MY_BAR
+				return self::callGetObjectsConstant( $name, $value[PHPTAGS_STACK_PARAM_3] );
+			case PHPTAGS_HOOK_GET_STATIC_PROPERTY: // Hook is a static property of a method. Example: echo FOO::$bar;
+				return self::callGetStaticProperty( $name, $value[PHPTAGS_STACK_PARAM_3] );
 			case PHPTAGS_HOOK_GET_OBJECT_PROPERTY: // Hook is a property of a method. Example: $foo = new Foo(); echo $foo->bar;
-				return self::callGetObjectsProperty( $name, $object );
-			case PHPTAGS_HOOK_SET_STATIC_PROPERTY: // Example FOO::bar = true;
-				return self::callSetStaticProperty( $name, $object, $arguments );
+				return self::callGetObjectsProperty( $name, $value[PHPTAGS_STACK_PARAM_3] );
+			case PHPTAGS_HOOK_SET_STATIC_PROPERTY: // Example FOO::$bar = true;
+				return self::callSetStaticProperty( $name, $value[PHPTAGS_STACK_PARAM_3], $value[PHPTAGS_STACK_PARAM_2] );
 			case PHPTAGS_HOOK_SET_OBJECT_PROPERTY: // Example: $foo = new Foo(); $foo->bar = true;
-				return self::callSetObjectsProperty( $name, $object, $arguments );
+				return self::callSetObjectsProperty( $name, $value[PHPTAGS_STACK_PARAM_3], $value[PHPTAGS_STACK_PARAM_2] );
 			case PHPTAGS_HOOK_STATIC_METHOD: // Example: FOO::bar()
-				return self::callStaticMethod( $arguments, $name, $object );
+				return self::callStaticMethod( $value[PHPTAGS_STACK_PARAM_2], $name, $value[PHPTAGS_STACK_PARAM_3] );
 			case PHPTAGS_HOOK_OBJECT_METHOD: // Example: $foo = new Foo(); $foo->bar();
-				return self::callObjectsMethod( $arguments, $name, $object );
+				return self::callObjectsMethod( $value[PHPTAGS_STACK_PARAM_2], $name, $value[PHPTAGS_STACK_PARAM_3] );
 		}
 	}
 
@@ -249,10 +263,10 @@ class Hooks {
 			if( false === isset( $constants[$className] )  ) { // it is not exists in cache
 				// Need to check this class
 				if( false === class_exists( $className ) ) {
-					throw new PhpTagsException( PhpTagsException::FATAL_NONEXISTENT_CONSTANT_CLASS, array($name, $className) );
+					throw new PhpTagsException( PhpTagsException::FATAL_NONEXISTENT_CONSTANT_CLASS, $className );
 				}
 				if ( false === is_subclass_of( $className, 'PhpTags\\GenericObject' ) ) {
-					throw new PhpTagsException( PhpTagsException::FATAL_INVALID_CONSTANT_CLASS, array($name, $className) );
+					throw new PhpTagsException( PhpTagsException::FATAL_INVALID_CONSTANT_CLASS, $className );
 				}
 				$constants[$className] = true; // add to cache
 			}
@@ -267,60 +281,75 @@ class Hooks {
 	/**
 	 * Call the function's hook
 	 * @param array $arguments List of the arguments
-	 * @param string $name Name of the function
+	 * @param string $calledFuncName Name of the function
 	 * @return mixed
 	 */
-	private static function callFunction( $arguments, $name ) {
-		$funcName = strtolower( $name );
-		$funcClass = self::getFunctionClass( $funcName, $name );
-		$e = self::checkFunctionArguments( $funcName, $name, $arguments );
+	private static function callFunction( $arguments, $calledFuncName ) {
+		$funcKey = strtolower( $calledFuncName );
+		$funcClass = self::getFunctionClass( $funcKey );
+		$e = self::checkFunctionArguments( $funcKey, $arguments );
 		if ( $e === true ) {
 			ksort( $arguments );
-			return call_user_func_array( array($funcClass, "f_$name"), $arguments );
+			return call_user_func_array( array($funcClass, "f_$calledFuncName"), $arguments );
 		}
-		return self::getReturnsOnFailure( $funcName, $e ); // returns onfailure field from json
+		Runtime::pushException( $e );
+		return self::getCallInfo( self::INFO_RETURNS_ON_FAILURE );
 	}
 
 	/**
 	 * Call the method of object based on class \PhpTags\GenericObject
 	 * @param array $arguments List of the arguments
-	 * @param string $name Name of the method
-	 * @param mixed $object Name of the object or the object of class \PhpTags\GenericObject
+	 * @param string $calledMethodName Name of the method
+	 * @param mixed $calledObject Name of the object or the object of class \PhpTags\GenericObject
 	 * @return mixed
 	 * @throws PhpTagsException
 	 */
-	private static function callObjectsMethod( $arguments, $name, $object ) {
-		if ( $object instanceof GenericObject ) {
+	private static function callObjectsMethod( $arguments, $calledMethodName, $calledObject ) {
+		if ( $calledObject instanceof GenericObject ) {
 			ksort( $arguments );
-			$e = self::checkObjectArguments( $object->getName(), $name, false, $arguments );
+			$e = self::checkObjectArguments( $calledObject->getObjectKey(), $calledMethodName, false, $arguments );
 			if ( $e === true ) {
-				return call_user_func_array( array($object, "m_$name"), $arguments );
+				return call_user_func_array( array($calledObject, "m_$calledMethodName"), $arguments );
 			}
 			if ( $e instanceof \PhpTags\PhpTagsException ) {
 				Runtime::pushException( $e );
 			}
-			return null;
+			Runtime::pushException( $e );
+			return self::getCallInfo( self::INFO_RETURNS_ON_FAILURE );
 		}
-		throw new PhpTagsException( PhpTagsException::FATAL_CALL_FUNCTION_ON_NON_OBJECT, $name );
+		throw new PhpTagsException( PhpTagsException::FATAL_CALL_FUNCTION_ON_NON_OBJECT );
 	}
 
-	private static function callStaticMethod( $arguments, $name, $object ) {
-		self::$objectName = $object;
+	private static function callStaticMethod( $arguments, $calledMethodName, $calledObject ) {
 		ksort( $arguments );
-		$e = self::checkObjectArguments( $object, $name, true, $arguments );
+
+		if ( $calledObject instanceof GenericObject ) {
+			$objectKey = $calledObject->getObjectKey();
+		} else {
+			$objectKey = strtolower( $calledObject );
+		}
+
+		$e = self::checkObjectArguments( $objectKey, $calledMethodName, true, $arguments );
+
 		if ( $e === true ) {
-			$className = self::getClassNameByObjectName( $object );
-			return call_user_func_array( array($className, "s_$name"), $arguments );
+			$className = self::getClassNameByObjectName( $objectKey );
+			return call_user_func_array( array($className, "s_$calledMethodName"), $arguments );
 		}
 		if ( $e instanceof \PhpTags\PhpTagsException ) {
 			Runtime::pushException( $e );
 		}
-		return null;
+		Runtime::pushException( $e );
+		return self::getCallInfo( self::INFO_RETURNS_ON_FAILURE );
 	}
 
 	public static function callGetObjectsConstant( $name, $object ) {
-		self::$objectName = $object;
-		$className = self::getClassNameByObjectName( $object );
+		if ( $object instanceof GenericObject ) {
+			$objectKey = $object->getObjectKey();
+		} else {
+			$objectKey = strtolower( $object );
+		}
+
+		$className = self::getClassNameByObjectName( $objectKey );
 		$handler = "c_$name";
 		return $className::$handler();
 	}
@@ -334,16 +363,20 @@ class Hooks {
 	 */
 	public static function callGetObjectsProperty( $name, $object ) {
 		if ( $object instanceof GenericObject ) {
-			$objectName = $object->getName();
 			$handler = "p_$name";
 			return $object->$handler();
 		}
-		Runtime::pushException( new PhpTagsException( PhpTagsException::NOTICE_GET_PROPERTY_OF_NON_OBJECT, null ) );
+		Runtime::pushException( new PhpTagsException( PhpTagsException::NOTICE_GET_PROPERTY_OF_NON_OBJECT ) );
 	}
 
 	public static function callGetStaticProperty( $name, $object ) {
-		self::$objectName = $object;
-		$className = self::getClassNameByObjectName( $object );
+		if ( $object instanceof GenericObject ) {
+			$objectKey = $object->getObjectKey();
+		} else {
+			$objectKey = strtolower( $object );
+		}
+
+		$className = self::getClassNameByObjectName( $objectKey );
 		$handler = "q_$name";
 		return $className::$handler();
 	}
@@ -351,21 +384,26 @@ class Hooks {
 	public static function callSetObjectsProperty( $name, $object, $value ) {
 		if ( $object instanceof GenericObject ) {
 			$handler = "b_$name";
-			$validValue = self::getValidPropertyValue( $object->getName(), $name, false, $value );
+			$validValue = self::getValidPropertyValue( $object->getObjectKey(), $name, false, $value );
 			if ( $validValue instanceof PhpTagsException ) {
 				Runtime::pushException( $validValue );
 				return;
 			}
 			return $object->$handler( $validValue );
 		}
-		Runtime::pushException( new PhpTagsException( PhpTagsException::WARNING_ATTEMPT_TO_ASSIGN_PROPERTY, null ) );
+		Runtime::pushException( new PhpTagsException( PhpTagsException::WARNING_ATTEMPT_TO_ASSIGN_PROPERTY ) );
 	}
 
 	public static function callSetStaticProperty( $name, $object, $value ) {
-		self::$objectName = $object;
-		$className = self::getClassNameByObjectName( $object );
+		if ( $object instanceof GenericObject ) {
+			$objectKey = $object->getObjectKey();
+		} else {
+			$objectKey = strtolower( $object );
+		}
+
+		$className = self::getClassNameByObjectName( $objectKey );
 		$handler = "d_$name";
-		$validValue = self::getValidPropertyValue( $object, $name, true, $value );
+		$validValue = self::getValidPropertyValue( $objectKey, $name, true, $value );
 		if ( $validValue instanceof PhpTagsException ) {
 			Runtime::pushException( $validValue );
 			return;
@@ -376,19 +414,27 @@ class Hooks {
 	/**
 	 *
 	 * @param array $arguments
-	 * @param string $objectName
+	 * @param string $calledObjectName
 	 * @param bool $showException
 	 * @return \PhpTags\GenericObject
 	 */
-	public static function createObject( $arguments, $objectName, $showException = true ) {
-		$className = self::getClassNameByObjectName( $objectName );
-		$object = new $className( $objectName );
+	public static function createObject( $arguments, $calledObjectName, $showException = true ) {
+		self::$value = array(
+			PHPTAGS_STACK_HOOK_TYPE => PHPTAGS_HOOK_NEW_OBJECT,
+			PHPTAGS_STACK_PARAM => '__construct',
+			PHPTAGS_STACK_PARAM_2 => $arguments,
+			PHPTAGS_STACK_PARAM_3 => $calledObjectName,
+			);
+
+		$objectKey = strtolower( $calledObjectName );
+		$className = self::getClassNameByObjectName( $objectKey );
+		$newObject = new $className( $calledObjectName, $objectKey );
 		ksort( $arguments );
 
 		try {
-			$e = self::checkObjectArguments( $objectName, '__construct', false, $arguments );
-			if ( $e === true && call_user_func_array( array($object, 'm___construct'), $arguments ) === true ) {
-				return $object;
+			$e = self::checkObjectArguments( $objectKey, '__construct', false, $arguments );
+			if ( $e === true && call_user_func_array( array($newObject, 'm___construct'), $arguments ) === true ) {
+				return $newObject;
 			}
 			if ( $e instanceof \PhpTags\PhpTagsException ) {
 				Runtime::pushException( $e );
@@ -401,101 +447,86 @@ class Hooks {
 				if ( $message == '' ) {
 					$message = $exc->getMessage();
 				}
-				Runtime::pushException( new PhpTagsException( PhpTagsException::FATAL_OBJECT_NOT_CREATED, array( $objectName, $message ) ) );
+				Runtime::pushException( new PhpTagsException( PhpTagsException::FATAL_OBJECT_NOT_CREATED, $message ) );
 			}
 		}
 		return false;
 	}
 
-	private static function getClassNameByObjectName( $objectName ) {
+	private static function getClassNameByObjectName( $objectKey ) {
 		static $cache = array();
-		$name = strtolower( $objectName );
-		if ( true === isset( $cache[$name] ) ) {
-			return $cache[$name];
+		if ( isset( $cache[$objectKey] ) ) {
+			return $cache[$objectKey];
 		}
 
-		if ( false === isset( self::$objects[$name] ) ) {
-			throw new PhpTagsException( PhpTagsException::FATAL_CLASS_NOT_FOUND, $objectName );
+		if ( false === isset( self::$objects[$objectKey] ) ) {
+			throw new PhpTagsException( PhpTagsException::FATAL_CLASS_NOT_FOUND, self::getCallInfo( self::INFO_CALLED_OBJECT_NAME ) );
 		}
 
-		$className = '\\PhpTagsObjects\\' . self::$objects[$name][0];
+		$className = '\\PhpTagsObjects\\' . self::$objects[$objectKey][0];
 		if ( false === class_exists( $className ) ) {
-			throw new PhpTagsException( PhpTagsException::FATAL_CREATEOBJECT_INVALID_CLASS, array($className, $name) );
+			throw new PhpTagsException( PhpTagsException::FATAL_CREATEOBJECT_INVALID_CLASS, $className );
 		}
 		if ( false === is_subclass_of( $className, 'PhpTags\\GenericObject' ) ) {
 			throw new PhpTagsException( PhpTagsException::FATAL_MUST_EXTENDS_GENERIC, $className );
 		}
 
-		$cache[$name] = $className;
+		$cache[$objectKey] = $className;
 		return $className;
 	}
 
 	/**
-	 * Create new PhpTags class $name with value $value
-	 * @param string $name
+	 * Create new PhpTags class $objectName with value $value
+	 * @param string $objectName
 	 * @param array $value
 	 * @return \PhpTags\GenericObject
 	 */
-	public static function getObjectWithValue( $name, $value ) {
-		$className = self::getClassNameByObjectName( $name );
-		return new $className( $name, $value );
+	public static function getObjectWithValue( $objectName, $value ) {
+		$objectKey = strtolower( $objectName );
+		$className = self::getClassNameByObjectName( $objectKey );
+		return new $className( $objectName, $objectKey, $value );
 	}
 
 	public static function getDefinedFunctions() {
 		return self::$functions;
 	}
 
-	private static function checkFunctionArguments( $funcName, $name, $arguments ) {
-		if ( isset( self::$functions[$funcName] ) ) {
-			$f = self::$functions[$funcName];
-			$expects = $f[0];
-			$originalName = $f[1];
-		} else {
-			throw new PhpTagsException( PhpTagsException::FATAL_CALL_TO_UNDEFINED_FUNCTION, $name );
+	private static function checkFunctionArguments( $funcKey, $arguments ) {
+		if ( isset( self::$functions[$funcKey] ) ) {
+			return self::checkArguments( self::$functions[$funcKey][0], $arguments );
 		}
-		return self::checkArguments( $originalName, $expects, $arguments );
+		throw new PhpTagsException( PhpTagsException::FATAL_CALL_TO_UNDEFINED_FUNCTION );
 	}
 
 	/*
 	 *
 	 */
-	private static function checkObjectArguments( $objectName, $methodName, $isStatic, $arguments ) {
-		$object = strtolower( $objectName );
-		$method = strtolower( $methodName );
+	private static function checkObjectArguments( $objectKey, $calledMethodName, $isStatic, $arguments ) {
+		$methodKey = strtolower( $calledMethodName );
 		$point = $isStatic === false ? 1 : 2;
-		if ( isset(self::$objects[$object][$point][$method]) ) {
-			$m = self::$objects[$object][$point][$method];
-		} elseif ( $isStatic === false && isset(self::$objects[$object][2][$method]) ) { // static method called nonstatic
-			$m = self::$objects[$object][2][$method];
-		} elseif ( $isStatic !== false && isset(self::$objects[$object][1][$method]) ) {
-			throw new PhpTagsException( PhpTagsException::FATAL_NONSTATIC_CALLED_STATICALLY, array( self::getOriginalObjectName($object), $methodName) );
+		if ( isset(self::$objects[$objectKey][$point][$methodKey]) ) {
+			$m = self::$objects[$objectKey][$point][$methodKey];
+		} elseif ( $isStatic === false && isset(self::$objects[$objectKey][2][$methodKey]) ) { // static method called nonstatic
+			$m = self::$objects[$objectKey][2][$methodKey];
+		} elseif ( $isStatic !== false && isset(self::$objects[$objectKey][1][$methodKey]) ) {
+			throw new PhpTagsException( PhpTagsException::FATAL_NONSTATIC_CALLED_STATICALLY );
 		} else {
-			throw new PhpTagsException( PhpTagsException::FATAL_CALL_TO_UNDEFINED_METHOD, array( self::getOriginalObjectName($object), $methodName) );
+			throw new PhpTagsException( PhpTagsException::FATAL_CALL_TO_UNDEFINED_METHOD );
 		}
-		$expects = $m[0];
-		$originalName = self::$objects[$object][5] . '::' . $m[1];
-		return self::checkArguments( $originalName, $expects, $arguments );
+		return self::checkArguments( $m[0], $arguments );
 	}
 
-	private static function checkArguments( $originalName, $expects, $arguments ) {
+	private static function checkArguments( $expects, $arguments ) {
 		$argCount = count( $arguments );
 		if( true === isset( $expects[self::EXPECTS_EXACTLY_PARAMETERS] ) && $argCount != $expects[self::EXPECTS_EXACTLY_PARAMETERS] ) {
-			return new PhpTagsException(
-					PhpTagsException::WARNING_EXPECTS_EXACTLY_PARAMETER,
-					array( $originalName, $expects[self::EXPECTS_EXACTLY_PARAMETERS], $argCount )
-				);
+			return new PhpTagsException( PhpTagsException::WARNING_EXPECTS_EXACTLY_PARAMETER, array($expects[self::EXPECTS_EXACTLY_PARAMETERS], $argCount) );
 		} else {
 			if ( true == isset( $expects[self::EXPECTS_MAXIMUM_PARAMETERS] ) && $argCount > $expects[self::EXPECTS_MAXIMUM_PARAMETERS] ) {
 				return new PhpTagsException(
-					PhpTagsException::WARNING_EXPECTS_AT_MOST_PARAMETERS,
-					array( $originalName, $expects[self::EXPECTS_MAXIMUM_PARAMETERS], $argCount )
-				);
+					PhpTagsException::WARNING_EXPECTS_AT_MOST_PARAMETERS, array($expects[self::EXPECTS_MAXIMUM_PARAMETERS], $argCount) );
 			}
 			if ( true == isset( $expects[self::EXPECTS_MINIMUM_PARAMETERS] ) && $argCount < $expects[self::EXPECTS_MINIMUM_PARAMETERS] ) {
-				return new PhpTagsException(
-					PhpTagsException::WARNING_EXPECTS_AT_LEAST_PARAMETER,
-					array( $originalName, $expects[self::EXPECTS_MINIMUM_PARAMETERS], $argCount )
-				);
+				return new PhpTagsException( PhpTagsException::WARNING_EXPECTS_AT_LEAST_PARAMETER, array($expects[self::EXPECTS_MINIMUM_PARAMETERS], $argCount) );
 			}
 		}
 
@@ -533,7 +564,7 @@ class Hooks {
 						break 2;
 					}
 					break;
-				case self::TYPE_NOT_OBJECT:
+				case self::TYPE_NONOBJECT:
 					if ( true === is_object( $arguments[$i] ) ) {
 						$error = 'not object';
 						break 2;
@@ -560,24 +591,22 @@ class Hooks {
 			return true;
 		}
 
+		$type = $arguments[$i] instanceof GenericObject ? $arguments[$i]->getName() : gettype( $arguments[$i] );
 		return new PhpTagsException(
 				PhpTagsException::WARNING_EXPECTS_PARAMETER,
-				array( $originalName, $i+1, $error, gettype( $arguments[$i] ) )
+				array( $i+1, $error, $type )
 			);
 	}
 
-	private static function getValidPropertyValue( $objectName, $propertyName, $isStatic, $value ) {
-		$object = strtolower( $objectName );
-		$property = strtolower( $propertyName );
+	private static function getValidPropertyValue( $objectKey, $calledPropertyName, $isStatic, $value ) {
+		$propertyKey = strtolower( $calledPropertyName );
 		$point = $isStatic === false ? 3 : 4;
-		if ( isset(self::$objects[$object][$point][$property]) ) {
-			$p = self::$objects[$object][$point][$property];
-			$expect = $p[0];
-			$originalName = $p[1];
+		if ( isset(self::$objects[$objectKey][$point][$propertyKey]) ) {
+			$expect = self::$objects[$objectKey][$point][$propertyKey][0];
 		} elseif( $isStatic === false ) {
-			return new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_PROPERTY, array( self::getOriginalObjectName( $object ), $propertyName ) );
+			return new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_PROPERTY );
 		} else {
-			throw new PhpTagsException( PhpTagsException::FATAL_ACCESS_TO_UNDECLARED_STATIC_PROPERTY, array( self::getOriginalObjectName( $object ), $propertyName ) );
+			throw new PhpTagsException( PhpTagsException::FATAL_ACCESS_TO_UNDECLARED_STATIC_PROPERTY );
 		}
 
 		if ( $value === null ) {
@@ -614,7 +643,7 @@ class Hooks {
 					$error = 'scalar';
 				}
 				break;
-			case self::TYPE_NOT_OBJECT:
+			case self::TYPE_NONOBJECT:
 				if ( is_object( $value ) ) {
 					$error = 'not object';
 				}
@@ -634,27 +663,125 @@ class Hooks {
 			return $value;
 		}
 
-		return new \PhpTags\PhpTagsException(
-				\PhpTags\PhpTagsException::NOTICE_EXPECTS_PROPERTY,
-				array( "{$object}->{$originalName}", $error, gettype( $value ) )
-			);
+		return new PhpTagsException( PhpTagsException::NOTICE_EXPECTS_PROPERTY, array($error, gettype( $value )) );
 	}
 
-	public static function getReturnsOnFailure( $funcName, $e = null ) {
-		if ( $e instanceof \PhpTags\PhpTagsException ) {
-			Runtime::pushException( $e );
+	public static function hasProperty( $objectKey, $propertyName ) {
+		$propertyKey = strtolower( $propertyName );
+		return isset( self::$objects[$objectKey][3][$propertyKey] );
+	}
+
+	public static function getCallInfo( $key  = null ) {
+		static $value = null, $return = null;
+
+		if ( $value !== self::$value ) {
+			$return = self::fillCallInfo();
+			$value = self::$value;
 		}
-		return self::$functions[$funcName][3];
+
+		if ( $key === null ) {
+			return $return;
+		}
+		return isset( $return[$key] ) ? $return[$key] : false;
 	}
 
-	public static function getOriginalObjectName( $object ) {
-		return self::$objects[$object][5];
-	}
+	private static function fillCallInfo() {
+		$value = self::$value;
+		$hookType = $value[PHPTAGS_STACK_HOOK_TYPE];
+		if ( $hookType === PHPTAGS_HOOK_GET_CONSTANT || $hookType === PHPTAGS_HOOK_FUNCTION ) {
+			$calledObjectName = false;
+			$originalObjectName = false;
+		} else {
+			$object = $value[PHPTAGS_STACK_PARAM_3];
+			if ( $object instanceof GenericObject ) {
+				$originalObjectName = $calledObjectName = $object->getName();
+				$objectKey = $object->getObjectKey();
+			} else {
+				$calledObjectName = $object;
+				$objectKey = strtolower( $calledObjectName );
+				$originalObjectName = isset( self::$objects[$objectKey][5] ) ? self::$objects[$objectKey][5] : $calledObjectName;
+			}
+		}
 
-	public static function hasProperty( $objectName, $propertyName ) {
-		$object = strtolower( $objectName );
-		$property = strtolower( $propertyName );
-		return isset( self::$objects[$object][3][$property] );
+		$calledHookName = $value[PHPTAGS_STACK_PARAM];
+		$hookKey = strtolower( $calledHookName );
+		$returnsOnFailure = null;
+		$objectAim = false;
+		$objectAim_2 = false;
+
+		switch ( $value[PHPTAGS_STACK_HOOK_TYPE] ) {
+			case PHPTAGS_HOOK_GET_CONSTANT: // Hook is a constant. Example: echo M_PI;
+				$originalHookName = $calledHookName; // Constants are case sensitive
+				$originalFullName = $originalHookName;
+				break;
+			case PHPTAGS_HOOK_GET_OBJECT_CONSTANT: // Hook is a object constant. Example: Foo::MY_BAR
+				$originalHookName = $calledHookName; // Constants are case sensitive
+				$originalFullName = $originalObjectName . '::' . $originalHookName;
+				break;
+			case PHPTAGS_HOOK_NEW_OBJECT:
+				$originalHookName = $hookKey; // it is '__construct'
+				$originalFullName = $originalObjectName . '::' . $originalHookName . '()';
+				break;
+			case PHPTAGS_HOOK_FUNCTION: // Hook is a function. Example: echo foo();
+				if ( isset( self::$functions[$hookKey] ) ) {
+					$originalHookName = self::$functions[$hookKey][1];
+					$returnsOnFailure = self::$functions[$hookKey][3];
+				} else {
+					$originalHookName = $calledHookName;
+				}
+				$originalFullName = $originalHookName . '()';
+				break;
+			case PHPTAGS_HOOK_GET_STATIC_PROPERTY: // Hook is a static property of a method. Example: echo FOO::$bar;
+			case PHPTAGS_HOOK_SET_STATIC_PROPERTY: // Example FOO::$bar = true;
+				$originalHookName = isset( self::$objects[$objectKey][4][$hookKey][1] ) ? self::$objects[$objectKey][4][$hookKey][1] : ( isset( self::$objects[$objectKey][3][$hookKey][1] ) ? self::$objects[$objectKey][3][$hookKey][1] : $calledHookName ) ;
+				$originalFullName = $originalObjectName . '::$' . $originalHookName;
+				break;
+			case PHPTAGS_HOOK_GET_OBJECT_PROPERTY: // Hook is a property of a method. Example: $foo = new Foo(); echo $foo->bar;
+			case PHPTAGS_HOOK_SET_OBJECT_PROPERTY: // Example: $foo = new Foo(); $foo->bar = true;
+				$originalHookName = isset( self::$objects[$objectKey][3][$hookKey][1] ) ? self::$objects[$objectKey][3][$hookKey][1] : ( isset( self::$objects[$objectKey][4][$hookKey][1] ) ? self::$objects[$objectKey][4][$hookKey][1] : $calledHookName ) ;
+				$originalFullName = $originalObjectName . '->' . $originalHookName;
+				break;
+			case PHPTAGS_HOOK_STATIC_METHOD: // Example: FOO::bar()
+				if ( isset( self::$objects[$objectKey][2][$hookKey] ) ) {
+					$tmp = self::$objects[$objectKey][2][$hookKey];
+				} elseif ( isset( self::$objects[$objectKey][1][$hookKey] ) ) {
+					$tmp = self::$objects[$objectKey][1][$hookKey];
+				} else {
+					$tmp = false;
+					$originalHookName = $calledHookName;
+				}
+				if ( $tmp !== false ) {
+					$originalHookName = $tmp[1];
+					$returnsOnFailure = $tmp[2];
+				}
+				$originalFullName = $originalObjectName . '::' . $originalHookName . '()';
+				break;
+			case PHPTAGS_HOOK_OBJECT_METHOD: // Example: $foo = new Foo(); $foo->bar();
+				if ( isset( self::$objects[$objectKey][1][$hookKey] ) ) {
+					$tmp = self::$objects[$objectKey][1][$hookKey];
+				} elseif ( isset( self::$objects[$objectKey][2][$hookKey] ) ) {
+					$tmp = self::$objects[$objectKey][2][$hookKey];
+				} else {
+					$tmp = false;
+					$originalHookName = $calledHookName;
+				}
+				if ( $tmp !== false ) {
+					$originalHookName = $tmp[1];
+					$returnsOnFailure = $tmp[2];
+				}
+				$originalFullName = $originalObjectName . '->' . $originalHookName . '()';
+				break;
+		}
+
+		return array(
+			self::INFO_HOOK_TYPE => $hookType,
+			self::INFO_CALLED_HOOK_NAME => $calledHookName,
+			self::INFO_ORIGINAL_HOOK_NAME => $originalHookName,
+			self::INFO_CALLED_OBJECT_NAME => $calledObjectName,
+			self::INFO_ORIGINAL_OBJECT_NAME => $originalObjectName,
+			self::INFO_ORIGINAL_FULL_NAME => $originalFullName,
+			self::INFO_RETURNS_ON_FAILURE => $returnsOnFailure,
+		);
 	}
 
 }

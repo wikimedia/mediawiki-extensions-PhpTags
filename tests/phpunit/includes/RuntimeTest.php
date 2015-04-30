@@ -300,6 +300,42 @@ echo "foo is $foo"; // foo is foobar'),
 				array('5502')
 			);
 	}
+	public function testRun_echo_math_7() {
+		$this->assertEquals(
+				Runtime::runSource('$foo = 5; echo (2 xor $foo) === true ? "true" : "false";'),
+				array('false')
+			);
+	}
+	public function testRun_echo_math_8() {
+		$this->assertEquals(
+				Runtime::runSource('echo (true xor false) === true ? "true" : "false";'),
+				array('true')
+			);
+	}
+	public function testRun_echo_math_9() {
+		$this->assertEquals(
+				Runtime::runSource('$foo = false; echo (true xor $foo) === true ? "true" : "false";'),
+				array('true')
+			);
+	}
+	public function testRun_echo_math_10() {
+		$this->assertEquals(
+				Runtime::runSource('$foo = 0; echo (true xor $foo) === true ? "true" : "false";'),
+				array('true')
+			);
+	}
+	public function testRun_echo_math_11() {
+		$this->assertEquals(
+				Runtime::runSource('$foo = 0; echo (1 xor $foo) === true ? "true" : "false";'),
+				array('true')
+			);
+	}
+	public function testRun_echo_math_12() {
+		$this->assertEquals(
+				Runtime::runSource('$foo = 1; echo (1 xor $foo) === true ? "true" : "false";'),
+				array('false')
+			);
+	}
 
 	public function testRun_echo_math_params() {
 		$this->assertEquals(
@@ -867,6 +903,18 @@ echo "$a, ", $a-- + -5, ", " . --$a, ", $a.";'),
 		$this->assertEquals(
 				Runtime::runSource('echo 5 !== (string)5;'),
 				array('1')
+			);
+	}
+	public function testRun_echo_compare_15() {
+		$this->assertEquals(
+				Runtime::runSource('echo 5.4321 === (double)(string)5.4321 ? "true" : "false";'),
+				array('true')
+			);
+	}
+	public function testRun_echo_compare_16() {
+		$this->assertEquals(
+				Runtime::runSource('echo null === (unset)(double)(string)5.4321 ? "true" : "false";'),
+				array('true')
 			);
 	}
 
@@ -1711,6 +1759,38 @@ if ( $foo + $bar ) echo "\$foo + \$bar";'),
 				array('10', '11', '12')
 			);
 	}
+	public function testRun_echo_array_variable_increment_4() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo[5]=10; echo $foo[5][1]++, "-A-", $foo[5], "-B-", ++$foo[5][987], "-C-", $foo[5];', array('test'), 1),
+				array(
+					(string)new PhpTagsException( PhpTagsException::WARNING_SCALAR_VALUE_AS_ARRAY, null, 1, 'test' ),
+					null,
+					'-A-',
+					10,
+					'-B-',
+					(string)new PhpTagsException( PhpTagsException::WARNING_SCALAR_VALUE_AS_ARRAY, null, 1, 'test' ),
+					1,
+					'-C-',
+					10,
+				)
+			);
+	}
+	public function testRun_echo_array_variable_increment_5() {
+		$this->assertEquals(
+				Runtime::runSource( 'echo ++$undefinedFoo[5], $undefinedFoo[5], "###", $undefinedFoo[6][7]++, $undefinedFoo[6][7];', array('test'), 1),
+				array(
+					(string)new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_VARIABLE, 'undefinedFoo', 1, 'test' ),
+					(string)new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_OFFSET, 5, 1, 'test' ),
+					1,
+					1,
+					'###',
+					(string)new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_OFFSET, 6, 1, 'test' ),
+					(string)new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_OFFSET, 7, 1, 'test' ),
+					null,
+					1,
+				)
+			);
+	}
 	public function testRun_echo_array_variable_assignment_1() {
 		$this->assertEquals(
 				Runtime::runSource('$foo[5]=10; $foo[5]+=20; echo $foo[5];'),
@@ -1753,6 +1833,12 @@ if ( $foo + $bar ) echo "\$foo + \$bar";'),
 				array('3')
 			);
 	}
+	public function testRun_echo_array_12() {
+		$this->assertEquals(
+				Runtime::runSource('$foo="this is string"; echo $foo[0], $foo[1], $foo[ 2 ] . $foo[3] . $foo[4], $foo[5], $foo[1000];', array('Test'), 0),
+				array( 't', 'h', 'is ', 'i', (string) new PhpTagsException( PhpTagsException::NOTICE_UNINIT_STRING_OFFSET, 1000, 1, 'Test' ), null )
+			);
+	}
 
 	public function testRun_echo_array_double_arrow_1() {
 		$this->assertEquals(
@@ -1770,6 +1856,42 @@ if ( $foo + $bar ) echo "\$foo + \$bar";'),
 		$this->assertEquals(
 				Runtime::runSource('$bar="BAR"; $foo=array( 5 => 50, $bar => $bar, "string" => "STRING" ); echo $foo[$bar], $foo[5], $foo["string"];'),
 				array('BAR', 50, 'STRING')
+			);
+	}
+	public function testRun_echo_array_double_arrow_4() {
+		$this->assertEquals(
+				Runtime::runSource('$bar1="BAR1"; $bar2="BAR2"; $foo=array( 5 => 50, $bar1 => $bar1, "string" => "STRING", $bar2 => $bar2 ); echo $foo[$bar1], $foo[5], $foo["string"], $foo[$bar2];'),
+				array('BAR1', 50, 'STRING', 'BAR2')
+			);
+	}
+	public function testRun_echo_array_double_arrow_5() {
+		$this->assertEquals(
+				Runtime::runSource('$bar1="BAR1"; $bar2="BAR2"; $foo=array( 5 => 50, $bar1 => $bar1, "STRING", $bar2 => $bar2 ); echo $foo[$bar1], $foo[5], $foo[6], $foo[$bar2];'),
+				array('BAR1', 50, 'STRING', 'BAR2')
+			);
+	}
+	public function testRun_echo_array_double_arrow_6() {
+		$this->assertEquals(
+				Runtime::runSource('$bar1="BAR1"; $bar2="BAR2"; $foo=array( "STRING", 5 => 50, $bar1 => $bar1, $bar2 => $bar2 ); echo $foo[$bar1], $foo[5], $foo[0], $foo[$bar2];'),
+				array('BAR1', 50, 'STRING', 'BAR2')
+			);
+	}
+	public function testRun_echo_array_double_arrow_7() {
+		$this->assertEquals(
+				Runtime::runSource('$bar1="BAR1"; $bar2="BAR2"; $foo=array( 5 => 50, $bar1 => $bar1, $bar2 => $bar2, "STRING" ); echo $foo[$bar1], $foo[5], $foo[6], $foo[$bar2];'),
+				array('BAR1', 50, 'STRING', 'BAR2')
+			);
+	}
+	public function testRun_echo_array_double_arrow_8() {
+		$this->assertEquals(
+				Runtime::runSource('$bar1="BAR1"; $bar2="BAR2"; $bar3 = "STRING"; $foo=array( 5 => 50, $bar1 => $bar1, $bar2 => $bar2, $bar3 ); echo $foo[$bar1], $foo[5], $foo[6], $foo[$bar2];'),
+				array('BAR1', 50, 'STRING', 'BAR2')
+			);
+	}
+	public function testRun_echo_array_double_arrow_9() {
+		$this->assertEquals(
+				Runtime::runSource('$bar1="BAR1"; $bar2="BAR2"; $bar3 = "STRING"; $foo=array( 5 => 50, $bar1 => $bar1, $bar2 => $bar2, $bar2=>$bar3 ); echo $foo[$bar1], $foo[5], $foo[$bar2];'),
+				array('BAR1', 50, 'STRING')
 			);
 	}
 
@@ -1808,6 +1930,16 @@ if ( $foo + $bar ) echo "\$foo + \$bar";'),
 				Runtime::runSource('$foo=array(); $foo[]|=5; $foo[]^=6; $foo[]<<=7; $foo[]>>=8; echo $foo[0],$foo[1],$foo[2],$foo[3];'),
 				array('5', '6', '0', '0')
 			);
+	}
+	public function testRun_echo_empty_array_push_exception_1() {
+		$expExc = (string)new PhpTagsException( PhpTagsException::FATAL_CANNOT_USE_FOR_READING, null, 1 );
+		try {
+			Runtime::runSource( 'echo $foo[] + 4;' );
+		} catch ( PhpTagsException $ex ) {
+			$this->assertEquals( (string)$ex, $expExc );
+			return;
+		}
+		$this->fail( 'An expected exception has not been raised.' );
 	}
 	public function testRun_echo_array_encapsed_1() {
 		$this->assertEquals(
@@ -2208,6 +2340,35 @@ echo "^^^^^^^^^^^^^";'),
 				array( '@@@@@@@@@', " TRUE " )
 			);
 	}
+	public function testRun_break_exc_1() {
+		$this->assertEquals(
+				Runtime::runSource( 'echo "@@@@@@@@@";
+if (true) {
+	echo " TRUE ";
+	break 2;
+}
+echo "^^^^^^^^^^^^^";', array('test') ),
+				array( '@@@@@@@@@', " TRUE ", (string) new PhpTagsException( PhpTagsException::FATAL_WRONG_BREAK_LEVELS, 2, 4, 'test' ) )
+			);
+	}
+	public function testRun_while_continue_exc_1() {
+		$this->assertEquals(
+				Runtime::runSource( 'continue;', array('test') ),
+				array( (string) new PhpTagsException( PhpTagsException::FATAL_WRONG_BREAK_LEVELS, 1, 1, 'test' ) )
+			);
+	}
+	public function testRun_while_continue_exc_2() {
+		$this->assertEquals(
+				Runtime::runSource( 'continue 2;', array('test') ),
+				array( (string) new PhpTagsException( PhpTagsException::FATAL_WRONG_BREAK_LEVELS, 2, 1, 'test' ) )
+			);
+	}
+	public function testRun_while_continue_exc_3() {
+		$this->assertEquals(
+				Runtime::runSource( '$i=1; while( $i <= 3 ) { echo $i++; continue 2; $i++; }', array('test') ),
+				array( 1, (string) new PhpTagsException( PhpTagsException::FATAL_WRONG_BREAK_LEVELS, 2, 1, 'test' ) )
+			);
+	}
 
 //	 *
 //	 * Test static variable $stat in testTemplate
@@ -2284,6 +2445,16 @@ echo $foo, $argv[0], $argc, $bar, $stat, $argv["test"];', array('testTemplate', 
 				Runtime::runSource('$foo=40; static $foo=1+2*3; echo $foo++;', array('static_math'), 3),
 				array(9)
 			);
+	}
+	public function testRun_echo_static_expression_1() {
+		$expExc = (string)new PhpTagsException( PhpTagsException::PARSE_ERROR_EXPRESSION_IN_STATIC, null, 1 );
+		try {
+			Runtime::runSource( '$foo=40; static $foo=1+2*$foo; echo $foo++;' );
+		} catch ( PhpTagsException $ex ) {
+			$this->assertEquals( (string)$ex, $expExc );
+			return;
+		}
+		$this->fail( 'An expected exception has not been raised.' );
 	}
 	public function testRun_echo_static_null_1() {
 		$this->assertEquals(
@@ -2585,6 +2756,42 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 				array('true', 'false')
 			);
 	}
+	public function testRun_echo_unset_4() {
+		$this->assertEquals(
+				Runtime::runSource('$var = [ array("foo" => "string") ]; echo isset($var[0]["foo"]) ? "true" : "false"; unset($var[0]["foo"]); echo isset($var[0]["foo"]) ? "true" : "false";'),
+				array('true', 'false')
+			);
+	}
+	public function testRun_echo_unset_5() {
+		$this->assertEquals(
+				Runtime::runSource('$var = [ array("foo" => "string") ]; echo isset($var[0][345][678]) ? "true" : "false"; unset($var[0][345][678]); echo isset($var[0][345][678]) ? "true" : "false";'),
+				array('false', 'false')
+			);
+	}
+	public function testRun_echo_unset_exception_1() {
+		$this->assertEquals(
+				Runtime::runSource( 'unset( $undefined[0] );', array('test_unset'), 1 ),
+				array( (string)new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_VARIABLE, 'undefined', 1, 'test_unset' ) )
+			);
+	}
+	public function testRun_echo_unset_exception_2() {
+		$this->assertEquals(
+				Runtime::runSource( '$str = "string"; unset( $str[2] );', array('test_unset'), 2 ),
+				array( (string)new PhpTagsException( PhpTagsException::FATAL_CANNOT_UNSET_STRING_OFFSETS, null, 1, 'test_unset' ) )
+			);
+	}
+	public function testRun_echo_unset_exception_3() {
+		$this->assertEquals(
+				Runtime::runSource( '$strarr = ["string"]; unset( $str[0][2] );', array('test_unset'), 2 ),
+				array( (string)new PhpTagsException( PhpTagsException::FATAL_CANNOT_UNSET_STRING_OFFSETS, null, 1, 'test_unset' ) )
+			);
+	}
+	public function testRun_echo_unset_exception_4() {
+		$this->assertEquals(
+				Runtime::runSource('$var = [ array("foo" => "string") ]; echo isset($var[0]["foo"][2]) ? "true" : "false"; unset($var[0]["foo"][2]); echo isset($var[0]["foo"][2]) ? "true" : "false";', array('test_unset'), 2),
+				array('true', (string)new PhpTagsException( PhpTagsException::FATAL_CANNOT_UNSET_STRING_OFFSETS, null, 1, 'test_unset' ))
+			);
+	}
 
 	public function testRun_echo_list_1() {
 		$this->assertEquals(
@@ -2616,7 +2823,47 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 				array(1, 2, 3)
 			);
 	}
-
+	public function testRun_echo_list_6() {
+		$this->assertEquals(
+				Runtime::runSource('list($a, list($b, $c)) = array(1, "string"); echo $a, $b, $c;'),
+				array(1, null, null)
+			);
+	}
+	public function testRun_echo_list_7() {
+		$this->assertEquals(
+				Runtime::runSource('list($a, list($b, $c)) = array(1, 456789); echo $a, $b, $c;'),
+				array(1, null, null)
+			);
+	}
+	public function testRun_echo_list_8() {
+		$this->assertEquals(
+				Runtime::runSource( 'list($a, list($b, $c), $d) = array(1, 456789); echo $a, $b, $c, $d;', array('T'), 1 ),
+				array( (string)new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_OFFSET, 2, 1, 'T'), 1, null, null, null )
+			);
+	}
+	public function testRun_echo_list_9() {
+		$this->assertEquals(
+				Runtime::runSource( 'list($a, list($b, $c), $d) = array("ddddd"); echo $a, $b, $c, $d;', array('T'), 1 ),
+				array(
+					(string)new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_OFFSET, 2, 1, 'T'),
+					(string)new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_OFFSET, 1, 1, 'T'),
+					(string)new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_OFFSET, 1, 1, 'T'),
+					'ddddd', null, null, null
+				)
+			);
+	}
+	public function testRun_echo_list_10() {
+		$this->assertEquals(
+				Runtime::runSource('list($bar[4]) = ["abcde"]; echo $bar[4];'),
+				array('abcde')
+			);
+	}
+	public function testRun_echo_list_11() {
+		$this->assertEquals(
+				Runtime::runSource('list($bar[4], list($bar[], $bar[6][7][8])) = ["abcde", ["end", "-678678-"]]; echo $bar[4], $bar[7], $bar[6][7][8];'),
+				array( 'abcde', 'end', '-678678-' )
+			);
+	}
 	public function testRun_foreach_1() {
 		$this->assertEquals(
 				Runtime::runSource('$arr = ["one", "two", "three"]; foreach ($arr as $value) echo "* Value: $value\n";'),
@@ -2681,6 +2928,18 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 		$this->assertEquals(
 				Runtime::runSource('foreach ($a as $v1) foreach ($v1 as $v2) echo $v2;'),
 				array('a', 'b', 'y', 'z')
+			);
+	}
+	public function testRun_foreach_12() {
+		$this->assertEquals(
+				Runtime::runSource( '$a = false; foreach ($a as $v) echo $v;', array('test'), 1 ),
+				array( (string)new PhpTagsException( PhpTagsException::WARNING_INVALID_ARGUMENT_FOR_FOREACH, null, 1, 'test' ) )
+			);
+	}
+	public function testRun_foreach_13() {
+		$this->assertEquals(
+				Runtime::runSource( '$a = false; foreach ($a as $k => $v) echo $v;', array('test'), 1 ),
+				array( (string)new PhpTagsException( PhpTagsException::WARNING_INVALID_ARGUMENT_FOR_FOREACH, null, 1, 'test' ) )
 			);
 	}
 

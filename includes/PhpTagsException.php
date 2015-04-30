@@ -13,18 +13,25 @@ class PhpTagsException extends \Exception {
 	public $params;
 	public $tokenLine;
 	public $place;
+	protected $hookCallInfo;
 
 	function __construct( $code = 0, $arguments = null, $tokenLine = null, $place = '' ) {
 		parent::__construct('', $code);
 		$this->params = $arguments;
 		$this->tokenLine = $tokenLine;
 		$this->place = $place != '' ? $place : 'Command line code';
+		$this->hookCallInfo = Hooks::getCallInfo();
+	}
+
+	function isFatal() {
+		return $this->code / 1000 === self::EXCEPTION_FATAL;
 	}
 
 	function __toString() {
 		$arguments = $this->params;
 		$line = $this->tokenLine;
 		$place = $this->place;
+		$originalFullName = $this->hookCallInfo[Hooks::INFO_ORIGINAL_FULL_NAME];
 
 		switch ( $this->code ) {
 			case self::PARSE_SYNTAX_ERROR_UNEXPECTED:
@@ -33,6 +40,9 @@ class PhpTagsException extends \Exception {
 				if ( $arguments ) {
 					$message .= ", expecting " . implode( ", ", $arguments );
 				}
+				break;
+			case self::PARSE_ERROR_EXPRESSION_IN_STATIC:
+				$message = "syntax error, expressions are not permitted if you declare static variable";
 				break;
 			case self::NOTICE_UNDEFINED_VARIABLE:
 				$message = "Undefined variable: $arguments";
@@ -52,9 +62,6 @@ class PhpTagsException extends \Exception {
 			case self::NOTICE_UNDEFINED_INDEX:
 				$message = "Undefined index: $arguments";
 				break;
-			case self::FATAL_STRING_OFFSET_AS_ARRAY:
-				$message = "Cannot use string offset as an array";
-				break;
 			case self::WARNING_SCALAR_VALUE_AS_ARRAY: //@todo have not used
 				$message = "Cannot use a scalar value as an array";
 				break;
@@ -65,10 +72,10 @@ class PhpTagsException extends \Exception {
 				$message = "Use of undefined constant $arguments - assumed '$arguments'";
 				break;
 			case self::NOTICE_UNDEFINED_PROPERTY:
-				$message = "Undefined property: {$arguments[0]}::\${$arguments[1]}";
+				$message = "Undefined property: $originalFullName";
 				break;
 			case self::NOTICE_UNDEFINED_CLASS_CONSTANT:
-				$message = "Undefined class constant: {$arguments[0]}::{$arguments[1]}";
+				$message = "Undefined class constant: $originalFullName";
 				break;
 			case self::WARNING_RETURNED_INVALID_VALUE:
 				// @todo
@@ -78,28 +85,28 @@ class PhpTagsException extends \Exception {
 				$message = "Only variables can be passed by reference";
 				break;
 			case self::WARNING_EXPECTS_PARAMETER:
-				$message = "{$arguments[0]}() expects parameter {$arguments[1]} to be {$arguments[2]}, {$arguments[3]} given";
+				$message = "$originalFullName expects parameter {$arguments[0]} to be {$arguments[1]}, {$arguments[2]} given";
 				break;
 			case self::NOTICE_EXPECTS_PROPERTY:
-				$message = "{$arguments[0]} expects property to be {$arguments[1]}, {$arguments[2]} given";
+				$message = "$originalFullName expects property to be {$arguments[0]}, {$arguments[1]} given";
 				break;
 			case self::FATAL_UNEXPECTED_OBJECT_TYPE; // = 4021; // Fatal error: Unexpected object type stdClass. in
-				$message = "{$arguments[0]}() Unexpected object type {$arguments[1]}";
+				$message = "$originalFullName Unexpected object type {$arguments[0]}";
 				break;
 			case self::WARNING_EXPECTS_EXACTLY_PARAMETERS:
-				$message = "{$arguments[0]}() expects exactly {$arguments[1]} parameters, {$arguments[2]} given";
+				$message = "$originalFullName expects exactly {$arguments[0]} parameters, {$arguments[1]} given";
 				break;
 			case self::WARNING_EXPECTS_EXACTLY_PARAMETER:
-				$message = "{$arguments[0]}() expects exactly {$arguments[1]} parameter, {$arguments[2]} given";
+				$message = "$originalFullName expects exactly {$arguments[0]} parameter, {$arguments[1]} given";
 				break;
 			case self::WARNING_EXPECTS_AT_LEAST_PARAMETERS:
-				$message = "{$arguments[0]}() expects at least {$arguments[1]} parameters, {$arguments[2]} given";
+				$message = "$originalFullName expects at least {$arguments[0]} parameters, {$arguments[1]} given";
 				break;
 			case self::WARNING_EXPECTS_AT_LEAST_PARAMETER:
-				$message = "{$arguments[0]}() expects at least {$arguments[1]} parameter, {$arguments[2]} given";
+				$message = "$originalFullName expects at least {$arguments[0]} parameter, {$arguments[1]} given";
 				break;
 			case self::WARNING_TOO_MANY_ARGUMENTS; //Warning: Too many arguments for date_format(), expected 2
-				$message = "Too many arguments for {$arguments[0]}(), expected {$arguments[1]}";
+				$message = "Too many arguments for $originalFullName, expected $arguments";
 				break;
 			case self::NOTICE_OBJECT_CONVERTED:
 				$message = "Object of class {$arguments[0]} could not be converted to {$arguments[1]}";
@@ -108,47 +115,47 @@ class PhpTagsException extends \Exception {
 				$message = "Array to string conversion";
 				break;
 			case self::FATAL_CALL_TO_UNDEFINED_FUNCTION:
-				$message = "Call to undefined function $arguments()";
+				$message = "Call to undefined function $originalFullName";
 				break;
 			case self::FATAL_CALL_TO_UNDEFINED_METHOD:
-				$message = "Call to undefined method {$arguments[0]}::{$arguments[1]}()";
+				$message = "Call to undefined method $originalFullName";
 				break;
 			case self::FATAL_CLASS_NOT_FOUND:
 				$message = "Class \"$arguments\" not found";
 				break;
 			case self::FATAL_NONEXISTENT_HOOK_CLASS:
-				$message = "For the function {$arguments[0]} was registered nonexistent hook class {$arguments[1]}";
+				$message = "For the function $originalFullName was registered nonexistent hook class $arguments";
 				break;
 			case self::FATAL_INVALID_HOOK_CLASS:
-				$message = "For the function {$arguments[0]} was registered invalid hook class {$arguments[1]}";
+				$message = "For the function $originalFullName was registered invalid hook class $arguments";
 				break;
 			case self::FATAL_NONEXISTENT_CONSTANT_CLASS:
-				$message = "For the constant {$arguments[0]} was registered nonexistent hook class {$arguments[1]}";
+				$message = "For the constant $originalFullName was registered nonexistent hook class $arguments";
 				break;
 			case self::FATAL_INVALID_CONSTANT_CLASS:
-				$message = "For the constant {$arguments[0]} was registered invalid hook class {$arguments[1]}";
+				$message = "For the constant $originalFullName was registered invalid hook class $arguments";
 				break;
 			case self::FATAL_CALLFUNCTION_INVALID_HOOK:
-				$message = "Class {$arguments[0]} has registered hook for function {$arguments[1]}, but one has no information about how to process it.";
+				$message = "Class $arguments registered hook for function $originalFullName, but it has no information how to process it.";
 				break;
 			case self::FATAL_CALLCONSTANT_INVALID_HOOK:
-				$message = "Class {$arguments[0]} has registered hook for constant {$arguments[1]}, but one has no information about how to process it.";
+				$message = "Class $arguments registered hook for constant $originalFullName, but has no information how to process it.";
 				break;
 			case self::FATAL_CREATEOBJECT_INVALID_CLASS:
-				$message = "Cannot find class {$arguments[0]} for create object {$arguments[1]}";
+				$message = "Cannot find class $arguments for create object " . $this->hookCallInfo[Hooks::INFO_ORIGINAL_OBJECT_NAME];
 				break;
 			case self::FATAL_CANNOT_UNSET_STRING_OFFSETS:
 				$message = 'Cannot unset string offsets';
 				break;
 			case self::EXCEPTION_FROM_HOOK:
-				$message = $arguments[0];
+				$message = "$originalFullName: {$arguments[0]}";
 				$this->code = $arguments[1] * 1000;
 				break;
 			case self::FATAL_LOOPS_LIMIT_REACHED:
 				$message = 'Maximum number of allowed loops reached';
 				break;
 			case self::FATAL_OBJECT_NOT_CREATED:
-				$message = "Object {$arguments[0]} has not been created with message \"{$arguments[1]}\"";
+				$message = 'Object ' . $this->hookCallInfo[Hooks::INFO_ORIGINAL_OBJECT_NAME] . " has not been created with message \"$arguments\"";
 				break;
 			case self::FATAL_MUST_EXTENDS_GENERIC:
 				$message = "Class $arguments must extends class '\\PhpTags\\GenericObject'";
@@ -157,31 +164,31 @@ class PhpTagsException extends \Exception {
 				$message = "Object of class {$arguments[0]} could not be converted to {$arguments[1]}";
 				break;
 			case self::FATAL_NONSTATIC_CALLED_STATICALLY: // @todo have not used
-				$message = "Non-static method {$arguments[0]}::{$arguments[1]}() cannot be called statically";
+				$message = "Non-static method $originalFullName cannot be called statically";
 				break;
 			case self::FATAL_CALLED_MANY_EXPENSIVE_FUNCTION:
-				$message = "Too many expensive function calls, last is $arguments";
+				$message = "Too many expensive function calls, last is $originalFullName";
+				break;
+			case self::FATAL_WRONG_BREAK_LEVELS:
+				$message = "Cannot break/continue $arguments levels";
 				break;
 			case self::NOTICE_GET_PROPERTY_OF_NON_OBJECT:
-				$message = 'Trying to get property of non-object';
+				$message = 'Trying to get property ' . $this->hookCallInfo[Hooks::INFO_ORIGINAL_HOOK_NAME] . ' of non-object';
 				break;
 			case self::WARNING_ATTEMPT_TO_ASSIGN_PROPERTY:
-				$message = 'Attempt to assign property of non-object';
+				$message = 'Attempt to assign property ' . $this->hookCallInfo[Hooks::INFO_ORIGINAL_HOOK_NAME] . ' of non-object';
 				break;
 			case self::FATAL_CALL_FUNCTION_ON_NON_OBJECT;
-				$message = "Call to a member function $arguments() on a non-object";
+				$message = 'Call to a member function ' . $this->hookCallInfo[Hooks::INFO_ORIGINAL_HOOK_NAME] . '() on a non-object';
 				break;
 			case self::FATAL_ACCESS_TO_UNDECLARED_STATIC_PROPERTY:
-				$message = "Access to undeclared static property: {$arguments[0]}::\${$arguments[1]}";
+				$message = "Access to undeclared static property: $originalFullName";
 				break;
 			case self::WARNING_EXPECTS_AT_MOST_PARAMETERS:
-				$message = "$arguments[0]() expects at most $arguments[1] parameters, $arguments[2] given";
+				$message = "$originalFullName expects at most $arguments[0] parameters, $arguments[1] given";
 				break;
 			case self::FATAL_DENIED_FOR_NAMESPACE:
 				$message = wfMessage( 'phptags-disabled-for-namespace', $arguments )->text();
-				break;
-			case self::WARNING_INVALID_TYPE;
-				$message = $arguments . ': Invalid type';
 				break;
 			default:
 				$message = "Undefined error, code {$this->code}";
@@ -242,11 +249,9 @@ class PhpTagsException extends \Exception {
 	const WARNING_ATTEMPT_TO_ASSIGN_PROPERTY = 3012; // PHP Warning:  Attempt to assign property of non-object
 	const WARNING_EXPECTS_AT_MOST_PARAMETERS = 3013; // PHP Warning:  round() expects at most 3 parameters, 4 given
 	const WARNING_TOO_MANY_ARGUMENTS = 3014; //Warning: Too many arguments for date_format(), expected 2
-	const WARNING_INVALID_TYPE = 3015; // PHP Warning:  settype(): Invalid type
 
 	const EXCEPTION_FATAL = 4;
 	const FATAL_CANNOT_USE_FOR_READING = 4001;  // PHP Fatal error:  Cannot use [] for reading in Command line code on line 1
-	const FATAL_STRING_OFFSET_AS_ARRAY = 4002;  // PHP Fatal error:  Cannot use string offset as an array
 	const FATAL_VALUE_PASSED_BY_REFERENCE = 4003;  // PHP Fatal error:  Only variables can be passed by reference
 	const FATAL_CALL_TO_UNDEFINED_FUNCTION = 4004;  // PHP Fatal error:  Call to undefined function $1()
 	const FATAL_NONEXISTENT_HOOK_CLASS = 4005;
@@ -266,6 +271,7 @@ class PhpTagsException extends \Exception {
 	const FATAL_CALL_FUNCTION_ON_NON_OBJECT = 4019; // PHP Fatal error:  Call to a member function doo() on a non-object
 	const FATAL_ACCESS_TO_UNDECLARED_STATIC_PROPERTY = 4020; // PHP Fatal error:  Access to undeclared static property: F::$rsrr
 	const FATAL_UNEXPECTED_OBJECT_TYPE = 4021; // Fatal error: Unexpected object type stdClass. in
+	const FATAL_WRONG_BREAK_LEVELS = 4022; // PHP Fatal error:  Cannot break/continue 4 levels
 
 	const FATAL_DENIED_FOR_NAMESPACE = 4500;
 	const FATAL_CALLFUNCTION_INVALID_HOOK = 4501;
@@ -276,6 +282,7 @@ class PhpTagsException extends \Exception {
 
 	const EXCEPTION_PARSE = 6;
 	const PARSE_SYNTAX_ERROR_UNEXPECTED = 6001;  // PHP Parse error:  syntax error, unexpected $end, expecting ',' or ';' in Command line code on line 1
+	const PARSE_ERROR_EXPRESSION_IN_STATIC = 6100; // syntax error, expressions are not permitted if you declare static variable
 
 // PHP Fatal error:  Allowed memory size of 134217728 bytes exhausted (tried to allocate 73 bytes)
 // PHP Fatal error:  Maximum execution time of 30 seconds exceeded
