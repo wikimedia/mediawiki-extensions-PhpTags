@@ -15,7 +15,7 @@ class PhpTagsException extends \Exception {
 	public $place;
 	protected $hookCallInfo;
 
-	function __construct( $code = 0, $arguments = null, $tokenLine = null, $place = '' ) {
+	public function __construct( $code = 0, $arguments = null, $tokenLine = null, $place = '' ) {
 		parent::__construct('', $code);
 		$this->params = $arguments;
 		$this->tokenLine = $tokenLine;
@@ -23,14 +23,16 @@ class PhpTagsException extends \Exception {
 		$this->hookCallInfo = Hooks::getCallInfo();
 	}
 
-	function isFatal() {
-		return $this->code / 1000 === self::EXCEPTION_FATAL;
+	public function isFatal() {
+		return intval( $this->code / 1000 ) > self::EXCEPTION_WARNING;
 	}
 
-	function __toString() {
+	public function isCatchable() {
+		return intval( $this->code / 1000 ) !== self::EXCEPTION_FATAL;
+	}
+
+	public function __toString() {
 		$arguments = $this->params;
-		$line = $this->tokenLine;
-		$place = $this->place;
 		$originalFullName = $this->hookCallInfo[Hooks::INFO_ORIGINAL_FULL_NAME];
 
 		switch ( $this->code ) {
@@ -147,10 +149,6 @@ class PhpTagsException extends \Exception {
 			case self::FATAL_CANNOT_UNSET_STRING_OFFSETS:
 				$message = 'Cannot unset string offsets';
 				break;
-			case self::EXCEPTION_FROM_HOOK:
-				$message = "$originalFullName: {$arguments[0]}";
-				$this->code = $arguments[1] * 1000;
-				break;
 			case self::FATAL_LOOPS_LIMIT_REACHED:
 				$message = 'Maximum number of allowed loops reached';
 				break;
@@ -196,7 +194,14 @@ class PhpTagsException extends \Exception {
 				break;
 		}
 
-		switch ( intval($this->code / 1000) ) {
+		return $this->formatMessage( $message, intval( $this->code / 1000 ) );
+	}
+
+	protected function formatMessage( $message, $errorLevel ) {
+		$line = $this->tokenLine;
+		$place = $this->place;
+
+		switch ( $errorLevel ) {
 			case self::EXCEPTION_NOTICE:
 				$messageType = 'Notice';
 				break;
@@ -216,11 +221,11 @@ class PhpTagsException extends \Exception {
 				$messageType = 'Undefined error';
 				break;
 		}
+
 		//return "$message in $place on line $line\n";
 		return \Html::element( 'span', array('class'=>'error'), "PhpTags $messageType:  $message in $place on line $line" ) . '<br />';
-	}
 
-	const EXCEPTION_FROM_HOOK = 1001; // PHP Warning:  preg_replace(): Delimiter must not be alphanumeric or backslash
+	}
 
 	const EXCEPTION_NOTICE = 2;
 	const NOTICE_UNDEFINED_VARIABLE = 2001; // PHP Notice:  Undefined variable: $1 in Command line code on line 1
