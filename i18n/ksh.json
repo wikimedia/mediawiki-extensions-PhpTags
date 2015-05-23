@@ -4,5 +4,11 @@
 			"Purodha"
 		]
 	},
+	"phptags-compiler-error-category": "Sigge med onjöltejje PhpTags  Kohd dren",
+	"phptags-compiler-error-category-desc": "Dä PhpTags  Kohd hädd_ene Fähler dren.",
+	"phptags-runtime-error-category": "Sigge med PhpTags  Fähler dren",
+	"phptags-runtime-error-category-desc": "Ene Fähler es upjetrodde beim Verärbeijde vun dämm PhpTags  Kohd en dä Sigg.",
+	"phptags-desc": "Määd et müjjelesch, Ußdröck med en Süntx wi di Schprohch <i lang=\"en\" xml:lang=\"en\" dir=\"ltr\" title=\"PHP Hypertext Preprocessor\">PHP</i> em Wikkitäx ze bruche.",
+	"phptags-disabled-for-namespace": "dat Zohsazprojramm PhpTags  es för et Appachtemang „$1“ ußjescalldt.",
 	"phptags-extension-type": "De <i lang=\"en\" xml:lang=\"en\" dir=\"ltr\" title=\"„“\">PhpTags</i>-Zohsatzprojramme"
 }
