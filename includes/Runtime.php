@@ -273,25 +273,20 @@ class Runtime {
 
 	public static $loopsLimit = 0;
 
-	/**
-	 * PPFrame
-	 * @var \PPFrame
-	 */
-	static $frame;
-
-	/**
-	 * Parser
-	 * @var \Parser
-	 */
-	static $parser;
-
 	private static $variables = array();
 	private static $staticVariables = array();
 	private static $globalVariables = array();
 	private static $ignoreErrors = false;
-	private static $scope;
-	private static $parserDisabled = false;
-	private static $errorCategoryAdded = false;
+	private static $stack = array();
+
+	const S_RETURN = 0;
+	const S_RUNNING = 1;
+	const S_RUN_INDEX = 2;
+	const S_COUNT = 3;
+	const S_LOOPS_OWNER = 4;
+	const S_MEMORY = 5;
+	const S_PLACE = 6;
+	const S_VARIABLES = 7;
 
 	private static $operators = array(
 		PHPTAGS_T_QUOTE => 'doQuote',
@@ -370,37 +365,25 @@ class Runtime {
 		self::$staticVariables = array();
 		self::$globalVariables = array();
 		self::$loopsLimit = $wgPhpTagsMaxLoops;
-		self::$parserDisabled = false;
-		self::$errorCategoryAdded = false;
+		self::$ignoreErrors = false;
 	}
 
 	public static function runSource( $code, array $args = array(), $scope = '' ) {
 		return self::run( Compiler::compile($code), $args, $scope );
 	}
 
-	/**
-	 * The output cache
-	 * @var array
-	 */
-	private static $return;
-	private static $running;
-	private static $runIndex;
-	private static $c;
-	private static $loopsOwner;
-	private static $memory;
-	private static $place;
-	private static $thisVariables;
-
 	private static function pushDown( $newCode, $newLoopsOwner, &$refReturn ) {
-		self::$memory[] = array( &$refReturn, self::$running, self::$runIndex, self::$c, self::$loopsOwner );
-		self::$running = $newCode;
-		self::$runIndex = -1;
-		self::$c = count( $newCode );
-		self::$loopsOwner = $newLoopsOwner;
+		$stack =& self::$stack[0];
+		$stack[self::S_MEMORY][] = array( &$refReturn, $stack[self::S_RUNNING], $stack[self::S_RUN_INDEX], $stack[self::S_COUNT], $stack[self::S_LOOPS_OWNER] );
+		$stack[self::S_RUNNING] = $newCode;
+		$stack[self::S_RUN_INDEX] = -1;
+		$stack[self::S_COUNT] = count( $newCode );
+		$stack[self::S_LOOPS_OWNER] = $newLoopsOwner;
 	}
 
 	private static function popUp() {
-		list( self::$running[self::$runIndex][PHPTAGS_STACK_RESULT], self::$running, self::$runIndex, self::$c, self::$loopsOwner ) = array_pop( self::$memory );
+		$stack =& self::$stack[0];
+		list( $stack[self::S_RUNNING][ $stack[self::S_RUN_INDEX] ][PHPTAGS_STACK_RESULT], $stack[self::S_RUNNING], $stack[self::S_RUN_INDEX], $stack[self::S_COUNT], $stack[self::S_LOOPS_OWNER] ) = array_pop( $stack[self::S_MEMORY] );
 	}
 
 	/**
@@ -593,9 +576,9 @@ class Runtime {
 	 */
 	private static function doPrint ( &$value ) {
 		if( $value[PHPTAGS_STACK_PARAM] instanceof GenericObject ) {
-			self::$return[] = $value[PHPTAGS_STACK_PARAM]->toString();
+			self::$stack[0][self::S_RETURN][] = $value[PHPTAGS_STACK_PARAM]->toString();
 		} else {
-			self::$return[] = $value[PHPTAGS_STACK_PARAM];
+			self::$stack[0][self::S_RETURN][] = $value[PHPTAGS_STACK_PARAM];
 		}
 	}
 
@@ -668,9 +651,10 @@ class Runtime {
 	 * @param array $value
 	 */
 	private static function doVariable ( &$value ) {
+		$variables =& self::$stack[0][self::S_VARIABLES];
 		$aim = $value[PHPTAGS_STACK_AIM];
-		if ( isset(self::$thisVariables[ $value[PHPTAGS_STACK_PARAM] ]) || array_key_exists($value[PHPTAGS_STACK_PARAM], self::$thisVariables) ) {
-			$value[PHPTAGS_STACK_PARAM_2][$aim] =& self::$thisVariables[ $value[PHPTAGS_STACK_PARAM] ];
+		if ( isset( $variables[ $value[PHPTAGS_STACK_PARAM] ] ) || array_key_exists( $value[PHPTAGS_STACK_PARAM], $variables ) ) {
+			$value[PHPTAGS_STACK_PARAM_2][$aim] =& $variables[ $value[PHPTAGS_STACK_PARAM] ];
 			if ( isset($value[PHPTAGS_STACK_ARRAY_INDEX]) ) { // Example: $foo[1]
 				foreach ( $value[PHPTAGS_STACK_ARRAY_INDEX] as $v ) {
 					if ( is_array( $value[PHPTAGS_STACK_PARAM_2][$aim] ) ) { // Variable is array. Examle: $foo = ['string']; echo $foo[0];
@@ -774,9 +758,10 @@ class Runtime {
 			self::popUp();
 		}
 
-		self::$thisVariables[ $value[PHPTAGS_STACK_PARAM] ] = $tmp[1]; // save value
+		$variables =& self::$stack[0][self::S_VARIABLES];
+		$variables[ $value[PHPTAGS_STACK_PARAM] ] = $tmp[1]; // save value
 		if ( $value[PHPTAGS_STACK_PARAM_2] !== false ) { // T_DOUBLE_ARROW Example: while ( $foo as $key=>$value )
-			self::$thisVariables[ $value[PHPTAGS_STACK_PARAM_2] ] = $tmp[0]; // save key
+			$variables[ $value[PHPTAGS_STACK_PARAM_2] ] = $tmp[0]; // save key
 		}
 	}
 
@@ -785,8 +770,8 @@ class Runtime {
 	 * @param array $value
 	 */
 	private static function doBreak ( &$value ) {
-		$loopsOwner =& self::$loopsOwner;
-		$memory =& self::$memory;
+		$loopsOwner =& self::$stack[0][self::S_LOOPS_OWNER];
+		$memory =& self::$stack[0][self::S_MEMORY];
 		$originalBreakLevel = $breakLevel = $value[PHPTAGS_STACK_RESULT];
 
 		for ( ; $breakLevel > 0; ) {
@@ -811,8 +796,9 @@ class Runtime {
 		if( --self::$loopsLimit <= 0 ) {
 			throw new PhpTagsException( PhpTagsException::FATAL_LOOPS_LIMIT_REACHED, null );
 		}
-		$loopsOwner =& self::$loopsOwner;
-		$memory =& self::$memory;
+		$stack =& self::$stack[0];
+		$loopsOwner =& $stack[self::S_LOOPS_OWNER];
+		$memory =& $stack[self::S_MEMORY];
 		$originalBreakLevel = $value[PHPTAGS_STACK_RESULT];
 		$breakLevel = $originalBreakLevel - 1;
 
@@ -829,7 +815,7 @@ class Runtime {
 			}
 			self::popUp();
 		}
-		self::$runIndex = -1;
+		$stack[self::S_RUN_INDEX] = -1;
 	}
 
 	/**
@@ -841,7 +827,13 @@ class Runtime {
 		$i = 1;
 		foreach ( $value[PHPTAGS_STACK_PARAM_2] as $t ) {
 			list ( $k, $v ) = $t;
-			$newArray[$k] = $v;
+
+			if ( is_scalar( $k ) ) {
+				$newArray[$k] = $v;
+			} else {
+				self::pushException( new PhpTagsException( PhpTagsException::WARNING_ILLEGAL_OFFSET_TYPE ) );
+			}
+
 			if ( isset($value[PHPTAGS_STACK_PARAM][$i]) ) {
 				foreach ( $value[PHPTAGS_STACK_PARAM][$i] as $n ) {
 					$newArray[] = $n;
@@ -857,12 +849,13 @@ class Runtime {
 	 * @param array $value
 	 */
 	private static function doStatic ( &$value ) {
+		$place = self::$stack[0][self::S_PLACE];
 		$name = $value[PHPTAGS_STACK_PARAM]; // variable name
-		if ( false === (isset( self::$staticVariables[self::$place] ) && (isset( self::$staticVariables[self::$place][$name] ) || array_key_exists( $name, self::$staticVariables[self::$place] ))) ) {
+		if ( false === (isset( self::$staticVariables[$place] ) && (isset( self::$staticVariables[$place][$name] ) || array_key_exists( $name, self::$staticVariables[$place] ))) ) {
 			// It is not initialised variable, initialise it
-			self::$staticVariables[self::$place][$name] = $value[PHPTAGS_STACK_RESULT];
+			self::$staticVariables[$place][$name] = $value[PHPTAGS_STACK_RESULT];
 		}
-		self::$thisVariables[$name] =& self::$staticVariables[self::$place][$name];
+		self::$stack[0][self::S_VARIABLES][$name] =& self::$staticVariables[$place][$name];
 	}
 
 	/**
@@ -870,12 +863,13 @@ class Runtime {
 	 * @param array $value
 	 */
 	private static function doGlobal ( &$value ) {
+		$stack =& self::$stack[0];
 		$gVars =& self::$globalVariables;
 		foreach( $value[PHPTAGS_STACK_PARAM] as $name ) { // variable names
 			if( !array_key_exists($name, $gVars) ) {
 				$gVars[$name] = null;
 			}
-			self::$thisVariables[$name] =& $gVars[$name];
+			$stack[self::S_VARIABLES][$name] =& $gVars[$name];
 		}
 	}
 
@@ -903,19 +897,11 @@ class Runtime {
 	 * @param array $value
 	 */
 	private static function doCallingHook ( &$value ) {
-		try {
-			$result = Hooks::callHook( $value );
-		} catch ( \PhpTags\HookException $exc ) {
-			if ( $exc->isFatal() ) {
-				throw $exc;
-			}
-			self::pushException( $exc );
-			$result = Hooks::getCallInfo( Hooks::INFO_RETURNS_ON_FAILURE );
-		}
+		$result = Hooks::callHook( $value );
 
 		if ( $result instanceof outPrint ) {
 			$value[PHPTAGS_STACK_RESULT] = $result->returnValue;
-			self::$return[] = $result;
+			self::$stack[0][self::S_RETURN][] = $result;
 		} else {
 			$value[PHPTAGS_STACK_RESULT] = $result;
 		}
@@ -931,7 +917,8 @@ class Runtime {
 	 * @param array $value
 	 */
 	private static function doNewObject ( &$value ) {
-		$value[PHPTAGS_STACK_RESULT] = Hooks::createObject( $value[PHPTAGS_STACK_PARAM_2], $value[PHPTAGS_STACK_PARAM_3] );
+		$result = Hooks::createObject( $value[PHPTAGS_STACK_PARAM_2], $value[PHPTAGS_STACK_PARAM_3] );
+		$value[PHPTAGS_STACK_RESULT] = $result;
 	}
 
 	/**
@@ -939,12 +926,12 @@ class Runtime {
 	 * @param array $value
 	 */
 	private static function doUnset ( &$value ) {
-		$thisVariables =& self::$thisVariables;
+		$variables =& self::$stack[0][self::S_VARIABLES];
 		foreach ( $value[PHPTAGS_STACK_PARAM] as $val ) {
 			$name = $val[PHPTAGS_STACK_PARAM]; // Variable Name
-			if ( isset($thisVariables[$name]) || array_key_exists($name, $thisVariables) ) { // defined variable
+			if ( isset($variables[$name]) || array_key_exists($name, $variables) ) { // defined variable
 				if ( isset($val[PHPTAGS_STACK_ARRAY_INDEX]) ) { // There is array index. Example: unset($foo[0])
-					$ref =& $thisVariables[$name];
+					$ref =& $variables[$name];
 					$tmp = array_pop( $val[PHPTAGS_STACK_ARRAY_INDEX] );
 					foreach ( $val[PHPTAGS_STACK_ARRAY_INDEX] as $v ) {
 						if ( is_string($ref) ) {
@@ -960,7 +947,7 @@ class Runtime {
 						throw new PhpTagsException( PhpTagsException::FATAL_CANNOT_UNSET_STRING_OFFSETS, null );
 					}
 				}else{ // There is no array index. Example: unset($foo)
-					unset( $thisVariables[$name] );
+					unset( $variables[$name] );
 				}
 			} elseif ( isset($val[PHPTAGS_STACK_ARRAY_INDEX]) ) { // undefined variable with array index. Example: unset($foo[1])
 				self::pushException( new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_VARIABLE, $name ) );
@@ -973,14 +960,14 @@ class Runtime {
 	 * @param array $value
 	 */
 	private static function doIsSet ( &$value ) {
-		$thisVariables =& self::$thisVariables;
+		$variables =& self::$stack[0][self::S_VARIABLES];
 		foreach($value[PHPTAGS_STACK_PARAM] as $val) {
-			if( !isset($thisVariables[ $val[PHPTAGS_STACK_PARAM] ]) ) { // undefined variable or variable is null
+			if( !isset($variables[ $val[PHPTAGS_STACK_PARAM] ]) ) { // undefined variable or variable is null
 				$value[PHPTAGS_STACK_RESULT] = false;
 				return;
 			} // true, variable is defined
 			if( isset($val[PHPTAGS_STACK_ARRAY_INDEX]) ) { // Example: isset($foo[1])
-				$ref =& $thisVariables[ $val[PHPTAGS_STACK_PARAM] ];
+				$ref =& $variables[ $val[PHPTAGS_STACK_PARAM] ];
 				$tmp = array_pop( $val[PHPTAGS_STACK_ARRAY_INDEX] );
 				foreach( $val[PHPTAGS_STACK_ARRAY_INDEX] as $v ) {
 					if( !isset($ref[$v]) ) { // undefined array index
@@ -1004,12 +991,12 @@ class Runtime {
 	 * @param array $value
 	 */
 	private static function doIsEmpty ( &$value ) {
-		$thisVariables =& self::$thisVariables;
+		$variables =& self::$stack[0][self::S_VARIABLES];
 		foreach($value[PHPTAGS_STACK_PARAM] as $val) {
-			if( !array_key_exists($val[PHPTAGS_STACK_PARAM], $thisVariables) ) { // undefined variable
+			if( !array_key_exists($val[PHPTAGS_STACK_PARAM], $variables) ) { // undefined variable
 				continue;
 			}
-			$ref =& $thisVariables[ $val[PHPTAGS_STACK_PARAM] ];
+			$ref =& $variables[ $val[PHPTAGS_STACK_PARAM] ];
 			if( isset($val[PHPTAGS_STACK_ARRAY_INDEX]) ) { // Example: empty($foo[1])
 				$tmp = array_pop( $val[PHPTAGS_STACK_ARRAY_INDEX] );
 				foreach( $val[PHPTAGS_STACK_ARRAY_INDEX] as $v ) {
@@ -1036,7 +1023,7 @@ class Runtime {
 	 * @param array $value
 	 */
 	private static function doReturn ( &$value ) {
-		self::$return = self::$return ? new PhpTagsException() : $value[PHPTAGS_STACK_PARAM];
+		self::$stack[0][self::S_RETURN] = self::$stack[0][self::S_RETURN] ? new PhpTagsException() : $value[PHPTAGS_STACK_PARAM];
 	}
 
 	/**
@@ -1199,18 +1186,18 @@ class Runtime {
 	}
 
 	private static function & getVariableRef( $value ) {
-		$thisVariables =& self::$thisVariables;
-		$variable = $value[PHPTAGS_STACK_PARAM];
-		$variableName = $variable[PHPTAGS_STACK_PARAM];
-		if( !(isset($thisVariables[$variableName]) || array_key_exists($variableName, $thisVariables)) ) { // Use undefined variable
-			$thisVariables[$variableName] = null;
+		$variables =& self::$stack[0][self::S_VARIABLES];
+		$var = $value[PHPTAGS_STACK_PARAM];
+		$variableName = $var[PHPTAGS_STACK_PARAM];
+		if( !(isset($variables[$variableName]) || array_key_exists($variableName, $variables)) ) { // Use undefined variable
+			$variables[$variableName] = null;
 			if( $value[PHPTAGS_STACK_COMMAND] !== PHPTAGS_T_EQUAL ) {
 				self::pushException( new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_VARIABLE, $variableName ) );
 			}
 		}
-		$ref =& $thisVariables[$variableName];
-		if ( isset($variable[PHPTAGS_STACK_ARRAY_INDEX]) ) { // Example: $foo[1]++
-			foreach ( $variable[PHPTAGS_STACK_ARRAY_INDEX] as $v ) {
+		$ref =& $variables[$variableName];
+		if ( isset($var[PHPTAGS_STACK_ARRAY_INDEX]) ) { // Example: $foo[1]++
+			foreach ( $var[PHPTAGS_STACK_ARRAY_INDEX] as $v ) {
 				if ( $v === INF ) { // Example: $foo[]
 					$t = null;
 					$ref[] = &$t;
@@ -1249,29 +1236,33 @@ class Runtime {
 	public static function run( $code, array $args, $scope = '' ) {
 		set_error_handler( '\\PhpTags\\ErrorHandler::onError' );
 		try {
-			self::$scope = $scope;
-			self::$running = $code;
-			self::$memory = array();
-			self::$return = array();
-			self::$loopsOwner = null;
-			self::$place = isset($args[0]) ? $args[0] : ''; // Page name for static variables and error messages
-			self::$c = count( $code );
-			if( false === isset(self::$variables[$scope]) ) {
+			if( false === isset( self::$variables[$scope] ) ) {
 				self::$variables[$scope] = array();
 			}
-			self::$thisVariables =& self::$variables[$scope];
-			self::$thisVariables['argv'] = $args;
-			self::$thisVariables['argc'] = count($args);
-			self::$thisVariables['GLOBALS'] =& self::$globalVariables;
+			$stack = array(
+				self::S_RETURN => array(),
+				self::S_RUNNING => $code,
+				self::S_RUN_INDEX => -1,
+				self::S_COUNT => count( $code ),
+				self::S_LOOPS_OWNER => null,
+				self::S_MEMORY => array(),
+				self::S_PLACE => isset( $args[0] ) ? $args[0] : '', // Page name for static variables and error messages
+				self::S_VARIABLES => & self::$variables[$scope],
+			);
+			$stack[self::S_VARIABLES]['argv'] = $args;
+			$stack[self::S_VARIABLES]['argc'] = count( $args );
+			$stack[self::S_VARIABLES]['GLOBALS'] =& self::$globalVariables;
 
-			$runCode =& self::$running;
-			$runIndex =& self::$runIndex;
-			$loopsOwner =& self::$loopsOwner;
-			$memory =& self::$memory;
-			$c =& self::$c;
+			$runCode =& $stack[self::S_RUNNING];
+			$runIndex =& $stack[self::S_RUN_INDEX];
+			$loopsOwner =& $stack[self::S_LOOPS_OWNER];
+			$memory =& $stack[self::S_MEMORY];
+			$c =& $stack[self::S_COUNT];
 			$operators = self::$operators;
 
-			$runIndex = -1;
+			array_unshift( self::$stack, null );
+			self::$stack[0] =& $stack;
+doit:
 			do {
 				for ( ++$runIndex; $runIndex < $c; ++$runIndex ) {
 					$value =& $runCode[$runIndex];
@@ -1280,19 +1271,23 @@ class Runtime {
 				}
 			} while( list($runCode[$runIndex][PHPTAGS_STACK_RESULT], $runCode, $runIndex, $c, $loopsOwner) = array_pop($memory) );
 		} catch ( PhpTagsException $e ) {
-			if ( self::$ignoreErrors ) {
-				self::$ignoreErrors = false;
-			} else {
-				self::pushException( $e );
+			self::pushException( $e );
+			if ( $e->isFatal() !== true && ($call === $operators[PHPTAGS_T_HOOK] || $call === $operators[PHPTAGS_T_NEW]) ) {
+				$runCode[$runIndex][PHPTAGS_STACK_RESULT] = Hooks::getCallInfo( Hooks::INFO_RETURNS_ON_FAILURE );
+				goto doit;
 			}
-			self::$running[self::$runIndex][PHPTAGS_STACK_RESULT] = null;
+			$runCode[$runIndex][PHPTAGS_STACK_RESULT] = null;
+			self::$ignoreErrors = false;
 		} catch ( \Exception $e ) {
-			self::addRuntimeErrorCategory();
+			Renderer::addRuntimeErrorCategory();
 			restore_error_handler();
+			self::$ignoreErrors = false;
+			array_shift( self::$stack );
 			throw $e;
 		}
 		restore_error_handler();
-		return self::$return;
+		array_shift( self::$stack );
+		return $stack[self::S_RETURN];
 	}
 
 	static function fillList( &$values, &$parametrs, $offset = false ) {
@@ -1313,7 +1308,7 @@ class Runtime {
 				continue;
 			}
 			// $param is variable
-			$ref = &self::$thisVariables[ $param[PHPTAGS_STACK_PARAM] ];
+			$ref =& self::$stack[0][self::S_VARIABLES][ $param[PHPTAGS_STACK_PARAM] ];
 			if ( isset($param[PHPTAGS_STACK_ARRAY_INDEX]) ) { // Example: list($foo[0], $foo[1]) = $array;
 				foreach ( $param[PHPTAGS_STACK_ARRAY_INDEX] as $v ) {
 					if (  $v === INF ) { // Example: $foo[]
@@ -1343,63 +1338,25 @@ class Runtime {
 		}
 	}
 
-	/**
-	 * Set a flag in the output object indicating that the content is dynamic and
-	 * shouldn't be cached.
-	 * @global \OutputPage $wgOut
-	 * @staticvar boolean $done
-	 * @return null
-	 */
-	public static function disableParserCache() {
-		if ( self::$parserDisabled === true ) {
-			return;
-		}
-
-		global $wgOut;
-		self::$parser->disableCache();
-		$wgOut->enableClientCache( false );
-		self::$parserDisabled = true;
-	}
-
-	private static function addRuntimeErrorCategory() {
-		if ( self::$errorCategoryAdded === true || self::$parser === null ) {
-			return;
-		}
-
-		self::$parser->addTrackingCategory( 'phptags-runtime-error-category' );
-		self::$errorCategoryAdded = true;
-	}
-
-	/**
-	 * Increment the expensive function count
-	 * @param string $functionName
-	 * @return null
-	 * @throws PhpTagsException
-	 */
-	public static function incrementExpensiveFunctionCount( $functionName ) {
-		if ( false === self::$parser->incrementExpensiveFunctionCount() ) {
-			throw new PhpTagsException( PhpTagsException::FATAL_CALLED_MANY_EXPENSIVE_FUNCTION );
-		}
-		return null;
-	}
-
 	public static function pushException( PhpTagsException $exc ) {
 		if ( self::$ignoreErrors === false ) {
+			$stack =& self::$stack[0];
 			if ( $exc->tokenLine === null ) {
-				$exc->tokenLine = self::$running[self::$runIndex][PHPTAGS_STACK_TOKEN_LINE];
+				$exc->tokenLine = $stack[self::S_RUNNING][ $stack[self::S_RUN_INDEX] ][PHPTAGS_STACK_TOKEN_LINE];
 			}
-			$exc->place = self::$place;
-			self::$return[] = (string) $exc;
-			self::addRuntimeErrorCategory();
+			$exc->place = $stack[self::S_PLACE];
+			$stack[self::S_RETURN][] = (string) $exc;
+			Renderer::addRuntimeErrorCategory();
 		}
 	}
 
 	public static function getCurrentOperator() {
-		return self::$running[self::$runIndex];
+		$stack =& self::$stack[0];
+		return $stack[self::S_RUNNING][ $stack[self::S_RUN_INDEX] ];
 	}
 
 	public static function getVariables() {
-		return self::$variables[ self::$scope ];
+		return self::$stack[0][self::S_VARIABLES];
 	}
 
 }

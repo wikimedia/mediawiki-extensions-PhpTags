@@ -1292,6 +1292,7 @@ checkOperators:
 									PHPTAGS_STACK_PARAM => array( &$array ) ,
 									PHPTAGS_STACK_PARAM_2 => array( array(null, null) ),
 									PHPTAGS_STACK_RESULT => null,
+									PHPTAGS_STACK_TOKEN_LINE => $this->tokenLine,
 								);
 							} else {
 								$result[PHPTAGS_STACK_PARAM][$r] = &$array;
