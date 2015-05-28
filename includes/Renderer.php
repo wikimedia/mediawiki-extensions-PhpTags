@@ -291,7 +291,7 @@ Total   : %.3f sec
 			foreach ( self::$globalVariablesScript as $key=> $value ) {
 				$vars["ext.phptags.$key"] = $value;
 			}
-			$text .= Html::inlineScript(
+			$text .= \Html::inlineScript(
 				ResourceLoader::makeLoaderConditionalScript(
 					ResourceLoader::makeConfigSetScript( $vars )
 				)
