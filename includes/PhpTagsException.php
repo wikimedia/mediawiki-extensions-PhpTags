@@ -188,6 +188,9 @@ class PhpTagsException extends \Exception {
 			case self::FATAL_DENIED_FOR_NAMESPACE:
 				$message = wfMessage( 'phptags-disabled-for-namespace', $arguments )->text();
 				break;
+			case self::WARNING_ILLEGAL_OFFSET_TYPE:
+				$message = 'Illegal offset type';
+				break;
 			default:
 				$message = "Undefined error, code {$this->code}";
 				$this->code = self::EXCEPTION_FATAL * 1000;
@@ -254,6 +257,7 @@ class PhpTagsException extends \Exception {
 	const WARNING_ATTEMPT_TO_ASSIGN_PROPERTY = 3012; // PHP Warning:  Attempt to assign property of non-object
 	const WARNING_EXPECTS_AT_MOST_PARAMETERS = 3013; // PHP Warning:  round() expects at most 3 parameters, 4 given
 	const WARNING_TOO_MANY_ARGUMENTS = 3014; //Warning: Too many arguments for date_format(), expected 2
+	const WARNING_ILLEGAL_OFFSET_TYPE = 3015; // PHP Warning:  Illegal offset type
 
 	const EXCEPTION_FATAL = 4;
 	const FATAL_CANNOT_USE_FOR_READING = 4001;  // PHP Fatal error:  Cannot use [] for reading in Command line code on line 1

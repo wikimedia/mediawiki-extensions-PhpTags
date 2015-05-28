@@ -1941,6 +1941,15 @@ if ( $foo + $bar ) echo "\$foo + \$bar";'),
 		}
 		$this->fail( 'An expected exception has not been raised.' );
 	}
+	public function testRun_echo_empty_array_exception_1() {
+		$this->assertEquals(
+				Runtime::runSource( 'echo [4] === [ [666]=>"test", 4] ? "true" : "false";', array('test') ),
+				array(
+					(string) new PhpTagsException( PhpTagsException::WARNING_ILLEGAL_OFFSET_TYPE, null, 1, 'test' ),
+					'true',
+				)
+			);
+	}
 	public function testRun_echo_array_encapsed_1() {
 		$this->assertEquals(
 				Runtime::runSource('$foo=(array)5; echo "*$foo[0]*";'),
