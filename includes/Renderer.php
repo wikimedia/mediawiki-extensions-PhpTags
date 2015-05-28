@@ -292,8 +292,8 @@ Total   : %.3f sec
 				$vars["ext.phptags.$key"] = $value;
 			}
 			$text .= \Html::inlineScript(
-				ResourceLoader::makeLoaderConditionalScript(
-					ResourceLoader::makeConfigSetScript( $vars )
+				\ResourceLoader::makeLoaderConditionalScript(
+					\ResourceLoader::makeConfigSetScript( $vars )
 				)
 			);
 		}
