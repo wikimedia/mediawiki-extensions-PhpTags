@@ -1,0 +1,15 @@
+{
+	"@metadata": {
+		"authors": [
+			"Esketti",
+			"Sjoerddebruin"
+		]
+	},
+	"phptags-compiler-error-category": "Pagina ' s met een ongeldige code PhpTags",
+	"phptags-compiler-error-category-desc": "De PhpTags code bevat nog een fout.",
+	"phptags-runtime-error-category": "Pagina ' s met fouten PhpTags",
+	"phptags-runtime-error-category-desc": "Er is een fout opgetreden bij het verwerken van PhpTags code op de pagina.",
+	"phptags-desc": "Hiermee kunnen gebruikers gebruik maken van de Magic uitdrukkingen met PHP taal syntaxis",
+	"phptags-disabled-for-namespace": "Uitbreiding PhpTags is uitgeschakeld voor de naamruimte \"$1\".",
+	"phptags-extension-type": "PhpTags-extensies"
+}
