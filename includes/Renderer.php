@@ -235,29 +235,6 @@ class Renderer {
 		return $scope++;
 	}
 
-	/**
-	 *
-	 * @param array $extResources
-	 * @param array $extMode
-	 */
-	public static function onCodeMirrorGetAdditionalResources( &$extResources, &$extMode ) {
-		$extResources['scripts']['lib/codemirror/mode/php/php.js'] = true;
-		$extResources['scripts']['lib/codemirror/mode/htmlmixed/htmlmixed.js'] = true;
-		$extResources['scripts']['lib/codemirror/mode/xml/xml.js'] = true;
-		$extResources['scripts']['lib/codemirror/mode/javascript/javascript.js'] = true;
-		$extResources['scripts']['lib/codemirror/mode/css/css.js'] = true;
-		$extResources['scripts']['lib/codemirror/mode/clike/clike.js'] = true;
-
-		$extMode['tag']['phptag'] = 'text/x-php';
-
-		return true;
-	}
-
-	public static function onPhpTagsRuntimeFirstInit() {
-		Hooks::addJsonFile( __DIR__ . '/../PhpTags.json', PHPTAGS_VERSION );
-		return true;
-	}
-
 	public static function writeLimitReport() {
 		global $wgPhpTagsCounter, $wgPhpTagsLimitReport;
 

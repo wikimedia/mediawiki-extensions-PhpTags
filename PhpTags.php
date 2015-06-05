@@ -17,7 +17,7 @@ if ( !defined( 'MEDIAWIKI' ) ) {
 
 const PHPTAGS_MAJOR_VERSION = 5;
 const PHPTAGS_MINOR_VERSION = 1;
-const PHPTAGS_RELEASE_VERSION = 2;
+const PHPTAGS_RELEASE_VERSION = 3;
 define( 'PHPTAGS_VERSION', PHPTAGS_MAJOR_VERSION . '.' . PHPTAGS_MINOR_VERSION . '.' . PHPTAGS_RELEASE_VERSION );
 
 const PHPTAGS_HOOK_RELEASE = 8;
@@ -39,7 +39,12 @@ $wgExtensionCredits['parserhook'][] = array(
 $wgMessagesDirs['PhpTags'] = __DIR__ . '/i18n';
 $wgExtensionMessagesFiles['PhpTagsMagic'] = __DIR__ . '/PhpTags.i18n.magic.php';
 
+//
+$wgPhpTagsLimitReport = false;
+$wgPhpTagsCounter = 0;
+
 // Preparing classes for autoloading
+$wgAutoloadClasses['PhpTagsHooks'] = __DIR__ . '/PhpTags.hooks.php';
 $wgAutoloadClasses['PhpTags\\Renderer'] = __DIR__ . '/includes/Renderer.php';
 $wgAutoloadClasses['PhpTags\\Timer'] = __DIR__ . '/includes/Renderer.php';
 $wgAutoloadClasses['PhpTags\\iRawOutput'] = __DIR__ . '/includes/iRawOutput.php';
@@ -57,66 +62,16 @@ $wgAutoloadClasses['PhpTags\\JsonLoader'] = __DIR__ . '/includes/JsonLoader.php'
 $wgTrackingCategories[] = 'phptags-compiler-error-category';
 $wgTrackingCategories[] = 'phptags-runtime-error-category';
 
-$wgHooks['ParserFirstCallInit'][] = 'PhpTagsRegisterParserFunctions';
-$wgHooks['PhpTagsRuntimeFirstInit'][] = 'PhpTags\\Renderer::onPhpTagsRuntimeFirstInit';
-$wgHooks['CodeMirrorGetAdditionalResources'][] = 'PhpTags\\Renderer::onCodeMirrorGetAdditionalResources';
-$wgHooks['ParserLimitReport'][] = 'PhpTagsLimitReport';
-$wgHooks['ParserAfterTidy'][] = 'PhpTagsParserAfterTidy';
-$wgHooks['ExtensionTypes'][] = 'PhpTagsRegisterExtensionType';
-$wgHooks['UnitTestsList'][] = 'PhpTagsRegisterUnitTests';
+//
+$wgHooks['ParserFirstCallInit'][] = 'PhpTagsHooks::onParserFirstCallInit';
+$wgHooks['PhpTagsRuntimeFirstInit'][] = 'PhpTagsHooks::onPhpTagsRuntimeFirstInit';
+$wgHooks['CodeMirrorGetAdditionalResources'][] = 'PhpTagsHooks::onCodeMirrorGetAdditionalResources';
+$wgHooks['ParserLimitReport'][] = 'PhpTagsHooks::onParserLimitReport';
+$wgHooks['ParserAfterTidy'][] = 'PhpTagsHooks::onParserAfterTidy';
+$wgHooks['ExtensionTypes'][] = 'PhpTagsHooks::onExtensionTypes';
+$wgHooks['UnitTestsList'][] = 'PhpTagsHooks::onUnitTestsList';
 
-/**
- * @codeCoverageIgnore
- */
-function PhpTagsRegisterParserFunctions( Parser &$parser ) {
-	$parser->setFunctionHook( 'phptag', 'PhpTags\\Renderer::runParserFunction', Parser::SFH_OBJECT_ARGS );
-	$parser->setHook( 'phptag', 'PhpTags\\Renderer::runTagHook' );
-	return true;
-}
-
-/**
- * @codeCoverageIgnore
- */
-function PhpTagsParserAfterTidy ( &$parser, &$text ) {
-	global $wgPhpTagsCounter;
-	if ( $wgPhpTagsCounter > 0 ) {
-		\PhpTags\Renderer::onParserAfterTidy( $parser, $text );
-	}
-	return true;
-}
-$wgPhpTagsLimitReport = false;
-$wgPhpTagsCounter = 0;
-
-/**
- * @codeCoverageIgnore
- */
-function PhpTagsLimitReport( $parser, &$limitReport ) {
-	global $wgPhpTagsLimitReport;
-	if ( $wgPhpTagsLimitReport !== false ) {
-		$limitReport .= $wgPhpTagsLimitReport;
-		$wgPhpTagsLimitReport = false;
-	}
-	return true;
-}
-
-// Register extension type for Special:Version used for PhpTags extensions
-/**
- * @codeCoverageIgnore
- */
-function PhpTagsRegisterExtensionType( &$extTypes ) {
-	$extTypes['phptags'] = wfMessage( 'phptags-extension-type' )->text();
-}
-
-/**
- * Add files to phpunit test
- * @codeCoverageIgnore
- */
-function PhpTagsRegisterUnitTests( &$files ) {
-	$testDir = __DIR__ . '/tests/phpunit';
-	$files = array_merge( $files, glob( "$testDir/includes/*Test.php" ) );
-	return true;
-}
-
+// add parser tests
 $wgParserTestFiles[] = __DIR__ . '/tests/parser/PhpTagsTests.txt';
 
 /**
