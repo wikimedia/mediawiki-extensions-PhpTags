@@ -18,6 +18,8 @@ class Renderer {
 
 	static $globalVariablesScript = array();
 
+	private static $scopes = array();
+	private static $nextScopeID = 0;
 	/**
 	 * Array of PPFrame
 	 * @var array
@@ -211,6 +213,8 @@ class Renderer {
 		self::$globalVariablesScript = array();
 		self::$parserCacheDisabled = false;
 		self::$errorCategoryAdded = false;
+		self::$scopes = array();
+		self::$nextScopeID = 0;
 	}
 
 	/**
@@ -223,16 +227,14 @@ class Renderer {
 		return $parser->insertStripItem( $text );
 	}
 
-	private static function getScopeID( \PPFrame $frame ) {
-		static $frames = array(), $scope = 0;
-
-		foreach ( $frames as $value ) {
+	public static function getScopeID( \PPFrame $frame ) {
+		foreach ( self::$scopes as $value ) {
 			if ( $value[0] === $frame ) {
 				return $value[1];
 			}
 		}
-		$frames[] = array( $frame, $scope );
-		return $scope++;
+		self::$scopes[] = array( $frame, self::$nextScopeID );
+		return self::$nextScopeID++;
 	}
 
 	public static function writeLimitReport() {
@@ -241,12 +243,12 @@ class Renderer {
 		$time = Timer::getRunTime();
 		$compileTime = Timer::getCompileTime();
 		$wgPhpTagsLimitReport = sprintf(
-				'
+				'-------------------- PhpTags Extension --------------------
 PhpTags usage count: %d
 Runtime : %.3f sec
 Compiler: %.3f sec ( usage: %d, cache: %d, memory: %d )
 Total   : %.3f sec
-
+-----------------------------------------------------------
 ',
 				$wgPhpTagsCounter,
 				$time - $compileTime,

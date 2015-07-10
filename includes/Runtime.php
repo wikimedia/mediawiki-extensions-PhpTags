@@ -729,11 +729,15 @@ class Runtime {
 	 * @param array $value
 	 */
 	private static function doForeach ( &$value ) {
-		if ( !is_array($value[PHPTAGS_STACK_PARAM]) ) {
+		$t_as =& $value[PHPTAGS_STACK_PARAM];
+		$clone = $t_as[PHPTAGS_STACK_RESULT];
+		if ( !is_array( $clone ) ) {
 			self::pushException( new PhpTagsException( PhpTagsException::WARNING_INVALID_ARGUMENT_FOR_FOREACH, null ) );
 			return;
 		}
-		reset( $value[PHPTAGS_STACK_PARAM] );
+		unset( $t_as[PHPTAGS_STACK_RESULT] );
+		reset( $clone );
+		$t_as[PHPTAGS_STACK_RESULT] = $clone;
 		$null = null;
 		self::pushDown( $value[PHPTAGS_STACK_DO_TRUE], T_WHILE, $null );
 	}
@@ -753,8 +757,8 @@ class Runtime {
 	 */
 	private static function doAs ( &$value ) {
 		// $value[PHPTAGS_STACK_RESULT] is always array, checked in self::doForeach()
-		$tmp = each( $value[PHPTAGS_STACK_RESULT] );
-		if ( $tmp === false ) { // it is last element
+		$tmp = each( $value[PHPTAGS_STACK_RESULT] ); // 'each' can return false and null
+		if ( ! $tmp ) { // it is last element
 			self::popUp();
 		}
 

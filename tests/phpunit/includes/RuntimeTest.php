@@ -2951,6 +2951,12 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 				array( (string)new PhpTagsException( PhpTagsException::WARNING_INVALID_ARGUMENT_FOR_FOREACH, null, 1, 'test' ) )
 			);
 	}
+	public function testRun_foreach_14() {
+		$this->assertEquals(
+				Runtime::runSource( '$a = ["one", "two"]; foreach ($a as $v) { echo "-$v-"; $a = false; } echo $a === false ? "false" : "not false";', array('test'), 1 ),
+				array( '-one-', '-two-', 'false' )
+			);
+	}
 
 	public function testRun_constant_version() {
 		$this->assertEquals(
