@@ -1555,7 +1555,6 @@ checkOperators:
 
 		$this->stack_push_memory();
 		$asExpression = $arrayExpression;
-		$this->addValueIntoStack( $asExpression, $t_as, PHPTAGS_STACK_RESULT );
 		$this->stack[] =& $t_as;
 
 		if ( $this->id === '{' ) {
@@ -1569,13 +1568,13 @@ checkOperators:
 		$this->stack[] = array( PHPTAGS_STACK_COMMAND=>PHPTAGS_T_CONTINUE, PHPTAGS_STACK_RESULT=>1, PHPTAGS_STACK_TOKEN_LINE=>$tokenLine ); // Add operator T_CONTINUE to the end of the cycle
 		$foreach = array(
 			PHPTAGS_STACK_COMMAND => PHPTAGS_T_FOREACH,
-			PHPTAGS_STACK_PARAM => null,
+			PHPTAGS_STACK_PARAM => &$t_as,
 			PHPTAGS_STACK_DO_TRUE => $this->stack,
 			PHPTAGS_STACK_TOKEN_LINE => $tokenLine,
 			PHPTAGS_STACK_DEBUG => $text,
 		);
 		$this->stack_pop_memory();
-		$this->addValueIntoStack( $arrayExpression, $foreach, PHPTAGS_STACK_PARAM );
+		$this->addValueIntoStack( $asExpression, $t_as, PHPTAGS_STACK_RESULT );
 		$this->stack[] =& $foreach;
 		return true;
 	}
