@@ -2,10 +2,11 @@
 	"@metadata": {
 		"authors": [
 			"SnowedEarth",
-			"Element303"
+			"Element303",
+			"Wladek92"
 		]
 	},
-	"phptags-compiler-error-category": "Pages avec un code incorrect PhpTags",
+	"phptags-compiler-error-category": "Pages avec un code PhpTags incorrect",
 	"phptags-compiler-error-category-desc": "Le code PhpTags contient une erreur.",
 	"phptags-runtime-error-category": "Pages avec des erreurs de PhpTags",
 	"phptags-runtime-error-category-desc": "Il y a eu une erreur lors du traitement du code PhpTags sur la page.",
