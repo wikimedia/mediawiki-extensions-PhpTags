@@ -4,6 +4,11 @@
 			"Xuacu"
 		]
 	},
+	"phptags-compiler-error-category": "Páxines con códigu PhpTags inválidu",
+	"phptags-compiler-error-category-desc": "El códigu de PhpTags incluye un error.",
+	"phptags-runtime-error-category": "Páxines con errores de PhpTags",
+	"phptags-runtime-error-category-desc": "Hebo un error al procesar el códigu PhpTags de la páxina.",
 	"phptags-desc": "Permite a los usuarios usar les espresiones Magic con sintaxis del llinguax PHP",
-	"phptags-disabled-for-namespace": "La estensión PhpTags ta desactivada pal espaciu de nomes $1"
+	"phptags-disabled-for-namespace": "La estensión PhpTags ta desactivada pal espaciu de nomes $1",
+	"phptags-extension-type": "Estensiones de PhpTags"
 }
