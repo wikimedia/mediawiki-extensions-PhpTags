@@ -4,6 +4,11 @@
 			"Ата"
 		]
 	},
+	"phptags-compiler-error-category": "Сторінки з пошкодженим кодом PhpTags",
+	"phptags-compiler-error-category-desc": "Код PhpTags містить помилку.",
+	"phptags-runtime-error-category": "Сторінки з помилками PhpTags",
+	"phptags-runtime-error-category-desc": "Сталася помилка при виконанні коду PhpTags на сторінці.",
 	"phptags-desc": "Дозволяє користувачам використовувати магічні вирази з синтаксисом мови PHP",
-	"phptags-disabled-for-namespace": "Розширення PhpTags вимкнено для простору назв «$1»."
+	"phptags-disabled-for-namespace": "Розширення PhpTags вимкнено для простору назв «$1».",
+	"phptags-extension-type": "Розширення PhpTags"
 }
