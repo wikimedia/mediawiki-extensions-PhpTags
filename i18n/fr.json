@@ -11,5 +11,6 @@
 	"phptags-runtime-error-category": "Pages avec des erreurs de PhpTags",
 	"phptags-runtime-error-category-desc": "Il y a eu une erreur lors du traitement du code PhpTags sur la page.",
 	"phptags-desc": "Autorise les utilisateurs à utiliser les expressions Magic avec la syntaxe du langage PHP",
-	"phptags-disabled-for-namespace": "L'extension PhpTags est désactivée pour l'espace de noms «$1»."
+	"phptags-disabled-for-namespace": "L'extension PhpTags est désactivée pour l'espace de noms «$1».",
+	"phptags-extension-type": "Extensions des PhpTags"
 }
