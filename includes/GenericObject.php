@@ -63,7 +63,7 @@ class GenericObject implements \Iterator {
 				Runtime::pushException( new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_CLASS_CONSTANT ) );
 				break;
 			case 'f': // function
-				throw new PhpTagsException( PhpTagsException::FATAL_CALLFUNCTION_INVALID_HOOK, static::getClassName() );
+				throw new PhpTagsException( PhpTagsException::FATAL_CALLFUNCTION_INVALID_HOOK, get_called_class() );
 			default:
 				throw new \Exception( Hooks::getCallInfo( Hooks::INFO_ORIGINAL_OBJECT_NAME ) . ': Call to undefined method ' . __CLASS__ . "::$name()" );
 		}
@@ -99,11 +99,14 @@ class GenericObject implements \Iterator {
 	}
 
 	public static function getConstantValue( $constantName ) {
-		throw new PhpTagsException( PhpTagsException::FATAL_CALLCONSTANT_INVALID_HOOK, $constantName );
+		throw new PhpTagsException( PhpTagsException::FATAL_CALLCONSTANT_INVALID_HOOK, get_called_class() );
 	}
 
+	/**
+	 * @deprecated since you should use get_called_class()
+	 */
 	public static function getClassName() {
-		return __CLASS__;
+		return get_called_class();
 	}
 
 	protected static function pushExceptionExpectsParameter( $index, $expect, $value) {

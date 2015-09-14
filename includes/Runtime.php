@@ -1,266 +1,6 @@
 <?php
 namespace PhpTags;
 
-//const PHPTAGS_STACK_RESULT = 'r';
-//const PHPTAGS_STACK_COMMAND = 'c';
-//const PHPTAGS_STACK_PARAM = 'p';
-//const PHPTAGS_STACK_PARAM_2 = 's';
-//const PHPTAGS_STACK_PARAM_3 = 'o';
-//const PHPTAGS_STACK_INC_AFTER = 'i';
-//const PHPTAGS_STACK_TOKEN_LINE = 'l';
-//const PHPTAGS_STACK_DO_TRUE = 't';
-//const PHPTAGS_STACK_DO_FALSE = 'f';
-//const PHPTAGS_STACK_ARRAY_INDEX = 'a';
-//const PHPTAGS_STACK_DEBUG = '#';
-//const PHPTAGS_STACK_AIM = '*';
-//const PHPTAGS_STACK_HOOK_TYPE = 'h';
-
-const PHPTAGS_STACK_COMMAND = 0;
-const PHPTAGS_STACK_RESULT = 1;
-const PHPTAGS_STACK_PARAM = 2;
-const PHPTAGS_STACK_PARAM_2 = 3;
-const PHPTAGS_STACK_PARAM_3 = 4;
-const PHPTAGS_STACK_INC_AFTER = 5;
-const PHPTAGS_STACK_TOKEN_LINE = 6;
-const PHPTAGS_STACK_DO_TRUE = 7;
-const PHPTAGS_STACK_DO_FALSE = 8;
-const PHPTAGS_STACK_ARRAY_INDEX = 9;
-const PHPTAGS_STACK_DEBUG = 10;
-const PHPTAGS_STACK_AIM = 11;
-const PHPTAGS_STACK_HOOK_TYPE = 12;
-
-const PHPTAGS_HOOK_GET_CONSTANT = '_';
-const PHPTAGS_HOOK_FUNCTION = 'f';
-const PHPTAGS_HOOK_GET_OBJECT_CONSTANT = 'c';
-const PHPTAGS_HOOK_GET_STATIC_PROPERTY = 'q';
-const PHPTAGS_HOOK_GET_OBJECT_PROPERTY = 'p';
-const PHPTAGS_HOOK_SET_STATIC_PROPERTY = 'd';
-const PHPTAGS_HOOK_SET_OBJECT_PROPERTY = 'b';
-const PHPTAGS_HOOK_STATIC_METHOD = 's';
-const PHPTAGS_HOOK_OBJECT_METHOD = 'm';
-const PHPTAGS_HOOK_NEW_OBJECT = 'n';
-
-const PHPTAGS_OBJECT_DEFINITION = 0;
-const PHPTAGS_METHOD_CONSTRUCTOR = 1;
-
-/**
- * operator: "
- */
-const PHPTAGS_T_QUOTE = 0; // "
-/**
- * operator: .
- */
-const PHPTAGS_T_CONCAT = 1;
-/**
- * operator: +
- */
-const PHPTAGS_T_PLUS = 2;
-/**
- * operator: -
- */
-const PHPTAGS_T_MINUS = 3;
-/**
- * operator: *
- */
-const PHPTAGS_T_MUL = 4;
-/**
- * operator: /
- */
-const PHPTAGS_T_DIV = 5;
-/**
- * operator: ==
- */
-const PHPTAGS_T_IS_EQUAL = 6;
-/**
- * get value from variable
- */
-const PHPTAGS_T_VARIABLE = 7;
-/**
- * operator: if
- */
-const PHPTAGS_T_IF = 8;
-/**
- * operator: =
- */
-const PHPTAGS_T_EQUAL = 9;
-/**
- * operator: .=
- */
-const PHPTAGS_T_CONCAT_EQUAL = 10;
-/**
- * operator: /=
- */
-const PHPTAGS_T_DIV_EQUAL = 11;
-/**
- * operator: *=
- */
-const PHPTAGS_T_MUL_EQUAL = 12;
-/**
- * operator: -=
- */
-const PHPTAGS_T_MINUS_EQUAL = 13;
-/**
- * operator: +=
- */
-const PHPTAGS_T_PLUS_EQUAL = 14;
-/**
- * operator: !==
- */
-const PHPTAGS_T_IS_NOT_IDENTICAL = 15;
-/**
- * operator: ===
- */
-const PHPTAGS_T_IS_IDENTICAL = 16;
-/**
- * operator: !=
- */
-const PHPTAGS_T_IS_NOT_EQUAL = 17;
-/**
- * operator: ^=
- */
-const PHPTAGS_T_XOR_EQUAL = 18;
-/**
- * operator: >=
- */
-const PHPTAGS_T_IS_GREATER_OR_EQUAL = 19;
-/**
- * operator: <=
- */
-const PHPTAGS_T_IS_SMALLER_OR_EQUAL = 20;
-/**
- * operator: >>
- */
-const PHPTAGS_T_SR = 21;
-/**
- * operator: <<
- */
-const PHPTAGS_T_SL = 22;
-/**
- * operator: (unset)
- */
-const PHPTAGS_T_UNSET_CAST = 23;
-/**
- * operator: (bool)
- */
-const PHPTAGS_T_BOOL_CAST = 24;
-/**
- * operator: (array)
- */
-const PHPTAGS_T_ARRAY_CAST = 25;
-/**
- * operator: (string)
- */
-const PHPTAGS_T_STRING_CAST = 26;
-/**
- * operator: (double)
- */
-const PHPTAGS_T_DOUBLE_CAST = 27;
-/**
- * operator: (int)
- */
-const PHPTAGS_T_INT_CAST = 28;
-/**
- * operator: --
- */
-const PHPTAGS_T_DEC = 29;
-/**
- * operator: ++
- */
-const PHPTAGS_T_INC = 30;
-/**
- * operator: new
- */
-const PHPTAGS_T_NEW = 31;
-/**
- * operator: &=
- */
-const PHPTAGS_T_AND_EQUAL = 32;
-/**
- * call phptags hook
- */
-const PHPTAGS_T_HOOK = 33;
-/**
- * check passed param to phptags hook
- */
-const PHPTAGS_T_HOOK_CHECK_PARAM = 34;
-/**
- * it copies value from variable to destination
- */
-const PHPTAGS_T_COPY = 35;
-const PHPTAGS_T_WHILE = 36;
-const PHPTAGS_T_FOREACH = 37;
-const PHPTAGS_T_AS = 38;
-const PHPTAGS_T_BREAK = 39;
-const PHPTAGS_T_CONTINUE = 40;
-const PHPTAGS_T_RETURN = 41;
-const PHPTAGS_T_GLOBAL = 42;
-const PHPTAGS_T_STATIC = 43;
-const PHPTAGS_T_UNSET = 44;
-const PHPTAGS_T_ISSET = 45;
-const PHPTAGS_T_EMPTY = 46;
-const PHPTAGS_T_LIST = 47;
-const PHPTAGS_T_ARRAY = 48;
-const PHPTAGS_T_OR_EQUAL = 49;
-/**
- * operators: echo, print
- */
-const PHPTAGS_T_PRINT = 50;
-/**
- * operator: ||
- */
-const PHPTAGS_T_LOGICAL_OR = 51;
-/**
- * operator: @
- */
-const PHPTAGS_T_IGNORE_ERROR = 52; // @
-/**
- * ternary operator: ?
- */
-const PHPTAGS_T_TERNARY = 53; // ?
-/**
- * operator: |
- */
-const PHPTAGS_T_OR = 54; // |
-/**
- * operator: ^
- */
-const PHPTAGS_T_XOR = 55;
-/**
- * operator: &
- */
-const PHPTAGS_T_AND = 56;
-/**
- * operator: >
- */
-const PHPTAGS_T_IS_GREATER = 57;
-/**
- * operator: <
- */
-const PHPTAGS_T_IS_SMALLER = 58;
-/**
- * operator: xor
- */
-const PHPTAGS_T_LOGICAL_XOR = 59;
-const PHPTAGS_T_MOD_EQUAL = 60;
-/**
- * operator: and
- */
-const PHPTAGS_T_LOGICAL_AND = 61;
-/**
- * operator: %
- */
-const PHPTAGS_T_MOD = 62;
-const PHPTAGS_T_SL_EQUAL = 63;
-const PHPTAGS_T_SR_EQUAL = 64;
-/**
- * operator: !
- */
-const PHPTAGS_T_IS_NOT = 65;
-/**
- * operator: ~
- */
-const PHPTAGS_T_NOT = 66;
-
 /**
  * The runtime class of the extension PhpTags.
  *
@@ -271,6 +11,35 @@ const PHPTAGS_T_NOT = 66;
  */
 class Runtime {
 
+	##### Bytecode array indexes #####
+	const B_COMMAND = 0; // Token ID
+	const B_RESULT = 1;
+	const B_PARAM_1 = 2;
+	const B_PARAM_2 = 3;
+	const B_OBJECT = 4; // object or object name
+	const B_OBJECT_KEY = 5; // object lower case name
+	const B_TOKEN_LINE = 6; // Code line
+	const B_DO_TRUE = 7; // Do this code if true
+	const B_DO_FALSE = 8; // Do this code if false
+	const B_ARRAY_INDEX = 9; // get this array index when read variable, $foo['bar']
+	const B_DEBUG = 10; // original token string for debugging and error messages
+	const B_AIM = 11; // AIM set variable value to this aim
+	const B_HOOK_TYPE = 12; // describes PhpTags hook type, constant, function etc (self::H_...)
+	const B_METHOD = 13; // method or function name
+	const B_METHOD_KEY = 14; // method or function name in lower case
+
+	##### Hook types #####
+	const H_GET_CONSTANT = '_';
+	const H_FUNCTION = 'f';
+	const H_GET_OBJECT_CONSTANT = 'c';
+	const H_GET_STATIC_PROPERTY = 'q';
+	const H_GET_OBJECT_PROPERTY = 'p';
+	const H_SET_STATIC_PROPERTY = 'd';
+	const H_SET_OBJECT_PROPERTY = 'b';
+	const H_STATIC_METHOD = 's';
+	const H_OBJECT_METHOD = 'm';
+	const H_NEW_OBJECT = 'n';
+
 	public static $loopsLimit = 0;
 
 	private static $variables = array();
@@ -279,6 +48,7 @@ class Runtime {
 	private static $ignoreErrors = false;
 	private static $stack = array();
 
+	# self::$stack indexes
 	const S_RETURN = 0;
 	const S_RUNNING = 1;
 	const S_RUN_INDEX = 2;
@@ -289,73 +59,73 @@ class Runtime {
 	const S_VARIABLES = 7;
 
 	private static $operators = array(
-		PHPTAGS_T_QUOTE => 'doQuote',
-		PHPTAGS_T_CONCAT => 'doConcat',
-		PHPTAGS_T_PLUS => 'doPlus',
-		PHPTAGS_T_MINUS => 'doMinus',
-		PHPTAGS_T_MUL => 'doMul',
-		PHPTAGS_T_DIV => 'doDiv',
-		PHPTAGS_T_MOD => 'doMod',
-		PHPTAGS_T_AND => 'doAnd',
-		PHPTAGS_T_OR => 'doOr',
-		PHPTAGS_T_XOR => 'doXor',
-		PHPTAGS_T_SL => 'doShiftLeft',
-		PHPTAGS_T_SR => 'doShiftRight',
-		PHPTAGS_T_LOGICAL_AND => 'doLogicalAnd',
-		PHPTAGS_T_LOGICAL_XOR => 'doLogicalXor',
-		PHPTAGS_T_LOGICAL_OR => 'doLogicalOr',
-		PHPTAGS_T_IS_SMALLER => 'doIsSmaller',
-		PHPTAGS_T_IS_GREATER => 'doIsGreater',
-		PHPTAGS_T_IS_SMALLER_OR_EQUAL => 'doIsSmallerOrEqual',
-		PHPTAGS_T_IS_GREATER_OR_EQUAL => 'doIsGreaterOrEqual',
-		PHPTAGS_T_IS_EQUAL => 'doIsEqual',
-		PHPTAGS_T_IS_NOT_EQUAL => 'doIsNotEqual',
-		PHPTAGS_T_IS_IDENTICAL => 'doIsIdentical',
-		PHPTAGS_T_IS_NOT_IDENTICAL => 'doIsNotIdentical',
-		PHPTAGS_T_PRINT => 'doPrint',
-		PHPTAGS_T_NOT => 'doNot',
-		PHPTAGS_T_IS_NOT => 'doIsNot',
-		PHPTAGS_T_INT_CAST => 'doIntCast',
-		PHPTAGS_T_DOUBLE_CAST => 'doDoubleCast',
-		PHPTAGS_T_STRING_CAST => 'doStringCast',
-		PHPTAGS_T_ARRAY_CAST => 'doArrayCast',
-		PHPTAGS_T_BOOL_CAST => 'doBoolCast',
-		PHPTAGS_T_UNSET_CAST => 'doUnsetCast',
-		PHPTAGS_T_VARIABLE => 'doVariable',
-		PHPTAGS_T_TERNARY => 'doTernary',
-		PHPTAGS_T_IF => 'doIf',
-		PHPTAGS_T_FOREACH => 'doForeach',
-		PHPTAGS_T_WHILE => 'doWhile',
-		PHPTAGS_T_AS => 'doAs',
-		PHPTAGS_T_BREAK => 'doBreak',
-		PHPTAGS_T_CONTINUE => 'doContinue',
-		PHPTAGS_T_ARRAY => 'doArray',
-		PHPTAGS_T_STATIC => 'doStatic',
-		PHPTAGS_T_GLOBAL => 'doGlobal',
-		PHPTAGS_T_HOOK_CHECK_PARAM => 'doCheckingParam',
-		PHPTAGS_T_HOOK => 'doCallingHook',
-		PHPTAGS_T_NEW => 'doNewObject',
-		PHPTAGS_T_UNSET => 'doUnset',
-		PHPTAGS_T_ISSET => 'doIsSet',
-		PHPTAGS_T_EMPTY => 'doIsEmpty',
-		PHPTAGS_T_RETURN => 'doReturn',
-		PHPTAGS_T_COPY => 'doCopy',
-		PHPTAGS_T_IGNORE_ERROR => 'doIgnoreErrors',
-		PHPTAGS_T_LIST => 'doList',
-		PHPTAGS_T_INC => 'doIncrease',
-		PHPTAGS_T_DEC => 'doDecrease',
-		PHPTAGS_T_EQUAL => 'doSetVal',
-		PHPTAGS_T_CONCAT_EQUAL => 'doSetConcatVal',
-		PHPTAGS_T_PLUS_EQUAL => 'doSetPlusVal',
-		PHPTAGS_T_MINUS_EQUAL => 'doSetMinusVal',
-		PHPTAGS_T_MUL_EQUAL => 'doSetMulVal',
-		PHPTAGS_T_DIV_EQUAL => 'doSetDivVal',
-		PHPTAGS_T_MOD_EQUAL => 'doSetModVal',
-		PHPTAGS_T_AND_EQUAL => 'doSetAndVal',
-		PHPTAGS_T_OR_EQUAL => 'doSetOrVal',
-		PHPTAGS_T_XOR_EQUAL => 'doSetXorVal',
-		PHPTAGS_T_SL_EQUAL => 'doSetShiftLeftVal',
-		PHPTAGS_T_SR_EQUAL => 'doSetShiftRightVal',
+		self::T_QUOTE => 'doQuote',
+		self::T_CONCAT => 'doConcat',
+		self::T_PLUS => 'doPlus',
+		self::T_MINUS => 'doMinus',
+		self::T_MUL => 'doMul',
+		self::T_DIV => 'doDiv',
+		self::T_MOD => 'doMod',
+		self::T_AND => 'doAnd',
+		self::T_OR => 'doOr',
+		self::T_XOR => 'doXor',
+		self::T_SL => 'doShiftLeft',
+		self::T_SR => 'doShiftRight',
+		self::T_LOGICAL_AND => 'doLogicalAnd',
+		self::T_LOGICAL_XOR => 'doLogicalXor',
+		self::T_LOGICAL_OR => 'doLogicalOr',
+		self::T_IS_SMALLER => 'doIsSmaller',
+		self::T_IS_GREATER => 'doIsGreater',
+		self::T_IS_SMALLER_OR_EQUAL => 'doIsSmallerOrEqual',
+		self::T_IS_GREATER_OR_EQUAL => 'doIsGreaterOrEqual',
+		self::T_IS_EQUAL => 'doIsEqual',
+		self::T_IS_NOT_EQUAL => 'doIsNotEqual',
+		self::T_IS_IDENTICAL => 'doIsIdentical',
+		self::T_IS_NOT_IDENTICAL => 'doIsNotIdentical',
+		self::T_PRINT => 'doPrint',
+		self::T_NOT => 'doNot',
+		self::T_IS_NOT => 'doIsNot',
+		self::T_INT_CAST => 'doIntCast',
+		self::T_DOUBLE_CAST => 'doDoubleCast',
+		self::T_STRING_CAST => 'doStringCast',
+		self::T_ARRAY_CAST => 'doArrayCast',
+		self::T_BOOL_CAST => 'doBoolCast',
+		self::T_UNSET_CAST => 'doUnsetCast',
+		self::T_VARIABLE => 'doVariable',
+		self::T_TERNARY => 'doTernary',
+		self::T_IF => 'doIf',
+		self::T_FOREACH => 'doForeach',
+		self::T_WHILE => 'doWhile',
+		self::T_AS => 'doAs',
+		self::T_BREAK => 'doBreak',
+		self::T_CONTINUE => 'doContinue',
+		self::T_ARRAY => 'doArray',
+		self::T_STATIC => 'doStatic',
+		self::T_GLOBAL => 'doGlobal',
+		self::T_HOOK_CHECK_PARAM => 'doCheckingParam',
+		self::T_HOOK => 'doCallingHook',
+		self::T_NEW => 'doNewObject',
+		self::T_UNSET => 'doUnset',
+		self::T_ISSET => 'doIsSet',
+		self::T_EMPTY => 'doIsEmpty',
+		self::T_RETURN => 'doReturn',
+		self::T_COPY => 'doCopy',
+		self::T_IGNORE_ERROR => 'doIgnoreErrors',
+		self::T_LIST => 'doList',
+		self::T_INC => 'doIncrease',
+		self::T_DEC => 'doDecrease',
+		self::T_EQUAL => 'doSetVal',
+		self::T_CONCAT_EQUAL => 'doSetConcatVal',
+		self::T_PLUS_EQUAL => 'doSetPlusVal',
+		self::T_MINUS_EQUAL => 'doSetMinusVal',
+		self::T_MUL_EQUAL => 'doSetMulVal',
+		self::T_DIV_EQUAL => 'doSetDivVal',
+		self::T_MOD_EQUAL => 'doSetModVal',
+		self::T_AND_EQUAL => 'doSetAndVal',
+		self::T_OR_EQUAL => 'doSetOrVal',
+		self::T_XOR_EQUAL => 'doSetXorVal',
+		self::T_SL_EQUAL => 'doSetShiftLeftVal',
+		self::T_SR_EQUAL => 'doSetShiftRightVal',
 	);
 
 	public static function reset() {
@@ -369,7 +139,7 @@ class Runtime {
 	}
 
 	public static function runSource( $code, array $args = array(), $scope = '' ) {
-		return self::run( Compiler::compile($code), $args, $scope );
+		return self::run( Compiler::compile( $code ), $args, $scope );
 	}
 
 	private static function pushDown( $newCode, $newLoopsOwner, &$refReturn ) {
@@ -383,400 +153,400 @@ class Runtime {
 
 	private static function popUp() {
 		$stack =& self::$stack[0];
-		list( $stack[self::S_RUNNING][ $stack[self::S_RUN_INDEX] ][PHPTAGS_STACK_RESULT], $stack[self::S_RUNNING], $stack[self::S_RUN_INDEX], $stack[self::S_COUNT], $stack[self::S_LOOPS_OWNER] ) = array_pop( $stack[self::S_MEMORY] );
+		list( $stack[self::S_RUNNING][ $stack[self::S_RUN_INDEX] ][self::B_RESULT], $stack[self::S_RUNNING], $stack[self::S_RUN_INDEX], $stack[self::S_COUNT], $stack[self::S_LOOPS_OWNER] ) = array_pop( $stack[self::S_MEMORY] );
 	}
 
 	/**
-	 * PHPTAGS_T_QUOTE
+	 * self::T_QUOTE
 	 * @param array $value
 	 */
 	private static function doQuote ( &$value ) {
-		$value[PHPTAGS_STACK_RESULT] = implode( $value[PHPTAGS_STACK_PARAM] );
+		$value[self::B_RESULT] = implode( $value[self::B_PARAM_1] );
 	}
 
 	/**
-	 * PHPTAGS_T_CONCAT
+	 * self::T_CONCAT
 	 * @param array $value
 	 */
 	private static function doConcat ( &$value ) {
-		$value[PHPTAGS_STACK_RESULT] = $value[PHPTAGS_STACK_PARAM] . $value[PHPTAGS_STACK_PARAM_2];
+		$value[self::B_RESULT] = $value[self::B_PARAM_1] . $value[self::B_PARAM_2];
 	}
 
 	/**
-	 * PHPTAGS_T_PLUS
+	 * self::T_PLUS
 	 * @param array $value
 	 */
 	private static function doPlus ( &$value ) {
-		$value[PHPTAGS_STACK_RESULT] = $value[PHPTAGS_STACK_PARAM] + $value[PHPTAGS_STACK_PARAM_2];
+		$value[self::B_RESULT] = $value[self::B_PARAM_1] + $value[self::B_PARAM_2];
 	}
 
 	/**
-	 * PHPTAGS_T_MINUS
+	 * self::T_MINUS
 	 * @param array $value
 	 */
 	private static function doMinus ( &$value ) {
-		$value[PHPTAGS_STACK_RESULT] = $value[PHPTAGS_STACK_PARAM] - $value[PHPTAGS_STACK_PARAM_2];
+		$value[self::B_RESULT] = $value[self::B_PARAM_1] - $value[self::B_PARAM_2];
 	}
 
 	/**
-	 * PHPTAGS_T_MUL
+	 * self::T_MUL
 	 * @param array $value
 	 */
 	private static function doMul ( &$value ) {
-		$value[PHPTAGS_STACK_RESULT] = $value[PHPTAGS_STACK_PARAM] * $value[PHPTAGS_STACK_PARAM_2];
+		$value[self::B_RESULT] = $value[self::B_PARAM_1] * $value[self::B_PARAM_2];
 	}
 
 	/**
-	 * PHPTAGS_T_DIV
+	 * self::T_DIV
 	 * @param array $value
 	 */
 	private static function doDiv ( &$value ) {
-		$value[PHPTAGS_STACK_RESULT] = $value[PHPTAGS_STACK_PARAM] / $value[PHPTAGS_STACK_PARAM_2];
+		$value[self::B_RESULT] = $value[self::B_PARAM_1] / $value[self::B_PARAM_2];
 	}
 
 	/**
-	 * PHPTAGS_T_MOD
+	 * self::T_MOD
 	 * @param array $value
 	 */
 	private static function doMod ( &$value ) {
-		$value[PHPTAGS_STACK_RESULT] = $value[PHPTAGS_STACK_PARAM] % $value[PHPTAGS_STACK_PARAM_2];
+		$value[self::B_RESULT] = $value[self::B_PARAM_1] % $value[self::B_PARAM_2];
 	}
 
 	/**
-	 * PHPTAGS_T_AND
+	 * self::T_AND
 	 * @param array $value
 	 */
 	private static function doAnd ( &$value ) {
-		$value[PHPTAGS_STACK_RESULT] = $value[PHPTAGS_STACK_PARAM] & $value[PHPTAGS_STACK_PARAM_2];
+		$value[self::B_RESULT] = $value[self::B_PARAM_1] & $value[self::B_PARAM_2];
 	}
 
 	/**
-	 * PHPTAGS_T_OR
+	 * self::T_OR
 	 * @param array $value
 	 */
 	private static function doOr ( &$value ) {
-		$value[PHPTAGS_STACK_RESULT] = $value[PHPTAGS_STACK_PARAM] | $value[PHPTAGS_STACK_PARAM_2];
+		$value[self::B_RESULT] = $value[self::B_PARAM_1] | $value[self::B_PARAM_2];
 	}
 
 	/**
-	 * PHPTAGS_T_XOR
+	 * self::T_XOR
 	 * @param array $value
 	 */
 	private static function doXor ( &$value ) {
-		$value[PHPTAGS_STACK_RESULT] = $value[PHPTAGS_STACK_PARAM] ^ $value[PHPTAGS_STACK_PARAM_2];
+		$value[self::B_RESULT] = $value[self::B_PARAM_1] ^ $value[self::B_PARAM_2];
 	}
 
 	/**
-	 * PHPTAGS_T_SL
+	 * self::T_SL
 	 * @param array $value
 	 */
 	private static function doShiftLeft ( &$value ) {
-		$value[PHPTAGS_STACK_RESULT] = $value[PHPTAGS_STACK_PARAM] << $value[PHPTAGS_STACK_PARAM_2];
+		$value[self::B_RESULT] = $value[self::B_PARAM_1] << $value[self::B_PARAM_2];
 	}
 
 	/**
-	 * PHPTAGS_T_SR
+	 * self::T_SR
 	 * @param array $value
 	 */
 	private static function doShiftRight ( &$value ) {
-		$value[PHPTAGS_STACK_RESULT] = $value[PHPTAGS_STACK_PARAM] >> $value[PHPTAGS_STACK_PARAM_2];
+		$value[self::B_RESULT] = $value[self::B_PARAM_1] >> $value[self::B_PARAM_2];
 	}
 
 	/**
-	 * PHPTAGS_T_LOGICAL_AND
+	 * self::T_LOGICAL_AND
 	 * @param array $value
 	 */
 	private static function doLogicalAnd ( &$value ) {
-		$value[PHPTAGS_STACK_RESULT] = $value[PHPTAGS_STACK_PARAM] && $value[PHPTAGS_STACK_PARAM_2];
+		$value[self::B_RESULT] = $value[self::B_PARAM_1] && $value[self::B_PARAM_2];
 	}
 
 	/**
-	 * PHPTAGS_T_LOGICAL_XOR
+	 * self::T_LOGICAL_XOR
 	 * @param array $value
 	 */
 	private static function doLogicalXor ( &$value ) {
-		$value[PHPTAGS_STACK_RESULT] = ($value[PHPTAGS_STACK_PARAM] xor $value[PHPTAGS_STACK_PARAM_2]);
+		$value[self::B_RESULT] = ($value[self::B_PARAM_1] xor $value[self::B_PARAM_2]);
 	}
 
 	/**
-	 * PHPTAGS_T_LOGICAL_OR
+	 * self::T_LOGICAL_OR
 	 * @param array $value
 	 */
 	private static function doLogicalOr ( &$value ) {
-		$value[PHPTAGS_STACK_RESULT] = $value[PHPTAGS_STACK_PARAM] || $value[PHPTAGS_STACK_PARAM_2];
+		$value[self::B_RESULT] = $value[self::B_PARAM_1] || $value[self::B_PARAM_2];
 	}
 
 	/**
-	 * PHPTAGS_T_IS_SMALLER
+	 * self::T_IS_SMALLER
 	 * @param array $value
 	 */
 	private static function doIsSmaller ( &$value ) {
-		$value[PHPTAGS_STACK_RESULT] = $value[PHPTAGS_STACK_PARAM] < $value[PHPTAGS_STACK_PARAM_2];
+		$value[self::B_RESULT] = $value[self::B_PARAM_1] < $value[self::B_PARAM_2];
 	}
 
 	/**
-	 * PHPTAGS_T_IS_GREATER
+	 * self::T_IS_GREATER
 	 * @param array $value
 	 */
 	private static function doIsGreater ( &$value ) {
-		$value[PHPTAGS_STACK_RESULT] = $value[PHPTAGS_STACK_PARAM] > $value[PHPTAGS_STACK_PARAM_2];
+		$value[self::B_RESULT] = $value[self::B_PARAM_1] > $value[self::B_PARAM_2];
 	}
 
 	/**
-	 * PHPTAGS_T_IS_SMALLER_OR_EQUAL
+	 * self::T_IS_SMALLER_OR_EQUAL
 	 * @param array $value
 	 */
 	private static function doIsSmallerOrEqual ( &$value ) {
-		$value[PHPTAGS_STACK_RESULT] = $value[PHPTAGS_STACK_PARAM] <= $value[PHPTAGS_STACK_PARAM_2];
+		$value[self::B_RESULT] = $value[self::B_PARAM_1] <= $value[self::B_PARAM_2];
 	}
 
 	/**
-	 * PHPTAGS_T_IS_GREATER_OR_EQUAL
+	 * self::T_IS_GREATER_OR_EQUAL
 	 * @param array $value
 	 */
 	private static function doIsGreaterOrEqual ( &$value ) {
-		$value[PHPTAGS_STACK_RESULT] = $value[PHPTAGS_STACK_PARAM] >= $value[PHPTAGS_STACK_PARAM_2];
+		$value[self::B_RESULT] = $value[self::B_PARAM_1] >= $value[self::B_PARAM_2];
 	}
 
 	/**
-	 * PHPTAGS_T_IS_EQUAL
+	 * self::T_IS_EQUAL
 	 * @param array $value
 	 */
 	private static function doIsEqual ( &$value ) {
-		$value[PHPTAGS_STACK_RESULT] = $value[PHPTAGS_STACK_PARAM] == $value[PHPTAGS_STACK_PARAM_2];
+		$value[self::B_RESULT] = $value[self::B_PARAM_1] == $value[self::B_PARAM_2];
 	}
 
 	/**
-	 * PHPTAGS_T_IS_NOT_EQUAL
+	 * self::T_IS_NOT_EQUAL
 	 * @param array $value
 	 */
 	private static function doIsNotEqual ( &$value ) {
-		$value[PHPTAGS_STACK_RESULT] = $value[PHPTAGS_STACK_PARAM] != $value[PHPTAGS_STACK_PARAM_2];
+		$value[self::B_RESULT] = $value[self::B_PARAM_1] != $value[self::B_PARAM_2];
 	}
 
 	/**
-	 * PHPTAGS_T_IS_IDENTICAL
+	 * self::T_IS_IDENTICAL
 	 * @param array $value
 	 */
 	private static function doIsIdentical ( &$value ) {
-		$value[PHPTAGS_STACK_RESULT] = $value[PHPTAGS_STACK_PARAM] === $value[PHPTAGS_STACK_PARAM_2];
+		$value[self::B_RESULT] = $value[self::B_PARAM_1] === $value[self::B_PARAM_2];
 	}
 
 	/**
-	 * PHPTAGS_T_IS_NOT_IDENTICAL
+	 * self::T_IS_NOT_IDENTICAL
 	 * @param array $value
 	 */
 	private static function doIsNotIdentical ( &$value ) {
-		$value[PHPTAGS_STACK_RESULT] = $value[PHPTAGS_STACK_PARAM] !== $value[PHPTAGS_STACK_PARAM_2];
+		$value[self::B_RESULT] = $value[self::B_PARAM_1] !== $value[self::B_PARAM_2];
 	}
 
 	/**
-	 * PHPTAGS_T_PRINT outputs the value
+	 * self::T_PRINT outputs the value
 	 * @param array $value
 	 */
 	private static function doPrint ( &$value ) {
-		if( $value[PHPTAGS_STACK_PARAM] instanceof GenericObject ) {
-			self::$stack[0][self::S_RETURN][] = $value[PHPTAGS_STACK_PARAM]->toString();
+		if( $value[self::B_PARAM_1] instanceof GenericObject ) {
+			self::$stack[0][self::S_RETURN][] = $value[self::B_PARAM_1]->toString();
 		} else {
-			self::$stack[0][self::S_RETURN][] = $value[PHPTAGS_STACK_PARAM];
+			self::$stack[0][self::S_RETURN][] = $value[self::B_PARAM_1];
 		}
 	}
 
 	/**
-	 * PHPTAGS_T_NOT
+	 * self::T_NOT
 	 * @param array $value
 	 */
 	private static function doNot ( &$value ) {
-		$value[PHPTAGS_STACK_RESULT] = ~$value[PHPTAGS_STACK_PARAM_2];
+		$value[self::B_RESULT] = ~$value[self::B_PARAM_2];
 	}
 
 	/**
-	 * PHPTAGS_T_IS_NOT
+	 * self::T_IS_NOT
 	 * @param array $value
 	 */
 	private static function doIsNot ( &$value ) {
-		$value[PHPTAGS_STACK_RESULT] = !$value[PHPTAGS_STACK_PARAM_2];
+		$value[self::B_RESULT] = !$value[self::B_PARAM_2];
 	}
 
 	/**
-	 * PHPTAGS_T_INT_CAST
+	 * self::T_INT_CAST
 	 * @param array $value
 	 */
 	private static function doIntCast ( &$value ) {
-		$value[PHPTAGS_STACK_RESULT] = (int)$value[PHPTAGS_STACK_PARAM_2];
+		$value[self::B_RESULT] = (int)$value[self::B_PARAM_2];
 	}
 
 	/**
-	 * PHPTAGS_T_DOUBLE_CAST
+	 * self::T_DOUBLE_CAST
 	 * @param array $value
 	 */
 	private static function doDoubleCast ( &$value ) {
-		$value[PHPTAGS_STACK_RESULT] = (double)$value[PHPTAGS_STACK_PARAM_2];
+		$value[self::B_RESULT] = (double)$value[self::B_PARAM_2];
 	}
 
 	/**
-	 * PHPTAGS_T_STRING_CAST
+	 * self::T_STRING_CAST
 	 * @param array $value
 	 */
 	private static function doStringCast ( &$value ) {
-		$value[PHPTAGS_STACK_RESULT] = (string)$value[PHPTAGS_STACK_PARAM_2];
+		$value[self::B_RESULT] = (string)$value[self::B_PARAM_2];
 	}
 
 	/**
-	 * PHPTAGS_T_ARRAY_CAST
+	 * self::T_ARRAY_CAST
 	 * @param array $value
 	 */
 	private static function doArrayCast ( &$value ) {
-		$value[PHPTAGS_STACK_RESULT] = (array)$value[PHPTAGS_STACK_PARAM_2];
+		$value[self::B_RESULT] = (array)$value[self::B_PARAM_2];
 	}
 
 	/**
-	 * PHPTAGS_T_BOOL_CAST
+	 * self::T_BOOL_CAST
 	 * @param array $value
 	 */
 	private static function doBoolCast ( &$value ) {
-		$value[PHPTAGS_STACK_RESULT] = (bool)$value[PHPTAGS_STACK_PARAM_2];
+		$value[self::B_RESULT] = (bool)$value[self::B_PARAM_2];
 	}
 
 	/**
-	 * PHPTAGS_T_UNSET_CAST
+	 * self::T_UNSET_CAST
 	 * @param array $value
 	 */
 	private static function doUnsetCast ( &$value ) {
-		$value[PHPTAGS_STACK_RESULT] = (unset)$value[PHPTAGS_STACK_PARAM_2];
+		$value[self::B_RESULT] = (unset)$value[self::B_PARAM_2];
 	}
 
 	/**
-	 * PHPTAGS_T_VARIABLE
+	 * self::T_VARIABLE
 	 * @param array $value
 	 */
 	private static function doVariable ( &$value ) {
 		$variables =& self::$stack[0][self::S_VARIABLES];
-		$aim = $value[PHPTAGS_STACK_AIM];
-		if ( isset( $variables[ $value[PHPTAGS_STACK_PARAM] ] ) || array_key_exists( $value[PHPTAGS_STACK_PARAM], $variables ) ) {
-			$value[PHPTAGS_STACK_PARAM_2][$aim] =& $variables[ $value[PHPTAGS_STACK_PARAM] ];
-			if ( isset($value[PHPTAGS_STACK_ARRAY_INDEX]) ) { // Example: $foo[1]
-				foreach ( $value[PHPTAGS_STACK_ARRAY_INDEX] as $v ) {
-					if ( is_array( $value[PHPTAGS_STACK_PARAM_2][$aim] ) ) { // Variable is array. Examle: $foo = ['string']; echo $foo[0];
-						if ( isset($value[PHPTAGS_STACK_PARAM_2][$aim][$v]) || array_key_exists($v, $value[PHPTAGS_STACK_PARAM_2][$aim]) ) {
-							$value[PHPTAGS_STACK_PARAM_2][$aim] =& $value[PHPTAGS_STACK_PARAM_2][$aim][$v];
+		$aim = $value[self::B_AIM];
+		if ( isset( $variables[ $value[self::B_PARAM_1] ] ) || array_key_exists( $value[self::B_PARAM_1], $variables ) ) {
+			$value[self::B_PARAM_2][$aim] =& $variables[ $value[self::B_PARAM_1] ];
+			if ( isset($value[self::B_ARRAY_INDEX]) ) { // Example: $foo[1]
+				foreach ( $value[self::B_ARRAY_INDEX] as $v ) {
+					if ( is_array( $value[self::B_PARAM_2][$aim] ) ) { // Variable is array. Examle: $foo = ['string']; echo $foo[0];
+						if ( isset($value[self::B_PARAM_2][$aim][$v]) || array_key_exists($v, $value[self::B_PARAM_2][$aim]) ) {
+							$value[self::B_PARAM_2][$aim] =& $value[self::B_PARAM_2][$aim][$v];
 						} else {
 							// PHP Notice:  Undefined offset: $1
 							self::pushException( new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_INDEX, $v ) );
-							unset( $value[PHPTAGS_STACK_PARAM_2][$aim] );
-							$value[PHPTAGS_STACK_PARAM_2][$aim] = null;
+							unset( $value[self::B_PARAM_2][$aim] );
+							$value[self::B_PARAM_2][$aim] = null;
 						}
 					} else { // Variable is string. Examle: $foo = 'string'; echo $foo[2];
-						if ( isset( $value[PHPTAGS_STACK_PARAM_2][$aim][$v]) ) {
-							$tmp = $value[PHPTAGS_STACK_PARAM_2][$aim][$v];
-							unset( $value[PHPTAGS_STACK_PARAM_2][$aim] );
-							$value[PHPTAGS_STACK_PARAM_2][$aim] = $tmp;
+						if ( isset( $value[self::B_PARAM_2][$aim][$v]) ) {
+							$tmp = $value[self::B_PARAM_2][$aim][$v];
+							unset( $value[self::B_PARAM_2][$aim] );
+							$value[self::B_PARAM_2][$aim] = $tmp;
 						} else {
 							// PHP Notice:  Uninitialized string offset: $1
 							self::pushException( new PhpTagsException( PhpTagsException::NOTICE_UNINIT_STRING_OFFSET, (int)$v ) );
-							unset( $value[PHPTAGS_STACK_PARAM_2][$aim] );
-							$value[PHPTAGS_STACK_PARAM_2][$aim] = null;
+							unset( $value[self::B_PARAM_2][$aim] );
+							$value[self::B_PARAM_2][$aim] = null;
 						}
 					}
 				}
 			}
 		} else {
-			unset( $value[PHPTAGS_STACK_PARAM_2][$aim] );
-			$value[PHPTAGS_STACK_PARAM_2][$aim] = null;
-			self::pushException( new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_VARIABLE, $value[PHPTAGS_STACK_PARAM] ) );
+			unset( $value[self::B_PARAM_2][$aim] );
+			$value[self::B_PARAM_2][$aim] = null;
+			self::pushException( new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_VARIABLE, $value[self::B_PARAM_1] ) );
 		}
 	}
 
 	/**
-	 * PHPTAGS_T_TERNARY
+	 * self::T_TERNARY
 	 * @param array $value
 	 */
 	private static function doTernary ( &$value ) {
-		if( $value[PHPTAGS_STACK_PARAM] ) { // true ?
-			if( $value[PHPTAGS_STACK_PARAM_2][PHPTAGS_STACK_DO_TRUE] ) { // true ? 1+2 :
-				self::pushDown( $value[PHPTAGS_STACK_PARAM_2][PHPTAGS_STACK_DO_TRUE], '?', $value[PHPTAGS_STACK_PARAM_2][PHPTAGS_STACK_PARAM] );
+		if( $value[self::B_PARAM_1] ) { // true ?
+			if( $value[self::B_PARAM_2][self::B_DO_TRUE] ) { // true ? 1+2 :
+				self::pushDown( $value[self::B_PARAM_2][self::B_DO_TRUE], '?', $value[self::B_PARAM_2][self::B_PARAM_1] );
 			}else{ // true ? 1 :
-				$value[PHPTAGS_STACK_RESULT] = $value[PHPTAGS_STACK_PARAM_2][PHPTAGS_STACK_PARAM];
+				$value[self::B_RESULT] = $value[self::B_PARAM_2][self::B_PARAM_1];
 			}
 		}else{ // false ?
-			if( $value[PHPTAGS_STACK_PARAM_2][PHPTAGS_STACK_DO_FALSE] ) { // false ? ... : 1+2
-				self::pushDown( $value[PHPTAGS_STACK_PARAM_2][PHPTAGS_STACK_DO_FALSE], '?', $value[PHPTAGS_STACK_PARAM_2][PHPTAGS_STACK_PARAM_2] );
+			if( $value[self::B_PARAM_2][self::B_DO_FALSE] ) { // false ? ... : 1+2
+				self::pushDown( $value[self::B_PARAM_2][self::B_DO_FALSE], '?', $value[self::B_PARAM_2][self::B_PARAM_2] );
 			}else{ // false ? ... : 1
-				$value[PHPTAGS_STACK_RESULT] = $value[PHPTAGS_STACK_PARAM_2][PHPTAGS_STACK_PARAM_2];
+				$value[self::B_RESULT] = $value[self::B_PARAM_2][self::B_PARAM_2];
 			}
 		}
 	}
 
 	/**
-	 * PHPTAGS_T_IF
+	 * self::T_IF
 	 * @param array $value
 	 */
 	private static function doIf ( &$value ) {
 		$return = null;
-		if( $value[PHPTAGS_STACK_PARAM] ) { // Example: if( true )
-			if( $value[PHPTAGS_STACK_DO_TRUE] ) { // Stack not empty: if(true);
-				self::pushDown( $value[PHPTAGS_STACK_DO_TRUE], T_IF, $return );
+		if( $value[self::B_PARAM_1] ) { // Example: if( true )
+			if( $value[self::B_DO_TRUE] ) { // Stack not empty: if(true);
+				self::pushDown( $value[self::B_DO_TRUE], T_IF, $return );
 			}
 		}else{ // Example: if( false )
-			if( isset($value[PHPTAGS_STACK_DO_FALSE]) ) { // Stack not empty: if(false) ; else ;
-				self::pushDown( $value[PHPTAGS_STACK_DO_FALSE], T_IF, $return );
+			if( isset($value[self::B_DO_FALSE]) ) { // Stack not empty: if(false) ; else ;
+				self::pushDown( $value[self::B_DO_FALSE], T_IF, $return );
 			}
 		}
 	}
 
 	/**
-	 * PHPTAGS_T_FOREACH
+	 * self::T_FOREACH
 	 * @param array $value
 	 */
 	private static function doForeach ( &$value ) {
-		$t_as =& $value[PHPTAGS_STACK_PARAM];
-		$clone = $t_as[PHPTAGS_STACK_RESULT];
+		$t_as =& $value[self::B_PARAM_1];
+		$clone = $t_as[self::B_RESULT];
 		if ( !is_array( $clone ) ) {
 			self::pushException( new PhpTagsException( PhpTagsException::WARNING_INVALID_ARGUMENT_FOR_FOREACH, null ) );
 			return;
 		}
-		unset( $t_as[PHPTAGS_STACK_RESULT] );
+		unset( $t_as[self::B_RESULT] );
 		reset( $clone );
-		$t_as[PHPTAGS_STACK_RESULT] = $clone;
+		$t_as[self::B_RESULT] = $clone;
 		$null = null;
-		self::pushDown( $value[PHPTAGS_STACK_DO_TRUE], T_WHILE, $null );
+		self::pushDown( $value[self::B_DO_TRUE], T_WHILE, $null );
 	}
 
 	/**
-	 * PHPTAGS_T_WHILE
+	 * self::T_WHILE
 	 * @param array $value
 	 */
 	private static function doWhile ( &$value ) {
 		$null = null;
-		self::pushDown( $value[PHPTAGS_STACK_DO_TRUE], T_WHILE, $null );
+		self::pushDown( $value[self::B_DO_TRUE], T_WHILE, $null );
 	}
 
 	/**
-	 * PHPTAGS_T_AS
+	 * self::T_AS
 	 * @param array $value
 	 */
 	private static function doAs ( &$value ) {
 		// $value[PHPTAGS_STACK_RESULT] is always array, checked in self::doForeach()
-		$tmp = each( $value[PHPTAGS_STACK_RESULT] ); // 'each' can return false and null
+		$tmp = each( $value[self::B_RESULT] ); // 'each' can return false and null
 		if ( ! $tmp ) { // it is last element
 			self::popUp();
 		}
 
 		$variables =& self::$stack[0][self::S_VARIABLES];
-		$variables[ $value[PHPTAGS_STACK_PARAM] ] = $tmp[1]; // save value
-		if ( $value[PHPTAGS_STACK_PARAM_2] !== false ) { // T_DOUBLE_ARROW Example: while ( $foo as $key=>$value )
-			$variables[ $value[PHPTAGS_STACK_PARAM_2] ] = $tmp[0]; // save key
+		$variables[ $value[self::B_PARAM_1] ] = $tmp[1]; // save value
+		if ( $value[self::B_PARAM_2] !== false ) { // T_DOUBLE_ARROW Example: while ( $foo as $key=>$value )
+			$variables[ $value[self::B_PARAM_2] ] = $tmp[0]; // save key
 		}
 	}
 
 	/**
-	 * PHPTAGS_T_BREAK
+	 * self::T_BREAK
 	 * @param array $value
 	 */
 	private static function doBreak ( &$value ) {
 		$loopsOwner =& self::$stack[0][self::S_LOOPS_OWNER];
 		$memory =& self::$stack[0][self::S_MEMORY];
-		$originalBreakLevel = $breakLevel = $value[PHPTAGS_STACK_RESULT];
+		$originalBreakLevel = $breakLevel = $value[self::B_RESULT];
 
 		for ( ; $breakLevel > 0; ) {
 			if ( $loopsOwner === T_WHILE ) {
@@ -784,7 +554,7 @@ class Runtime {
 			}
 			if ( false === isset( $memory[0] ) ) {
 				if ( $breakLevel > 1 ) { // Allows exit from PhpTags
-					throw new PhpTagsException( PhpTagsException::FATAL_WRONG_BREAK_LEVELS, $originalBreakLevel, $value[PHPTAGS_STACK_TOKEN_LINE] );
+					throw new PhpTagsException( PhpTagsException::FATAL_WRONG_BREAK_LEVELS, $originalBreakLevel, $value[self::B_TOKEN_LINE] );
 				}
 				--$breakLevel; // Return
 			}
@@ -793,7 +563,7 @@ class Runtime {
 	}
 
 	/**
-	 * PHPTAGS_T_CONTINUE
+	 * self::T_CONTINUE
 	 * @param array $value
 	 */
 	private static function doContinue ( &$value ) {
@@ -803,7 +573,7 @@ class Runtime {
 		$stack =& self::$stack[0];
 		$loopsOwner =& $stack[self::S_LOOPS_OWNER];
 		$memory =& $stack[self::S_MEMORY];
-		$originalBreakLevel = $value[PHPTAGS_STACK_RESULT];
+		$originalBreakLevel = $value[self::B_RESULT];
 		$breakLevel = $originalBreakLevel - 1;
 
 		for ( ; ; ) {
@@ -815,7 +585,7 @@ class Runtime {
 				}
 			}
 			if ( false === isset( $memory[0] ) ) {
-				throw new PhpTagsException( PhpTagsException::FATAL_WRONG_BREAK_LEVELS, $originalBreakLevel, $value[PHPTAGS_STACK_TOKEN_LINE] );
+				throw new PhpTagsException( PhpTagsException::FATAL_WRONG_BREAK_LEVELS, $originalBreakLevel, $value[self::B_TOKEN_LINE] );
 			}
 			self::popUp();
 		}
@@ -823,13 +593,13 @@ class Runtime {
 	}
 
 	/**
-	 * PHPTAGS_T_ARRAY inits new array
+	 * self::T_ARRAY inits new array
 	 * @param array $value
 	 */
 	private static function doArray ( &$value ) {
-		$newArray = $value[PHPTAGS_STACK_PARAM][0];
+		$newArray = $value[self::B_PARAM_1][0];
 		$i = 1;
-		foreach ( $value[PHPTAGS_STACK_PARAM_2] as $t ) {
+		foreach ( $value[self::B_PARAM_2] as $t ) {
 			list ( $k, $v ) = $t;
 
 			if ( is_scalar( $k ) ) {
@@ -838,38 +608,38 @@ class Runtime {
 				self::pushException( new PhpTagsException( PhpTagsException::WARNING_ILLEGAL_OFFSET_TYPE ) );
 			}
 
-			if ( isset($value[PHPTAGS_STACK_PARAM][$i]) ) {
-				foreach ( $value[PHPTAGS_STACK_PARAM][$i] as $n ) {
+			if ( isset($value[self::B_PARAM_1][$i]) ) {
+				foreach ( $value[self::B_PARAM_1][$i] as $n ) {
 					$newArray[] = $n;
 				}
 			}
 			++$i;
 		}
-		$value[PHPTAGS_STACK_RESULT] = $newArray;
+		$value[self::B_RESULT] = $newArray;
 	}
 
 	/**
-	 * PHPTAGS_T_STATIC inits static variables
+	 * self::T_STATIC inits static variables
 	 * @param array $value
 	 */
 	private static function doStatic ( &$value ) {
 		$place = self::$stack[0][self::S_PLACE];
-		$name = $value[PHPTAGS_STACK_PARAM]; // variable name
+		$name = $value[self::B_PARAM_1]; // variable name
 		if ( false === (isset( self::$staticVariables[$place] ) && (isset( self::$staticVariables[$place][$name] ) || array_key_exists( $name, self::$staticVariables[$place] ))) ) {
 			// It is not initialised variable, initialise it
-			self::$staticVariables[$place][$name] = $value[PHPTAGS_STACK_RESULT];
+			self::$staticVariables[$place][$name] = $value[self::B_RESULT];
 		}
 		self::$stack[0][self::S_VARIABLES][$name] =& self::$staticVariables[$place][$name];
 	}
 
 	/**
-	 * PHPTAGS_T_GLOBAL inits global variables
+	 * self::T_GLOBAL inits global variables
 	 * @param array $value
 	 */
 	private static function doGlobal ( &$value ) {
 		$stack =& self::$stack[0];
 		$gVars =& self::$globalVariables;
-		foreach( $value[PHPTAGS_STACK_PARAM] as $name ) { // variable names
+		foreach( $value[self::B_PARAM_1] as $name ) { // variable names
 			if( !array_key_exists($name, $gVars) ) {
 				$gVars[$name] = null;
 			}
@@ -878,66 +648,66 @@ class Runtime {
 	}
 
 	/**
-	 * PHPTAGS_T_HOOK_CHECK_PARAM checks param for hooks
+	 * self::T_HOOK_CHECK_PARAM checks param for hooks
 	 * @param array $value
 	 */
 	private static function doCheckingParam ( &$value ) {
-		$i = $value[PHPTAGS_STACK_AIM]; // ordinal number of the argument, zero based
+		$i = $value[self::B_AIM]; // ordinal number of the argument, zero based
 		$reference_info = Hooks::getReferenceInfo( $i, $value );
 
-		if ( $value[PHPTAGS_STACK_PARAM_2] === true && $reference_info === false ) {
+		if ( $value[self::B_PARAM_2] === true && $reference_info === false ) {
 			// Param is variable and it needs to clone
-			$t = $value[PHPTAGS_STACK_RESULT][$i];
-			unset( $value[PHPTAGS_STACK_RESULT][$i] );
-			$value[PHPTAGS_STACK_RESULT][$i] = $t;
-		} elseif ( $value[PHPTAGS_STACK_PARAM_2] === false && $reference_info === true ) {
+			$clone = $value[self::B_RESULT][$i];
+			unset( $value[self::B_RESULT][$i] );
+			$value[self::B_RESULT][$i] = $clone;
+		} elseif ( $value[self::B_PARAM_2] === false && $reference_info === true ) {
 			// Param is not variable and it's need reference
 			throw new PhpTagsException( PhpTagsException::FATAL_VALUE_PASSED_BY_REFERENCE, null );
 		}
 	}
 
 	/**
-	 * PHPTAGS_T_HOOK calls hook
+	 * self::T_HOOK calls hook
 	 * @param array $value
 	 */
 	private static function doCallingHook ( &$value ) {
 		$result = Hooks::callHook( $value );
 
 		if ( $result instanceof outPrint ) {
-			$value[PHPTAGS_STACK_RESULT] = $result->returnValue;
+			$value[self::B_RESULT] = $result->returnValue;
 			self::$stack[0][self::S_RETURN][] = $result;
 		} else {
-			$value[PHPTAGS_STACK_RESULT] = $result;
+			$value[self::B_RESULT] = $result;
 		}
-		if ( is_object($value[PHPTAGS_STACK_RESULT]) && !($value[PHPTAGS_STACK_RESULT] instanceof iRawOutput || $value[PHPTAGS_STACK_RESULT] instanceof GenericObject) ) {
+		if ( is_object($value[self::B_RESULT]) && !($value[self::B_RESULT] instanceof iRawOutput || $value[self::B_RESULT] instanceof GenericObject) ) {
 			// @todo
-			$value[PHPTAGS_STACK_RESULT] = null;
-			self::pushException( new PhpTagsException( PhpTagsException::WARNING_RETURNED_INVALID_VALUE, $value[PHPTAGS_STACK_PARAM] ) );
+			$value[self::B_RESULT] = null;
+			self::pushException( new PhpTagsException( PhpTagsException::WARNING_RETURNED_INVALID_VALUE, $value[self::B_METHOD] ) );
 		}
 	}
 
 	/**
-	 * PHPTAGS_T_NEW creates new object
+	 * self::T_NEW creates new object
 	 * @param array $value
 	 */
 	private static function doNewObject ( &$value ) {
-		$result = Hooks::createObject( $value[PHPTAGS_STACK_PARAM_2], $value[PHPTAGS_STACK_PARAM_3] );
-		$value[PHPTAGS_STACK_RESULT] = $result;
+		$result = Hooks::createObject( $value[self::B_PARAM_2], $value[self::B_OBJECT], $value[self::B_OBJECT_KEY] );
+		$value[self::B_RESULT] = $result;
 	}
 
 	/**
-	 * PHPTAGS_T_UNSET unsets variables
+	 * self::T_UNSET unsets variables
 	 * @param array $value
 	 */
 	private static function doUnset ( &$value ) {
 		$variables =& self::$stack[0][self::S_VARIABLES];
-		foreach ( $value[PHPTAGS_STACK_PARAM] as $val ) {
-			$name = $val[PHPTAGS_STACK_PARAM]; // Variable Name
+		foreach ( $value[self::B_PARAM_1] as $val ) {
+			$name = $val[self::B_PARAM_1]; // Variable Name
 			if ( isset($variables[$name]) || array_key_exists($name, $variables) ) { // defined variable
-				if ( isset($val[PHPTAGS_STACK_ARRAY_INDEX]) ) { // There is array index. Example: unset($foo[0])
+				if ( isset($val[self::B_ARRAY_INDEX]) ) { // There is array index. Example: unset($foo[0])
 					$ref =& $variables[$name];
-					$tmp = array_pop( $val[PHPTAGS_STACK_ARRAY_INDEX] );
-					foreach ( $val[PHPTAGS_STACK_ARRAY_INDEX] as $v ) {
+					$tmp = array_pop( $val[self::B_ARRAY_INDEX] );
+					foreach ( $val[self::B_ARRAY_INDEX] as $v ) {
 						if ( is_string($ref) ) {
 							throw new PhpTagsException( PhpTagsException::FATAL_CANNOT_UNSET_STRING_OFFSETS, null );
 						} elseif ( !isset($ref[$v]) ) { // undefined array index not for string
@@ -953,57 +723,57 @@ class Runtime {
 				}else{ // There is no array index. Example: unset($foo)
 					unset( $variables[$name] );
 				}
-			} elseif ( isset($val[PHPTAGS_STACK_ARRAY_INDEX]) ) { // undefined variable with array index. Example: unset($foo[1])
+			} elseif ( isset($val[self::B_ARRAY_INDEX]) ) { // undefined variable with array index. Example: unset($foo[1])
 				self::pushException( new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_VARIABLE, $name ) );
 			}
 		}
 	}
 
 	/**
-	 * PHPTAGS_T_ISSET returns TRUE when variables are set
+	 * self::T_ISSET returns TRUE when variables are set
 	 * @param array $value
 	 */
 	private static function doIsSet ( &$value ) {
 		$variables =& self::$stack[0][self::S_VARIABLES];
-		foreach($value[PHPTAGS_STACK_PARAM] as $val) {
-			if( !isset($variables[ $val[PHPTAGS_STACK_PARAM] ]) ) { // undefined variable or variable is null
-				$value[PHPTAGS_STACK_RESULT] = false;
+		foreach($value[self::B_PARAM_1] as $val) {
+			if( !isset($variables[ $val[self::B_PARAM_1] ]) ) { // undefined variable or variable is null
+				$value[self::B_RESULT] = false;
 				return;
 			} // true, variable is defined
-			if( isset($val[PHPTAGS_STACK_ARRAY_INDEX]) ) { // Example: isset($foo[1])
-				$ref =& $variables[ $val[PHPTAGS_STACK_PARAM] ];
-				$tmp = array_pop( $val[PHPTAGS_STACK_ARRAY_INDEX] );
-				foreach( $val[PHPTAGS_STACK_ARRAY_INDEX] as $v ) {
+			if( isset($val[self::B_ARRAY_INDEX]) ) { // Example: isset($foo[1])
+				$ref =& $variables[ $val[self::B_PARAM_1] ];
+				$tmp = array_pop( $val[self::B_ARRAY_INDEX] );
+				foreach( $val[self::B_ARRAY_INDEX] as $v ) {
 					if( !isset($ref[$v]) ) { // undefined array index
-						$value[PHPTAGS_STACK_RESULT] = false;
+						$value[self::B_RESULT] = false;
 						return;
 					}
 					$ref =& $ref[$v];
 				}
 				// @todo ->>>>>>>>>>>> | ************************************************************* | <<<<< it only for compatible with PHP 5.4 if used PHP 5.3 @see http://www.php.net/manual/en/function.isset.php Example #2 isset() on String Offsets
 				if( !isset($ref[$tmp]) || (is_string($ref) && is_string($tmp ) && $tmp  != (string)(int)$tmp ) ) {
-					$value[PHPTAGS_STACK_RESULT] = false;
+					$value[self::B_RESULT] = false;
 					return;
 				}
 			} // true, variable is defined and have no array index
 		}
-		$value[PHPTAGS_STACK_RESULT] = true;
+		$value[self::B_RESULT] = true;
 	}
 
 	/**
-	 * PHPTAGS_T_EMPTY returns TRUE when variables are empty
+	 * self::T_EMPTY returns TRUE when variables are empty
 	 * @param array $value
 	 */
 	private static function doIsEmpty ( &$value ) {
 		$variables =& self::$stack[0][self::S_VARIABLES];
-		foreach($value[PHPTAGS_STACK_PARAM] as $val) {
-			if( !array_key_exists($val[PHPTAGS_STACK_PARAM], $variables) ) { // undefined variable
+		foreach($value[self::B_PARAM_1] as $val) {
+			if( !array_key_exists($val[self::B_PARAM_1], $variables) ) { // undefined variable
 				continue;
 			}
-			$ref =& $variables[ $val[PHPTAGS_STACK_PARAM] ];
-			if( isset($val[PHPTAGS_STACK_ARRAY_INDEX]) ) { // Example: empty($foo[1])
-				$tmp = array_pop( $val[PHPTAGS_STACK_ARRAY_INDEX] );
-				foreach( $val[PHPTAGS_STACK_ARRAY_INDEX] as $v ) {
+			$ref =& $variables[ $val[self::B_PARAM_1] ];
+			if( isset($val[self::B_ARRAY_INDEX]) ) { // Example: empty($foo[1])
+				$tmp = array_pop( $val[self::B_ARRAY_INDEX] );
+				foreach( $val[self::B_ARRAY_INDEX] as $v ) {
 					if( !isset($ref[$v]) ) { // undefined array index
 						continue 2;
 					}
@@ -1011,197 +781,197 @@ class Runtime {
 				}
 				// @todo ->>>>>>>>>>>> | ************************************************************* | <<<<< it only for compatible with PHP 5.4 if used PHP 5.3 @see http://www.php.net/manual/en/function.empty.php Example #2 empty() on String Offsets
 				if( !empty($ref[$tmp]) && (is_array($ref) || !is_string( $tmp ) || $tmp  == (string)(int)$tmp ) ) {
-					$value[PHPTAGS_STACK_RESULT] = false;
+					$value[self::B_RESULT] = false;
 					return;
 				}
 			}elseif( !empty($ref) ) { // there is no array index and empty() returns false (PHP 5.5.0 supports expressions)
-				$value[PHPTAGS_STACK_RESULT] = false;
+				$value[self::B_RESULT] = false;
 				return;
 			}
 		}
-		$value[PHPTAGS_STACK_RESULT] = true;
+		$value[self::B_RESULT] = true;
 	}
 
 	/**
-	 * PHPTAGS_T_RETURN is designed for compiler only!
+	 * self::T_RETURN is designed for compiler only!
 	 * @param array $value
 	 */
 	private static function doReturn ( &$value ) {
-		self::$stack[0][self::S_RETURN] = self::$stack[0][self::S_RETURN] ? new PhpTagsException() : $value[PHPTAGS_STACK_PARAM];
+		self::$stack[0][self::S_RETURN] = self::$stack[0][self::S_RETURN] ? new PhpTagsException() : $value[self::B_PARAM_1];
 	}
 
 	/**
-	 * PHPTAGS_T_COPY copies value from variable to destination
+	 * self::T_COPY copies value from variable to destination
 	 * @param array $value
 	 */
 	private static function doCopy ( &$value ) {
-		$value[PHPTAGS_STACK_RESULT] = $value[PHPTAGS_STACK_PARAM];
+		$value[self::B_RESULT] = $value[self::B_PARAM_1];
 	}
 
 	/**
-	 * PHPTAGS_T_IGNORE_ERROR
+	 * self::T_IGNORE_ERROR
 	 * @param array $value
 	 */
 	private static function doIgnoreErrors ( &$value ) {
-		self::$ignoreErrors = $value[PHPTAGS_STACK_PARAM];
+		self::$ignoreErrors = $value[self::B_PARAM_1];
 	}
 
 	/**
-	 * PHPTAGS_T_LIST
+	 * self::T_LIST
 	 * @param array $value
 	 */
 	private static function doList ( &$value ) {
-		self::fillList( $value[PHPTAGS_STACK_PARAM_2], $value[PHPTAGS_STACK_PARAM] );
-		$value[PHPTAGS_STACK_RESULT] = $value[PHPTAGS_STACK_PARAM_2];
+		self::fillList( $value[self::B_PARAM_2], $value[self::B_PARAM_1] );
+		$value[self::B_RESULT] = $value[self::B_PARAM_2];
 	}
 
 	/**
-	 * PHPTAGS_T_INC
+	 * self::T_INC
 	 * @param array $value
 	 */
 	private static function doIncrease ( &$value ) {
 		$ref =& self::getVariableRef( $value );
-		if ( $value[PHPTAGS_STACK_PARAM_2] ) { // $foo++
-			$value[PHPTAGS_STACK_RESULT] = $ref++;
+		if ( $value[self::B_PARAM_2] ) { // $foo++
+			$value[self::B_RESULT] = $ref++;
 		}else{ // ++$foo
-			$value[PHPTAGS_STACK_RESULT] = ++$ref;
+			$value[self::B_RESULT] = ++$ref;
 		}
 	}
 
 	/**
-	 * PHPTAGS_T_DEC
+	 * self::T_DEC
 	 * @param array $value
 	 */
 	private static function doDecrease ( &$value ) {
 		$ref =& self::getVariableRef( $value );
-		if ( $value[PHPTAGS_STACK_PARAM_2] ) { // $foo--
-			$value[PHPTAGS_STACK_RESULT] = $ref--;
+		if ( $value[self::B_PARAM_2] ) { // $foo--
+			$value[self::B_RESULT] = $ref--;
 		}else{ // --$foo
-			$value[PHPTAGS_STACK_RESULT] = --$ref;
+			$value[self::B_RESULT] = --$ref;
 		}
 	}
 
 	/**
-	 * PHPTAGS_T_EQUAL
+	 * self::T_EQUAL
 	 * @param array $value
 	 */
 	private static function doSetVal ( &$value ) {
 		$ref =& self::getVariableRef( $value );
-		$value[PHPTAGS_STACK_RESULT] = $ref = $value[PHPTAGS_STACK_PARAM_2];
+		$value[self::B_RESULT] = $ref = $value[self::B_PARAM_2];
 	}
 
 	/**
-	 * PHPTAGS_T_CONCAT_EQUAL
+	 * self::T_CONCAT_EQUAL
 	 * @param array $value
 	 */
 	private static function doSetConcatVal ( &$value ) {
 		$ref =& self::getVariableRef( $value );
-		$value[PHPTAGS_STACK_RESULT] = $ref .= $value[PHPTAGS_STACK_PARAM_2];
+		$value[self::B_RESULT] = $ref .= $value[self::B_PARAM_2];
 	}
 
 	/**
-	 * PHPTAGS_T_PLUS_EQUAL
+	 * self::T_PLUS_EQUAL
 	 * @param array $value
 	 */
 	private static function doSetPlusVal ( &$value ) {
 		$ref =& self::getVariableRef( $value );
-		$value[PHPTAGS_STACK_RESULT] = $ref += $value[PHPTAGS_STACK_PARAM_2];
+		$value[self::B_RESULT] = $ref += $value[self::B_PARAM_2];
 	}
 
 	/**
-	 * PHPTAGS_T_MINUS_EQUAL
+	 * self::T_MINUS_EQUAL
 	 * @param array $value
 	 */
 	private static function doSetMinusVal ( &$value ) {
 		$ref =& self::getVariableRef( $value );
-		$value[PHPTAGS_STACK_RESULT] = $ref -= $value[PHPTAGS_STACK_PARAM_2];
+		$value[self::B_RESULT] = $ref -= $value[self::B_PARAM_2];
 	}
 
 	/**
-	 * PHPTAGS_T_MUL_EQUAL
+	 * self::T_MUL_EQUAL
 	 * @param array $value
 	 */
 	private static function doSetMulVal ( &$value ) {
 		$ref =& self::getVariableRef( $value );
-		$value[PHPTAGS_STACK_RESULT] = $ref *= $value[PHPTAGS_STACK_PARAM_2];
+		$value[self::B_RESULT] = $ref *= $value[self::B_PARAM_2];
 	}
 
 	/**
-	 * PHPTAGS_T_DIV_EQUAL
+	 * self::T_DIV_EQUAL
 	 * @param array $value
 	 */
 	private static function doSetDivVal ( &$value ) {
 		$ref =& self::getVariableRef( $value );
-		$value[PHPTAGS_STACK_RESULT] = $ref /= $value[PHPTAGS_STACK_PARAM_2];
+		$value[self::B_RESULT] = $ref /= $value[self::B_PARAM_2];
 	}
 
 	/**
-	 * PHPTAGS_T_MOD_EQUAL
+	 * self::T_MOD_EQUAL
 	 * @param array $value
 	 */
 	private static function doSetModVal ( &$value ) {
 		$ref =& self::getVariableRef( $value );
-		$value[PHPTAGS_STACK_RESULT] = $ref %= $value[PHPTAGS_STACK_PARAM_2];
+		$value[self::B_RESULT] = $ref %= $value[self::B_PARAM_2];
 	}
 
 	/**
-	 * PHPTAGS_T_AND_EQUAL
+	 * self::T_AND_EQUAL
 	 * @param array $value
 	 */
 	private static function doSetAndVal ( &$value ) {
 		$ref =& self::getVariableRef( $value );
-		$value[PHPTAGS_STACK_RESULT] = $ref &= $value[PHPTAGS_STACK_PARAM_2];
+		$value[self::B_RESULT] = $ref &= $value[self::B_PARAM_2];
 	}
 
 	/**
-	 * PHPTAGS_T_OR_EQUAL
+	 * self::T_OR_EQUAL
 	 * @param array $value
 	 */
 	private static function doSetOrVal ( &$value ) {
 		$ref =& self::getVariableRef( $value );
-		$value[PHPTAGS_STACK_RESULT] = $ref |= $value[PHPTAGS_STACK_PARAM_2];
+		$value[self::B_RESULT] = $ref |= $value[self::B_PARAM_2];
 	}
 
 	/**
-	 * PHPTAGS_T_XOR_EQUAL
+	 * self::T_XOR_EQUAL
 	 * @param array $value
 	 */
 	private static function doSetXorVal ( &$value ) {
 		$ref =& self::getVariableRef( $value );
-		$value[PHPTAGS_STACK_RESULT] = $ref ^= $value[PHPTAGS_STACK_PARAM_2];
+		$value[self::B_RESULT] = $ref ^= $value[self::B_PARAM_2];
 	}
 
 	/**
-	 * PHPTAGS_T_SL_EQUAL
+	 * self::T_SL_EQUAL
 	 * @param array $value
 	 */
 	private static function doSetShiftLeftVal ( &$value ) {
 		$ref =& self::getVariableRef( $value );
-		$value[PHPTAGS_STACK_RESULT] = $ref <<= $value[PHPTAGS_STACK_PARAM_2];
+		$value[self::B_RESULT] = $ref <<= $value[self::B_PARAM_2];
 	}
 
 	/**
-	 * PHPTAGS_T_SR_EQUAL
+	 * self::T_SR_EQUAL
 	 * @param array $value
 	 */
 	private static function doSetShiftRightVal ( &$value ) {
 		$ref =& self::getVariableRef( $value );
-		$value[PHPTAGS_STACK_RESULT] = $ref <<= $value[PHPTAGS_STACK_PARAM_2];
+		$value[self::B_RESULT] = $ref <<= $value[self::B_PARAM_2];
 	}
 
 	private static function & getVariableRef( $value ) {
 		$variables =& self::$stack[0][self::S_VARIABLES];
-		$var = $value[PHPTAGS_STACK_PARAM];
-		$variableName = $var[PHPTAGS_STACK_PARAM];
+		$var = $value[self::B_PARAM_1];
+		$variableName = $var[self::B_PARAM_1];
 		if( !(isset($variables[$variableName]) || array_key_exists($variableName, $variables)) ) { // Use undefined variable
 			$variables[$variableName] = null;
-			if( $value[PHPTAGS_STACK_COMMAND] !== PHPTAGS_T_EQUAL ) {
+			if( $value[self::B_COMMAND] !== self::T_EQUAL ) {
 				self::pushException( new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_VARIABLE, $variableName ) );
 			}
 		}
 		$ref =& $variables[$variableName];
-		if ( isset($var[PHPTAGS_STACK_ARRAY_INDEX]) ) { // Example: $foo[1]++
-			foreach ( $var[PHPTAGS_STACK_ARRAY_INDEX] as $v ) {
+		if ( isset($var[self::B_ARRAY_INDEX]) ) { // Example: $foo[1]++
+			foreach ( $var[self::B_ARRAY_INDEX] as $v ) {
 				if ( $v === INF ) { // Example: $foo[]
 					$t = null;
 					$ref[] = &$t;
@@ -1209,7 +979,7 @@ class Runtime {
 					unset( $t );
 				} else {
 					if ( $ref === null ) {
-						if( $value[PHPTAGS_STACK_COMMAND] !== PHPTAGS_T_EQUAL ) {
+						if( $value[self::B_COMMAND] !== self::T_EQUAL ) {
 							// PHP Notice:  Undefined offset: $1
 							self::pushException( new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_OFFSET, $v ) );
 						}
@@ -1218,7 +988,7 @@ class Runtime {
 					} elseif ( is_array($ref) ) {
 						if ( !( isset($ref[$v]) || array_key_exists($v, $ref) ) ) {
 							$ref[$v] = null;
-							if( $value[PHPTAGS_STACK_COMMAND] !== PHPTAGS_T_EQUAL ) {
+							if( $value[self::B_COMMAND] !== self::T_EQUAL ) {
 								// PHP Notice:  Undefined offset: $1
 								self::pushException( new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_OFFSET, $v ) );
 							}
@@ -1270,17 +1040,17 @@ doit:
 			do {
 				for ( ++$runIndex; $runIndex < $c; ++$runIndex ) {
 					$value =& $runCode[$runIndex];
-					$call = $operators[ $value[PHPTAGS_STACK_COMMAND] ];
+					$call = $operators[ $value[self::B_COMMAND] ];
 					self::$call( $value );
 				}
-			} while( list($runCode[$runIndex][PHPTAGS_STACK_RESULT], $runCode, $runIndex, $c, $loopsOwner) = array_pop($memory) );
+			} while( list($runCode[$runIndex][self::B_RESULT], $runCode, $runIndex, $c, $loopsOwner) = array_pop($memory) );
 		} catch ( PhpTagsException $e ) {
 			self::pushException( $e );
-			if ( $e->isFatal() !== true && ($call === $operators[PHPTAGS_T_HOOK] || $call === $operators[PHPTAGS_T_NEW]) ) {
-				$runCode[$runIndex][PHPTAGS_STACK_RESULT] = Hooks::getCallInfo( Hooks::INFO_RETURNS_ON_FAILURE );
+			if ( $e->isFatal() !== true && ($call === $operators[self::T_HOOK] || $call === $operators[self::T_NEW]) ) {
+				$runCode[$runIndex][self::B_RESULT] = Hooks::getCallInfo( Hooks::INFO_RETURNS_ON_FAILURE );
 				goto doit;
 			}
-			$runCode[$runIndex][PHPTAGS_STACK_RESULT] = null;
+			$runCode[$runIndex][self::B_RESULT] = null;
 			self::$ignoreErrors = false;
 		} catch ( \Exception $e ) {
 			Renderer::addRuntimeErrorCategory();
@@ -1302,19 +1072,19 @@ doit:
 			if ( $param === null ) { // skip emty params. Example: list(, $bar) = $array;
 				continue;
 			}
-			if( $param[PHPTAGS_STACK_COMMAND] == PHPTAGS_T_LIST ) { // T_LIST inside other T_LIST. Example: list($a, list($b, $c)) = array(1, array(2, 3));
+			if( $param[self::B_COMMAND] == self::T_LIST ) { // T_LIST inside other T_LIST. Example: list($a, list($b, $c)) = array(1, array(2, 3));
 				if ( is_array($values) && isset($values[$pkey]) ) {
-					$return[$pkey] = self::fillList( $values[$pkey], $param[PHPTAGS_STACK_PARAM] );
+					$return[$pkey] = self::fillList( $values[$pkey], $param[self::B_PARAM_1] );
 				} else { // list() works with array only @todo support strings
 					static $emptyArray=array();
-					$return[$pkey] = self::fillList( $emptyArray, $param[PHPTAGS_STACK_PARAM], $pkey );
+					$return[$pkey] = self::fillList( $emptyArray, $param[self::B_PARAM_1], $pkey );
 				}
 				continue;
 			}
 			// $param is variable
-			$ref =& self::$stack[0][self::S_VARIABLES][ $param[PHPTAGS_STACK_PARAM] ];
-			if ( isset($param[PHPTAGS_STACK_ARRAY_INDEX]) ) { // Example: list($foo[0], $foo[1]) = $array;
-				foreach ( $param[PHPTAGS_STACK_ARRAY_INDEX] as $v ) {
+			$ref =& self::$stack[0][self::S_VARIABLES][ $param[self::B_PARAM_1] ];
+			if ( isset($param[self::B_ARRAY_INDEX]) ) { // Example: list($foo[0], $foo[1]) = $array;
+				foreach ( $param[self::B_ARRAY_INDEX] as $v ) {
 					if (  $v === INF ) { // Example: $foo[]
 						$t = null;
 						$ref[] = &$t;
@@ -1346,7 +1116,7 @@ doit:
 		if ( self::$ignoreErrors === false ) {
 			$stack =& self::$stack[0];
 			if ( $exc->tokenLine === null ) {
-				$exc->tokenLine = $stack[self::S_RUNNING][ $stack[self::S_RUN_INDEX] ][PHPTAGS_STACK_TOKEN_LINE];
+				$exc->tokenLine = $stack[self::S_RUNNING][ $stack[self::S_RUN_INDEX] ][self::B_TOKEN_LINE];
 			}
 			$exc->place = $stack[self::S_PLACE];
 			$stack[self::S_RETURN][] = (string) $exc;
@@ -1362,5 +1132,351 @@ doit:
 	public static function getVariables() {
 		return self::$stack[0][self::S_VARIABLES];
 	}
+
+	##### List of PhpTags runtime Tokens #####
+	/**
+	 * operator: "
+	 */
+	const T_QUOTE = 0;
+
+	/**
+	 * operator: .
+	 */
+	const T_CONCAT = 1;
+
+	/**
+	 * operator: +
+	 */
+	const T_PLUS = 2;
+
+	/**
+	 * operator: -
+	 */
+	const T_MINUS = 3;
+
+	/**
+	 * operator: *
+	 */
+	const T_MUL = 4;
+
+	/**
+	 * operator: /
+	 */
+	const T_DIV = 5;
+
+	/**
+	 * operator: ==
+	 */
+	const T_IS_EQUAL = 6;
+
+	/**
+	 * get value from variable
+	 */
+	const T_VARIABLE = 7;
+
+	/**
+	 * operator: if
+	 */
+	const T_IF = 8;
+
+	/**
+	 * operator: =
+	 */
+	const T_EQUAL = 9;
+
+	/**
+	 * operator: .=
+	 */
+	const T_CONCAT_EQUAL = 10;
+
+	/**
+	 * operator: /=
+	 */
+	const T_DIV_EQUAL = 11;
+
+	/**
+	 * operator: *=
+	 */
+	const T_MUL_EQUAL = 12;
+
+	/**
+	 * operator: -=
+	 */
+	const T_MINUS_EQUAL = 13;
+
+	/**
+	 * operator: +=
+	 */
+	const T_PLUS_EQUAL = 14;
+
+	/**
+	 * operator: !==
+	 */
+	const T_IS_NOT_IDENTICAL = 15;
+
+	/**
+	 * operator: ===
+	 */
+	const T_IS_IDENTICAL = 16;
+
+	/**
+	 * operator: !=
+	 */
+	const T_IS_NOT_EQUAL = 17;
+
+	/**
+	 * operator: ^=
+	 */
+	const T_XOR_EQUAL = 18;
+
+	/**
+	 * operator: >=
+	 */
+	const T_IS_GREATER_OR_EQUAL = 19;
+
+	/**
+	 * operator: <=
+	 */
+	const T_IS_SMALLER_OR_EQUAL = 20;
+
+	/**
+	 * operator: >>
+	 */
+	const T_SR = 21;
+
+	/**
+	 * operator: <<
+	 */
+	const T_SL = 22;
+
+	/**
+	 * operator: (unset)
+	 */
+	const T_UNSET_CAST = 23;
+
+	/**
+	 * operator: (bool)
+	 */
+	const T_BOOL_CAST = 24;
+
+	/**
+	 * operator: (array)
+	 */
+	const T_ARRAY_CAST = 25;
+
+	/**
+	 * operator: (string)
+	 */
+	const T_STRING_CAST = 26;
+
+	/**
+	 * operator: (double)
+	 */
+	const T_DOUBLE_CAST = 27;
+
+	/**
+	 * operator: (int)
+	 */
+	const T_INT_CAST = 28;
+
+	/**
+	 * operator: --
+	 */
+	const T_DEC = 29;
+
+	/**
+	 * operator: ++
+	 */
+	const T_INC = 30;
+
+	/**
+	 * operator: new
+	 */
+	const T_NEW = 31;
+
+	/**
+	 * operator: &=
+	 */
+	const T_AND_EQUAL = 32;
+
+	/**
+	 * call phptags hook
+	 * it can be constant, function, object's constant, property, method
+	 */
+	const T_HOOK = 33;
+
+	/**
+	 * check passed param before call self::T_HOOK
+	 */
+	const T_HOOK_CHECK_PARAM = 34;
+
+	/**
+	 * it copies value from variable to destination
+	 */
+	const T_COPY = 35;
+
+	/**
+	 * It saved current runtime state and starts new loop
+	 */
+	const T_WHILE = 36;
+
+	/**
+	 * It saved current runtime state and starts new foreach loop
+	 * next operator is self::T_AS
+	 */
+	const T_FOREACH = 37;
+
+	/**
+	 * It gets each value in started foreach loop, exit from loop if end of array
+	 */
+	const T_AS = 38;
+
+	/**
+	 * It ends execution of the current loop structure.
+	 */
+	const T_BREAK = 39;
+
+	/**
+	 * It starts current loop structure from the beginning
+	 * If value > 1, end execution (T_BREAK) of value - 1 loops
+	 * It checks loops count limit (self::$loopsLimit)
+	 * Every cycle should end with this operator
+	 */
+	const T_CONTINUE = 40;
+
+	/**
+	 * It is designet for \PhpTags\Compiler only!
+	 * It returns value of operation and used for calculation values in compiler
+	 * if it possible.
+	 * For example: compile $a = 5 + 4. Compiler calls Runtime and gets result 9 for
+	 * expression 5 + 4, and writes code $a = 9.
+	 */
+	const T_RETURN = 41;
+
+	/**
+	 * It links global variable to local scope
+	 */
+	const T_GLOBAL = 42;
+
+	/**
+	 * It inits static variables from local scope
+	 */
+	const T_STATIC = 43;
+
+	/**
+	 * destroys the specified variables
+	 */
+	const T_UNSET = 44;
+
+	/**
+	 * Determine if a variable is set and is not NULL
+	 */
+	const T_ISSET = 45;
+
+	/**
+	 * Determine whether a variable is empty
+	 */
+	const T_EMPTY = 46;
+
+	/**
+	 * Assign variables as if they were an array
+	 */
+	const T_LIST = 47;
+
+	/**
+	 * Inits new array
+	 */
+	const T_ARRAY = 48;
+
+	/**
+	 * operator: |=
+	 */
+	const T_OR_EQUAL = 49;
+
+	/**
+	 * Output string
+	 * Operators: echo, print
+	 */
+	const T_PRINT = 50;
+
+	/**
+	 * operator: ||
+	 */
+	const T_LOGICAL_OR = 51;
+
+	/**
+	 * operator: @
+	 */
+	const T_IGNORE_ERROR = 52;
+
+	/**
+	 * ternary operator: ?
+	 */
+	const T_TERNARY = 53;
+
+	/**
+	 * operator: |
+	 */
+	const T_OR = 54;
+
+	/**
+	 * operator: ^
+	 */
+	const T_XOR = 55;
+
+	/**
+	 * operator: &
+	 */
+	const T_AND = 56;
+
+	/**
+	 * operator: >
+	 */
+	const T_IS_GREATER = 57;
+
+	/**
+	 * operator: <
+	 */
+	const T_IS_SMALLER = 58;
+
+	/**
+	 * operator: xor
+	 */
+	const T_LOGICAL_XOR = 59;
+
+	/**
+	 * operator: %=
+	 */
+	const T_MOD_EQUAL = 60;
+
+	/**
+	 * operator: and
+	 */
+	const T_LOGICAL_AND = 61;
+
+	/**
+	 * operator: %
+	 */
+	const T_MOD = 62;
+
+	/**
+	 * operator: <<=
+	 */
+	const T_SL_EQUAL = 63;
+
+	/**
+	 * operator: >>=
+	 */
+	const T_SR_EQUAL = 64;
+
+	/**
+	 * operator: !
+	 */
+	const T_IS_NOT = 65;
+
+	/**
+	 * operator: ~
+	 */
+	const T_NOT = 66;
 
 }

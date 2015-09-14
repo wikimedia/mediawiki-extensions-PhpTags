@@ -33,6 +33,7 @@ class Hooks {
 	const INFO_ORIGINAL_OBJECT_NAME = 4;
 	const INFO_ORIGINAL_FULL_NAME = 5;
 	const INFO_RETURNS_ON_FAILURE = 6;
+	const INFO_HOOK_TYPE_STRING = 7;
 
 	/**
 	 * Value passed from class Runtime
@@ -147,25 +148,29 @@ class Hooks {
 	 */
 	public static function getReferenceInfo( $number, $value ) {
 		self::$value = $value;
-		$name = $value[PHPTAGS_STACK_PARAM]; // Function or method name
+		$methodKey = $value[Runtime::B_METHOD_KEY] ?: strtolower( $value[Runtime::B_METHOD] ); // Function or method name
 
-		if ( $value[PHPTAGS_STACK_HOOK_TYPE] === PHPTAGS_HOOK_FUNCTION ) { // Hook type is function
-			if ( isset( self::$functions[$name][0][self::EXPECTS_REFERENCE_PARAMETERS] ) ) {
-				$references = self::$functions[$name][0][self::EXPECTS_REFERENCE_PARAMETERS];
+		if ( $value[Runtime::B_HOOK_TYPE] === Runtime::H_FUNCTION ) { // Hook type is function
+			if ( isset( self::$functions[$methodKey][0][self::EXPECTS_REFERENCE_PARAMETERS] ) ) {
+				$references = self::$functions[$methodKey][0][self::EXPECTS_REFERENCE_PARAMETERS];
 			} else {
 				$references = false;
 			}
+		} elseif ( $value[Runtime::B_OBJECT] === false ) { // Hook type is not object
+			unset( self::$value[Runtime::B_OBJECT] ); // unlink reference before assign a value!!!
+			self::$value[Runtime::B_OBJECT] = false;
+			return false;
 		} else { // Hook type is object
-			$object = $value[PHPTAGS_STACK_PARAM_3] === false ? false : $value[PHPTAGS_STACK_PARAM_3][PHPTAGS_STACK_PARAM_3];
-			unset( self::$value[PHPTAGS_STACK_PARAM_3] ); // unlink reference before assign a value!!!
-			self::$value[PHPTAGS_STACK_PARAM_3] = $object; // self::getCallInfo() waits $object in PHPTAGS_STACK_PARAM_3
+			$object = $value[Runtime::B_OBJECT][Runtime::B_OBJECT];
+			unset( self::$value[Runtime::B_OBJECT] ); // unlink reference before assign a value!!!
+			self::$value[Runtime::B_OBJECT] = $object; // self::getCallInfo() waits $object in [Runtime::B_OBJECT] index
 			if ( $object instanceof GenericObject ) { // Object has been created
-				$className = self::getClassNameByObjectName( $object->getObjectKey() );
+				$objectKey = self::getClassNameByObjectName( $object->getObjectKey() );
 			} else { // It is static method of object
-				$className = $object;
+				$objectKey = $value[Runtime::B_OBJECT][Runtime::B_OBJECT_KEY] ?: strtolower( $object );
 			}
-			if ( isset( self::$objects[$className][2][$name][0][self::EXPECTS_REFERENCE_PARAMETERS] ) ) {
-				$references = self::$objects[$className][2][$name][0][self::EXPECTS_REFERENCE_PARAMETERS];
+			if ( isset( self::$objects[$objectKey][2][$methodKey][0][self::EXPECTS_REFERENCE_PARAMETERS] ) ) {
+				$references = self::$objects[$objectKey][2][$methodKey][0][self::EXPECTS_REFERENCE_PARAMETERS];
 			} else {
 				$references = false;
 			}
@@ -225,28 +230,39 @@ class Hooks {
 	 */
 	public static function callHook( $value ) {
 		self::$value = $value; // Remember to function getCallInfo
-		$name = $value[PHPTAGS_STACK_PARAM];
-
-		switch ( $value[PHPTAGS_STACK_HOOK_TYPE] ) {
-			case PHPTAGS_HOOK_GET_CONSTANT: // Hook is a constant. Example: echo M_PI;
-				return self::callGetConstant( $name );
-			case PHPTAGS_HOOK_FUNCTION: // Hook is a function. Example: echo foo();
-				return self::callFunction( $value[PHPTAGS_STACK_PARAM_2], $name );
-			case PHPTAGS_HOOK_GET_OBJECT_CONSTANT: // Hook is a object constant. Example: Foo::MY_BAR
-				return self::callGetObjectsConstant( $name, $value[PHPTAGS_STACK_PARAM_3] );
-			case PHPTAGS_HOOK_GET_STATIC_PROPERTY: // Hook is a static property of a method. Example: echo FOO::$bar;
-				return self::callGetStaticProperty( $name, $value[PHPTAGS_STACK_PARAM_3] );
-			case PHPTAGS_HOOK_GET_OBJECT_PROPERTY: // Hook is a property of a method. Example: $foo = new Foo(); echo $foo->bar;
-				return self::callGetObjectsProperty( $name, $value[PHPTAGS_STACK_PARAM_3] );
-			case PHPTAGS_HOOK_SET_STATIC_PROPERTY: // Example FOO::$bar = true;
-				return self::callSetStaticProperty( $name, $value[PHPTAGS_STACK_PARAM_3], $value[PHPTAGS_STACK_PARAM_2] );
-			case PHPTAGS_HOOK_SET_OBJECT_PROPERTY: // Example: $foo = new Foo(); $foo->bar = true;
-				return self::callSetObjectsProperty( $name, $value[PHPTAGS_STACK_PARAM_3], $value[PHPTAGS_STACK_PARAM_2] );
-			case PHPTAGS_HOOK_STATIC_METHOD: // Example: FOO::bar()
-				return self::callStaticMethod( $value[PHPTAGS_STACK_PARAM_2], $name, $value[PHPTAGS_STACK_PARAM_3] );
-			case PHPTAGS_HOOK_OBJECT_METHOD: // Example: $foo = new Foo(); $foo->bar();
-				return self::callObjectsMethod( $value[PHPTAGS_STACK_PARAM_2], $name, $value[PHPTAGS_STACK_PARAM_3] );
+		$hookType = $value[Runtime::B_HOOK_TYPE];
+		if ( $hookType === Runtime::H_GET_CONSTANT ) { // Hook is a constant. Example: echo M_PI;
+			return self::callGetConstant( $value[Runtime::B_METHOD] );
+		} elseif ( $hookType === Runtime::H_GET_OBJECT_CONSTANT ) { // Hook is a object constant. Example: Foo::MY_BAR
+			return self::callGetObjectConstant( $value[Runtime::B_METHOD], $value[Runtime::B_OBJECT], $value[Runtime::B_OBJECT_KEY] );
 		}
+
+		$methodKey = $value[Runtime::B_METHOD_KEY] ?: strtolower( $value[Runtime::B_METHOD] );
+		switch ( $hookType ) {
+			case Runtime::H_FUNCTION: // Hook is a function. Example: echo foo();
+				return self::callFunction( $value[Runtime::B_PARAM_2], $methodKey );
+			case Runtime::H_GET_STATIC_PROPERTY: // Hook is a static property of a method. Example: echo FOO::$bar;
+				return self::callGetStaticProperty( $methodKey, $value[Runtime::B_OBJECT], $value[Runtime::B_OBJECT_KEY] );
+			case Runtime::H_GET_OBJECT_PROPERTY: // Hook is a property of a method. Example: $foo = new Foo(); echo $foo->bar;
+				return self::callGetObjectProperty( $methodKey, $value[Runtime::B_OBJECT] );
+			case Runtime::H_SET_STATIC_PROPERTY: // Example FOO::$bar = true;
+				return self::callSetStaticProperty( $value[Runtime::B_PARAM_2], $methodKey, $value[Runtime::B_OBJECT], $value[Runtime::B_OBJECT_KEY] );
+			case Runtime::H_SET_OBJECT_PROPERTY: // Example: $foo = new Foo(); $foo->bar = true;
+				return self::callSetObjectProperty( $value[Runtime::B_PARAM_2], $methodKey, $value[Runtime::B_OBJECT] );
+			case Runtime::H_STATIC_METHOD: // Example: FOO::bar()
+				return self::callStaticMethod( $value[Runtime::B_PARAM_2], $methodKey, $value[Runtime::B_OBJECT], $value[Runtime::B_OBJECT_KEY] );
+			case Runtime::H_OBJECT_METHOD: // Example: $foo = new Foo(); $foo->bar();
+				return self::callObjectMethod( $value[Runtime::B_PARAM_2], $methodKey, $value[Runtime::B_OBJECT] );
+		}
+	}
+
+	private static function checkPermission( $hookType, $objectName, $methodName, $values ) {
+		if ( \Hooks::run( 'PhpTagsBeforeCallRuntimeHook', array($hookType, $objectName, $methodName, $values) ) ) {
+			return true;
+		}
+
+		Runtime::pushException( new HookException( 'banned by administrator' ) );
+		return false;
 	}
 
 	/**
@@ -270,116 +286,168 @@ class Hooks {
 				}
 				$constants[$className] = true; // add to cache
 			}
+			if ( !self::checkPermission( Runtime::H_GET_CONSTANT, null, $name, null ) ) {
+				return self::getCallInfo( self::INFO_RETURNS_ON_FAILURE );
+			}
 			return $className::getConstantValue( $name );
 		} elseif ( isset( self::$constantValues[$name] ) || array_key_exists( $name, self::$constantValues ) ) {
+			if ( !self::checkPermission( Runtime::H_GET_CONSTANT, null, $name, null ) ) {
+				return self::getCallInfo( self::INFO_RETURNS_ON_FAILURE );
+			}
 			return self::$constantValues[$name];
 		}
 		Runtime::pushException( new PhpTagsException( PhpTagsException::NOTICE_UNDEFINED_CONSTANT, $name ) );
+		if ( !self::checkPermission( Runtime::H_GET_CONSTANT, null, $name, null ) ) {
+			return self::getCallInfo( self::INFO_RETURNS_ON_FAILURE );
+		}
 		return $name;
 	}
 
 	/**
 	 * Call the function's hook
 	 * @param array $arguments List of the arguments
-	 * @param string $calledFuncName Name of the function
+	 * @param string $funcKey Name of the function in lower case
 	 * @return mixed
 	 */
-	private static function callFunction( $arguments, $calledFuncName ) {
-		$funcKey = strtolower( $calledFuncName );
+	private static function callFunction( $arguments, $funcKey = null ) {
 		$funcClass = self::getFunctionClass( $funcKey );
 		ksort( $arguments );
 		self::checkFunctionArguments( $funcKey, $arguments );
-		return call_user_func_array( array($funcClass, "f_$calledFuncName"), $arguments );
+
+		if ( !self::checkPermission( Runtime::H_FUNCTION, null, $funcKey, $arguments ) ) {
+			return self::getCallInfo( self::INFO_RETURNS_ON_FAILURE );
+		}
+		return call_user_func_array( array($funcClass, "f_$funcKey"), $arguments );
 	}
 
 	/**
 	 * Call the method of object based on class \PhpTags\GenericObject
 	 * @param array $arguments List of the arguments
-	 * @param string $calledMethodName Name of the method
-	 * @param mixed $calledObject Name of the object or the object of class \PhpTags\GenericObject
+	 * @param string $methodKey Name of the method in lower case
+	 * @param mixed $object Name of the object or the object of class \PhpTags\GenericObject
 	 * @return mixed
 	 * @throws PhpTagsException
 	 */
-	private static function callObjectsMethod( $arguments, $calledMethodName, $calledObject ) {
-		if ( false === $calledObject instanceof GenericObject ) {
+	private static function callObjectMethod( $arguments, $methodKey, $object ) {
+		if ( false === $object instanceof GenericObject ) {
 			throw new PhpTagsException( PhpTagsException::FATAL_CALL_FUNCTION_ON_NON_OBJECT );
 		}
+		$objectKey = $object->getObjectKey();
 		ksort( $arguments );
-		self::checkObjectArguments( $calledObject->getObjectKey(), $calledMethodName, false, $arguments );
-		return call_user_func_array( array($calledObject, "m_$calledMethodName"), $arguments );
+		self::checkObjectArguments( $objectKey, $methodKey, false, $arguments );
+		if ( !self::checkPermission( Runtime::H_OBJECT_METHOD, $objectKey, $methodKey, $arguments ) ) {
+			return self::getCallInfo( self::INFO_RETURNS_ON_FAILURE );
+		}
+		return call_user_func_array( array($object, "m_$methodKey"), $arguments );
 	}
 
-	private static function callStaticMethod( $arguments, $calledMethodName, $calledObject ) {
+	private static function callStaticMethod( $arguments, $methodKey, $calledObject, $objectKey = null ) {
 		if ( $calledObject instanceof GenericObject ) {
 			$objectKey = $calledObject->getObjectKey();
-		} else {
+		} elseif( !$objectKey ) {
 			$objectKey = strtolower( $calledObject );
 		}
 
 		ksort( $arguments );
-		self::checkObjectArguments( $objectKey, $calledMethodName, true, $arguments );
+		self::checkObjectArguments( $objectKey, $methodKey, true, $arguments );
 		$className = self::getClassNameByObjectName( $objectKey );
-		return call_user_func_array( array($className, "s_$calledMethodName"), $arguments );
+		if ( !self::checkPermission( Runtime::H_STATIC_METHOD, $objectKey, $methodKey, $arguments ) ) {
+			return self::getCallInfo( self::INFO_RETURNS_ON_FAILURE );
+		}
+		return call_user_func_array( array($className, "s_$methodKey"), $arguments );
 	}
 
-	public static function callGetObjectsConstant( $name, $object ) {
+	private static function callGetObjectConstant( $name, $object, $objectKey = null ) {
 		if ( $object instanceof GenericObject ) {
 			$objectKey = $object->getObjectKey();
-		} else {
+		} elseif ( !$objectKey ) {
 			$objectKey = strtolower( $object );
 		}
 
 		$className = self::getClassNameByObjectName( $objectKey );
 		$handler = "c_$name";
+		if ( !self::checkPermission( Runtime::H_GET_OBJECT_CONSTANT, $objectKey, $name, null ) ) {
+			return self::getCallInfo( self::INFO_RETURNS_ON_FAILURE );
+		}
 		return $className::$handler();
 	}
 
 	/**
 	 * Call the property of object based on class \PhpTags\GenericObject
-	 * @param string $name Name of the property
+	 * @param string $propertyKey Name of the property in lower case
 	 * @param mixed $object Name of the object or the object of class \PhpTags\GenericObject
 	 * @return mixed
 	 * @throws PhpTagsException
 	 */
-	public static function callGetObjectsProperty( $name, $object ) {
+	private static function callGetObjectProperty( $propertyKey, $object ) {
 		if ( false === $object instanceof GenericObject ) {
 			Runtime::pushException( new PhpTagsException( PhpTagsException::NOTICE_GET_PROPERTY_OF_NON_OBJECT ) );
 		}
-		$handler = "p_$name";
+		$handler = "p_$propertyKey";
+		if ( !self::checkPermission( Runtime::H_GET_OBJECT_PROPERTY, $object->getObjectKey(), $propertyKey, null ) ) {
+			return self::getCallInfo( self::INFO_RETURNS_ON_FAILURE );
+		}
 		return $object->$handler();
 	}
 
-	public static function callGetStaticProperty( $name, $object ) {
+	private static function callGetStaticProperty( $propertyKey, $object, $objectKey = null ) {
 		if ( $object instanceof GenericObject ) {
 			$objectKey = $object->getObjectKey();
-		} else {
+		} elseif ( !$objectKey ) {
 			$objectKey = strtolower( $object );
 		}
 
 		$className = self::getClassNameByObjectName( $objectKey );
-		$handler = "q_$name";
+		$handler = "q_$propertyKey";
+		if ( !self::checkPermission( Runtime::H_GET_STATIC_PROPERTY, $objectKey, $propertyKey, null ) ) {
+			return self::getCallInfo( self::INFO_RETURNS_ON_FAILURE );
+		}
 		return $className::$handler();
 	}
 
+	/**
+	 * @deprecated since version 5.2.0
+	 * @param type $name
+	 * @param type $object
+	 * @param type $value
+	 */
 	public static function callSetObjectsProperty( $name, $object, $value ) {
+		return self::callSetObjectProperty( $value, strtolower( $name ), $object );
+	}
+
+	/**
+	 * @since 5.2.0
+	 * @param mixed $value
+	 * @param string $propertyKey
+	 * @param \PhpTags\GenericObject $object
+	 * @return mixded
+	 */
+	public static function callSetObjectProperty( $value, $propertyKey, $object ) {
 		if ( false === $object instanceof GenericObject ) {
 			Runtime::pushException( new PhpTagsException( PhpTagsException::WARNING_ATTEMPT_TO_ASSIGN_PROPERTY ) );
 		}
-		$handler = "b_$name";
-		$validValue = self::getValidPropertyValue( $object->getObjectKey(), $name, false, $value );
+		$objectKey = $object->getObjectKey();
+		$validValue = self::getValidPropertyValue( $objectKey, $propertyKey, false, $value );
+		$handler = 'b_' . $propertyKey;
+		if ( !self::checkPermission( Runtime::H_SET_OBJECT_PROPERTY, $objectKey, $propertyKey, $value ) ) {
+			return self::getCallInfo( self::INFO_RETURNS_ON_FAILURE );
+		}
 		return $object->$handler( $validValue );
 	}
 
-	public static function callSetStaticProperty( $name, $object, $value ) {
+	private static function callSetStaticProperty( $value, $propertyKey, $object, $objectKey = null ) {
 		if ( $object instanceof GenericObject ) {
 			$objectKey = $object->getObjectKey();
-		} else {
+		} elseif( !$objectKey ) {
 			$objectKey = strtolower( $object );
 		}
 
 		$className = self::getClassNameByObjectName( $objectKey );
-		$handler = "d_$name";
-		$validValue = self::getValidPropertyValue( $objectKey, $name, true, $value );
+		$validValue = self::getValidPropertyValue( $objectKey, $propertyKey, true, $value );
+		$handler = "d_$propertyKey";
+		if ( !self::checkPermission( Runtime::H_SET_STATIC_PROPERTY, $objectKey, $propertyKey, $value ) ) {
+			return self::getCallInfo( self::INFO_RETURNS_ON_FAILURE );
+		}
 		return $className::$handler( $validValue );
 	}
 
@@ -387,24 +455,33 @@ class Hooks {
 	 *
 	 * @param array $arguments
 	 * @param string $calledObjectName
+	 * @param string $objectKey Object name in lower case
 	 * @return \PhpTags\GenericObject
 	 * @throws PhpTagsException
 	 */
-	public static function createObject( $arguments, $calledObjectName ) {
+	public static function createObject( $arguments, $calledObjectName, $objectKey = null ) {
+		if ( !$objectKey ) {
+			$objectKey = strtolower( $calledObjectName );
+		}
+
 		self::$value = array(
-			PHPTAGS_STACK_HOOK_TYPE => PHPTAGS_HOOK_NEW_OBJECT,
-			PHPTAGS_STACK_PARAM => '__construct',
-			PHPTAGS_STACK_PARAM_2 => $arguments,
-			PHPTAGS_STACK_PARAM_3 => $calledObjectName,
+			Runtime::B_HOOK_TYPE => Runtime::H_NEW_OBJECT,
+			Runtime::B_METHOD => '__construct',
+			Runtime::B_METHOD_KEY => '__construct',
+			Runtime::B_PARAM_2 => $arguments,
+			Runtime::B_OBJECT => $calledObjectName,
+			Runtime::B_OBJECT_KEY => $objectKey,
 			);
 
-		$objectKey = strtolower( $calledObjectName );
 		$className = self::getClassNameByObjectName( $objectKey );
-		$newObject = new $className( $calledObjectName, $objectKey );
+		$newObject = new $className( self::getCallInfo( self::INFO_ORIGINAL_OBJECT_NAME ), $objectKey );
 		ksort( $arguments );
 
 		try {
 			self::checkObjectArguments( $objectKey, '__construct', false, $arguments );
+			if ( !self::checkPermission( Runtime::H_SET_STATIC_PROPERTY, $objectKey, '__construct', $arguments ) ) {
+				throw new PhpTagsException( PhpTagsException::FATAL_OBJECT_NOT_CREATED, '' );
+			}
 			call_user_func_array( array($newObject, 'm___construct'), $arguments );
 		} catch ( \PhpTags\PhpTagsException $exc) {
 			throw $exc;
@@ -466,8 +543,7 @@ class Hooks {
 	/*
 	 *
 	 */
-	private static function checkObjectArguments( $objectKey, $calledMethodName, $isStatic, $arguments ) {
-		$methodKey = strtolower( $calledMethodName );
+	private static function checkObjectArguments( $objectKey, $methodKey, $isStatic, $arguments ) {
 		$point = $isStatic === false ? 1 : 2;
 		if ( isset(self::$objects[$objectKey][$point][$methodKey]) ) {
 			$m = self::$objects[$objectKey][$point][$methodKey];
@@ -562,8 +638,7 @@ class Hooks {
 		return true;
 	}
 
-	private static function getValidPropertyValue( $objectKey, $calledPropertyName, $isStatic, $value ) {
-		$propertyKey = strtolower( $calledPropertyName );
+	private static function getValidPropertyValue( $objectKey, $propertyKey, $isStatic, $value ) {
 		$point = $isStatic === false ? 3 : 4;
 		if ( isset(self::$objects[$objectKey][$point][$propertyKey]) ) {
 			$expect = self::$objects[$objectKey][$point][$propertyKey][0];
@@ -629,8 +704,7 @@ class Hooks {
 		return $value;
 	}
 
-	public static function hasProperty( $objectKey, $propertyName ) {
-		$propertyKey = strtolower( $propertyName );
+	public static function hasProperty( $objectKey, $propertyKey ) {
 		return isset( self::$objects[$objectKey][3][$propertyKey] );
 	}
 
@@ -650,42 +724,45 @@ class Hooks {
 
 	private static function fillCallInfo() {
 		$value = self::$value;
-		$hookType = $value[PHPTAGS_STACK_HOOK_TYPE];
-		if ( $hookType === PHPTAGS_HOOK_GET_CONSTANT || $hookType === PHPTAGS_HOOK_FUNCTION ) {
+		$hookType = $value[Runtime::B_HOOK_TYPE];
+		if ( $hookType === Runtime::H_GET_CONSTANT || $hookType === Runtime::H_FUNCTION ) {
 			$calledObjectName = false;
 			$originalObjectName = false;
 		} else {
-			$object = $value[PHPTAGS_STACK_PARAM_3];
+			$object = $value[Runtime::B_OBJECT];
 			if ( $object instanceof GenericObject ) {
 				$originalObjectName = $calledObjectName = $object->getName();
 				$objectKey = $object->getObjectKey();
 			} else {
 				$calledObjectName = $object;
-				$objectKey = strtolower( $calledObjectName );
+				$objectKey = $value[Runtime::B_OBJECT_KEY] ?: strtolower( $calledObjectName );
 				$originalObjectName = isset( self::$objects[$objectKey][5] ) ? self::$objects[$objectKey][5] : $calledObjectName;
 			}
 		}
 
-		$calledHookName = $value[PHPTAGS_STACK_PARAM];
-		$hookKey = strtolower( $calledHookName );
+		$calledHookName = $value[Runtime::B_METHOD];
+		$hookKey = $value[Runtime::B_METHOD_KEY] ?: strtolower( $calledHookName );
 		$returnsOnFailure = null;
 		$objectAim = false;
 		$objectAim_2 = false;
 
-		switch ( $value[PHPTAGS_STACK_HOOK_TYPE] ) {
-			case PHPTAGS_HOOK_GET_CONSTANT: // Hook is a constant. Example: echo M_PI;
+		switch ( $value[Runtime::B_HOOK_TYPE] ) {
+			case Runtime::H_GET_CONSTANT: // Hook is a constant. Example: echo M_PI;
 				$originalHookName = $calledHookName; // Constants are case sensitive
 				$originalFullName = $originalHookName;
+				$hookTypeString = 'constant';
 				break;
-			case PHPTAGS_HOOK_GET_OBJECT_CONSTANT: // Hook is a object constant. Example: Foo::MY_BAR
+			case Runtime::H_GET_OBJECT_CONSTANT: // Hook is a object constant. Example: Foo::MY_BAR
 				$originalHookName = $calledHookName; // Constants are case sensitive
 				$originalFullName = $originalObjectName . '::' . $originalHookName;
+				$hookTypeString = 'object constant';
 				break;
-			case PHPTAGS_HOOK_NEW_OBJECT:
+			case Runtime::H_NEW_OBJECT:
 				$originalHookName = $hookKey; // it is '__construct'
 				$originalFullName = $originalObjectName . '::' . $originalHookName . '()';
+				$hookTypeString = 'construct';
 				break;
-			case PHPTAGS_HOOK_FUNCTION: // Hook is a function. Example: echo foo();
+			case Runtime::H_FUNCTION: // Hook is a function. Example: echo foo();
 				if ( isset( self::$functions[$hookKey] ) ) {
 					$originalHookName = self::$functions[$hookKey][1];
 					$returnsOnFailure = self::$functions[$hookKey][3];
@@ -693,18 +770,21 @@ class Hooks {
 					$originalHookName = $calledHookName;
 				}
 				$originalFullName = $originalHookName . '()';
+				$hookTypeString = 'function';
 				break;
-			case PHPTAGS_HOOK_GET_STATIC_PROPERTY: // Hook is a static property of a method. Example: echo FOO::$bar;
-			case PHPTAGS_HOOK_SET_STATIC_PROPERTY: // Example FOO::$bar = true;
+			case Runtime::H_GET_STATIC_PROPERTY: // Hook is static property of object. Example: echo FOO::$bar;
+			case Runtime::H_SET_STATIC_PROPERTY: // Example FOO::$bar = true;
 				$originalHookName = isset( self::$objects[$objectKey][4][$hookKey][1] ) ? self::$objects[$objectKey][4][$hookKey][1] : ( isset( self::$objects[$objectKey][3][$hookKey][1] ) ? self::$objects[$objectKey][3][$hookKey][1] : $calledHookName ) ;
 				$originalFullName = $originalObjectName . '::$' . $originalHookName;
+				$hookTypeString = 'static property';
 				break;
-			case PHPTAGS_HOOK_GET_OBJECT_PROPERTY: // Hook is a property of a method. Example: $foo = new Foo(); echo $foo->bar;
-			case PHPTAGS_HOOK_SET_OBJECT_PROPERTY: // Example: $foo = new Foo(); $foo->bar = true;
+			case Runtime::H_GET_OBJECT_PROPERTY: // Hook is property of object. Example: $foo = new Foo(); echo $foo->bar;
+			case Runtime::H_SET_OBJECT_PROPERTY: // Example: $foo = new Foo(); $foo->bar = true;
 				$originalHookName = isset( self::$objects[$objectKey][3][$hookKey][1] ) ? self::$objects[$objectKey][3][$hookKey][1] : ( isset( self::$objects[$objectKey][4][$hookKey][1] ) ? self::$objects[$objectKey][4][$hookKey][1] : $calledHookName ) ;
 				$originalFullName = $originalObjectName . '->' . $originalHookName;
+				$hookTypeString = 'property';
 				break;
-			case PHPTAGS_HOOK_STATIC_METHOD: // Example: FOO::bar()
+			case Runtime::H_STATIC_METHOD: // Example: FOO::bar()
 				if ( isset( self::$objects[$objectKey][2][$hookKey] ) ) {
 					$tmp = self::$objects[$objectKey][2][$hookKey];
 				} elseif ( isset( self::$objects[$objectKey][1][$hookKey] ) ) {
@@ -718,8 +798,9 @@ class Hooks {
 					$returnsOnFailure = $tmp[2];
 				}
 				$originalFullName = $originalObjectName . '::' . $originalHookName . '()';
+				$hookTypeString = 'static method';
 				break;
-			case PHPTAGS_HOOK_OBJECT_METHOD: // Example: $foo = new Foo(); $foo->bar();
+			case Runtime::H_OBJECT_METHOD: // Example: $foo = new Foo(); $foo->bar();
 				if ( isset( self::$objects[$objectKey][1][$hookKey] ) ) {
 					$tmp = self::$objects[$objectKey][1][$hookKey];
 				} elseif ( isset( self::$objects[$objectKey][2][$hookKey] ) ) {
@@ -733,6 +814,7 @@ class Hooks {
 					$returnsOnFailure = $tmp[2];
 				}
 				$originalFullName = $originalObjectName . '->' . $originalHookName . '()';
+				$hookTypeString = 'method';
 				break;
 		}
 
@@ -744,6 +826,7 @@ class Hooks {
 			self::INFO_ORIGINAL_OBJECT_NAME => $originalObjectName,
 			self::INFO_ORIGINAL_FULL_NAME => $originalFullName,
 			self::INFO_RETURNS_ON_FAILURE => $returnsOnFailure,
+			self::INFO_HOOK_TYPE_STRING => $hookTypeString,
 		);
 	}
 

@@ -1,0 +1,50 @@
+{
+	"constants": {
+		"PHPTAGS_TEST": {},
+		"PHPTAGS_TEST_BANNED": {},
+		"PHPTAGS_TEST_IN_CLASS": {
+			"class": "PhpTagsTestClass"
+		},
+		"PHPTAGS_TEST_IN_CLASS_BANNED": {
+			"class": "PhpTagsTestClass"
+		}
+	},
+	"functions": {
+		"PhpTagsTestfunction": {
+			"class": "PhpTagsTestClass",
+			"parameters": []
+		},
+		"PhpTagsTestfunction_banned": {
+			"class": "PhpTagsTestClass",
+			"parameters": []
+		}
+	},
+	"objects": {
+		"PhpTagsTest": {
+			"class": "PhpTagsTestClass",
+			"METHODS": {
+				"__construct": {
+					"parameters": []
+				},
+				"myMethod" : {
+					"parameters": []
+				},
+				"myMethod_BANNED" : {
+					"parameters": []
+				}
+			},
+			"STATIC METHODS": {
+				"myStaticMethod" : {
+					"parameters": []
+				},
+				"myStaticMethod_BANNED" : {
+					"parameters": []
+				}
+			},
+			"CONSTANTS": {
+				"OBJ_TEST": {},
+				"OBJ_TEST_BANNED": {}
+			}
+		}
+	}
+}
