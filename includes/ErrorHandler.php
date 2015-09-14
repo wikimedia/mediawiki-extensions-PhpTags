@@ -33,14 +33,14 @@ class ErrorHandler {
 	private static function onRuntimeObjectConvertionError( $matches ) {
 		$object = Runtime::getCurrentOperator();
 		static $previousOperator = false;
-		if ( isset($object[PHPTAGS_STACK_PARAM]) && is_a($object[PHPTAGS_STACK_PARAM], $matches[1]) ) {
-			if ( $previousOperator === $object && is_a($object[PHPTAGS_STACK_PARAM_2], $matches[1]) ) {
-				$matches[1] = $object[PHPTAGS_STACK_PARAM_2]->getName();
+		if ( isset($object[Runtime::B_PARAM_1]) && is_a($object[Runtime::B_PARAM_1], $matches[1]) ) {
+			if ( $previousOperator === $object && is_a($object[Runtime::B_PARAM_2], $matches[1]) ) {
+				$matches[1] = $object[Runtime::B_PARAM_2]->getName();
 			} else {
-				$matches[1] = $object[PHPTAGS_STACK_PARAM]->getName();
+				$matches[1] = $object[Runtime::B_PARAM_1]->getName();
 			}
 		} else {
-			$matches[1] = $object[PHPTAGS_STACK_PARAM_2]->getName();
+			$matches[1] = $object[Runtime::B_PARAM_2]->getName();
 		}
 		Runtime::pushException( new PhpTagsException( PhpTagsException::NOTICE_OBJECT_CONVERTED, array($matches[1], $matches[2]) ) );
 		$previousOperator = $object;

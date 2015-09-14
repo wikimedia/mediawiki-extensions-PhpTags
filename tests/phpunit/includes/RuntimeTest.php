@@ -1,7 +1,7 @@
 <?php
 namespace PhpTags;
 
-class RuntimeTest extends \PHPUnit_Framework_TestCase {
+class RuntimeTest extends \MediaWikiTestCase {
 
 	public function testRun_echo_null_1() {
 		$this->assertEquals(
@@ -3048,6 +3048,115 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 	}
 	public function testRun_echo_exception_11() {
 		$this->assertEquals( array( false ), Runtime::runSource( 'echo @(5/0);', array('Test') ) );
+	}
+
+	public function testRun_constant_test() {
+		$this->assertEquals(
+				Runtime::runSource( 'echo PHPTAGS_TEST;' ),
+				array( 'Test' )
+			);
+	}
+	public function testRun_constant_test_banned() {
+		$result = Runtime::runSource( 'echo PHPTAGS_TEST_BANNED;', array('Test ban') );
+
+		$exc1 = new \PhpTags\HookException( 'Sorry, you cannot use this constant' );
+		$exc1->place = 'Test ban';
+		$exc1->tokenLine = 1;
+		$exc2 = new \PhpTags\HookException( 'banned by administrator' );
+		$exc2->place = 'Test ban';
+		$exc2->tokenLine = 1;
+
+		$this->assertEquals( $result, array( (string)$exc1, (string)$exc2, false ) );
+	}
+	public function testRun_constant_class_test() {
+		$this->assertEquals(
+				Runtime::runSource( 'echo PHPTAGS_TEST_IN_CLASS;' ),
+				array( 'I am constant PHPTAGS_TEST_IN_CLASS' )
+			);
+	}
+	public function testRun_constant_class_banned_test() {
+		$result = Runtime::runSource( 'echo PHPTAGS_TEST_IN_CLASS_BANNED;', array('Test ban') );
+
+		$exc1 = new \PhpTags\HookException( 'Sorry, you cannot use this constant' );
+		$exc1->place = 'Test ban';
+		$exc1->tokenLine = 1;
+		$exc2 = new \PhpTags\HookException( 'banned by administrator' );
+		$exc2->place = 'Test ban';
+		$exc2->tokenLine = 1;
+
+		$this->assertEquals( $result, array( (string)$exc1, (string)$exc2, false ) );
+	}
+	public function testRun_object_constant_test() {
+		$this->assertEquals(
+				Runtime::runSource( 'echo PhpTagsTest::OBJ_TEST;' ),
+				array( 'c_OBJ_TEST' )
+			);
+	}
+	public function testRun_object_constant_banned_test() {
+		$result = Runtime::runSource( 'echo PhpTagsTest::OBJ_TEST_BANNED;', array('Test ban') );
+
+		$exc1 = new \PhpTags\HookException( 'Sorry, you cannot use this object constant' );
+		$exc1->place = 'Test ban';
+		$exc1->tokenLine = 1;
+		$exc2 = new \PhpTags\HookException( 'banned by administrator' );
+		$exc2->place = 'Test ban';
+		$exc2->tokenLine = 1;
+
+		$this->assertEquals( $result, array( (string)$exc1, (string)$exc2, false ) );
+	}
+	public function testRun_function_test() {
+		$this->assertEquals(
+				Runtime::runSource( 'echo PhpTagsTestfunction();' ),
+				array( 'f_phptagstestfunction' )
+			);
+	}
+	public function testRun_function_banned_test() {
+		$result = Runtime::runSource( 'echo PhpTagsTestfunction_BANNED();', array('Test ban') );
+
+		$exc1 = new \PhpTags\HookException( 'Sorry, you cannot use this function' );
+		$exc1->place = 'Test ban';
+		$exc1->tokenLine = 1;
+		$exc2 = new \PhpTags\HookException( 'banned by administrator' );
+		$exc2->place = 'Test ban';
+		$exc2->tokenLine = 1;
+
+		$this->assertEquals( $result, array( (string)$exc1, (string)$exc2, false ) );
+	}
+	public function testRun_object_method_test() {
+		$this->assertEquals(
+				Runtime::runSource( '$obj = new PhpTagsTest(); echo $obj->myMETHOD();' ),
+				array( 'm_mymethod' )
+			);
+	}
+	public function testRun_object_method_banned_test() {
+		$result = Runtime::runSource( '$obj = new PhpTagsTest(); echo $obj->myMETHOD_BaNnEd();', array('Test ban') );
+
+		$exc1 = new \PhpTags\HookException( 'Sorry, you cannot use this method' );
+		$exc1->place = 'Test ban';
+		$exc1->tokenLine = 1;
+		$exc2 = new \PhpTags\HookException( 'banned by administrator' );
+		$exc2->place = 'Test ban';
+		$exc2->tokenLine = 1;
+
+		$this->assertEquals( $result, array( (string)$exc1, (string)$exc2, false ) );
+	}
+	public function testRun_static_method_test() {
+		$this->assertEquals(
+				Runtime::runSource( 'echo PhpTagsTest::mystaticMETHOD();' ),
+				array( 's_mystaticmethod' )
+			);
+	}
+	public function testRun_static_method_banned_test() {
+		$result = Runtime::runSource( 'echo PhpTagsTest::mystaticMETHOD_BaNnEd();', array('Test ban') );
+
+		$exc1 = new \PhpTags\HookException( 'Sorry, you cannot use this static method' );
+		$exc1->place = 'Test ban';
+		$exc1->tokenLine = 1;
+		$exc2 = new \PhpTags\HookException( 'banned by administrator' );
+		$exc2->place = 'Test ban';
+		$exc2->tokenLine = 1;
+
+		$this->assertEquals( $result, array( (string)$exc1, (string)$exc2, false ) );
 	}
 
 }

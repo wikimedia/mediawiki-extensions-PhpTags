@@ -16,12 +16,12 @@ if ( !defined( 'MEDIAWIKI' ) ) {
 }
 
 const PHPTAGS_MAJOR_VERSION = 5;
-const PHPTAGS_MINOR_VERSION = 1;
-const PHPTAGS_RELEASE_VERSION = 4;
+const PHPTAGS_MINOR_VERSION = 2;
+const PHPTAGS_RELEASE_VERSION = 0;
 define( 'PHPTAGS_VERSION', PHPTAGS_MAJOR_VERSION . '.' . PHPTAGS_MINOR_VERSION . '.' . PHPTAGS_RELEASE_VERSION );
 
 const PHPTAGS_HOOK_RELEASE = 8;
-const PHPTAGS_RUNTIME_RELEASE = 5;
+const PHPTAGS_RUNTIME_RELEASE = 6;
 const PHPTAGS_JSONLOADER_RELEASE = 3;
 
 // Register this extension on Special:Version
@@ -57,6 +57,7 @@ $wgAutoloadClasses['PhpTags\\Runtime'] = __DIR__ . '/includes/Runtime.php';
 $wgAutoloadClasses['PhpTags\\GenericObject'] = __DIR__ . '/includes/GenericObject.php';
 $wgAutoloadClasses['PhpTags\\Hooks'] = __DIR__ . '/includes/Hooks.php';
 $wgAutoloadClasses['PhpTags\\JsonLoader'] = __DIR__ . '/includes/JsonLoader.php';
+$wgAutoloadClasses['PhpTagsObjects\\PhpTagsTestClass'] = __DIR__ . '/tests/phpunit/includes/PhpTagsTestClass.php';
 
 // Add tracking categories
 $wgTrackingCategories[] = 'phptags-compiler-error-category';
