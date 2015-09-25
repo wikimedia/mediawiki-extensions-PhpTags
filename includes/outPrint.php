@@ -9,28 +9,41 @@ namespace PhpTags;
  * @licence GNU General Public Licence 2.0 or later
  */
 class outPrint implements iRawOutput {
-	public $returnValue=null;
-	private $contents;
-	private $raw;
+	private $returnValue;
+	private $content;
 	private $element;
 	private $attribs;
 
-	public function __construct( $returnValue, $contents, $raw=false, $element='pre', $attribs = array() ) {
+	/**
+	 *
+	 * @param mixed $returnValue
+	 * @param string $content
+	 * @param bool $raw
+	 * @param string|false $element
+	 * @param array $attribs
+	 * @param array $sheath
+	 */
+	public function __construct( $returnValue, $content, $raw=false, $element='pre', $attribs = array() ) {
 		$this->returnValue = $returnValue;
-		$this->raw = $raw;
-		$this->contents = (string)$contents;
+		$this->content = $raw ? (string)$content : strtr( $content, array('&'=>'&amp;', '<'=>'&lt;') );
 		$this->element = $element;
 		$this->attribs = $attribs;
 	}
 
 	public function __toString() {
-		if( $this->element !== false ){
-			if( $this->raw ) {
-				return \Html::rawElement( $this->element, array(), $this->contents ) . "\n";
-			}else{
-				return \Html::element( $this->element, array(), $this->contents ) . "\n";
-			}
+		if ( $this->element ) {
+			return \Html::rawElement( $this->element, $this->attribs, $this->content );
 		}
-		return $this->raw ? "{$this->contents}\n" : strtr( $this->contents, array('&'=>'&amp;', '<'=>'&lt;') ) . "\n";
+		return $this->content;
 	}
+
+	public function getReturnValue() {
+		return $this->returnValue;
+	}
+
+	public function placeAsStripItem() {
+		$this->content = Renderer::insertNoWiki( $this->content );
+		return Renderer::insertStripItem( $this );
+	}
+
 }

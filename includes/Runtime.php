@@ -673,9 +673,9 @@ class Runtime {
 	private static function doCallingHook ( &$value ) {
 		$result = Hooks::callHook( $value );
 
-		if ( $result instanceof outPrint ) {
-			$value[self::B_RESULT] = $result->returnValue;
-			self::$stack[0][self::S_RETURN][] = $result;
+		if ( $result instanceof iRawOutput ) {
+			$value[self::B_RESULT] = $result->getReturnValue();
+			self::$stack[0][self::S_RETURN][] = $result->placeAsStripItem();
 		} else {
 			$value[self::B_RESULT] = $result;
 		}

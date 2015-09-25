@@ -341,6 +341,32 @@ Total   : %.3f sec
 		}
 	}
 
+	/**
+	 *
+	 * @see Parser::insertStripItem()
+	 * @param string $text
+	 * @return string
+	 */
+	public static function insertNoWiki( $text ) {
+		$parser = self::$parser;
+		if ( $parser === null ) { // skip in php unit tests
+			return $text;
+		}
+		$rnd = "{$parser->mUniqPrefix}-phptags-{$parser->mMarkerIndex}-" . \Parser::MARKER_SUFFIX;
+		$parser->mMarkerIndex++;
+		$parser->mStripState->addNoWiki( $rnd, $text );
+		return $rnd;
+	}
+
+
+	public static function insertStripItem( $text ) {
+		$parser = self::$parser;
+		if ( $parser === null ) { // skip in php unit tests
+			return $text;
+		}
+		return $parser->insertStripItem( $text );
+	}
+
 }
 
 class Timer {

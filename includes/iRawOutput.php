@@ -9,5 +9,11 @@ namespace PhpTags;
  * @licence GNU General Public Licence 2.0 or later
  */
 interface iRawOutput {
+
 	public function __toString();
+
+	public function getReturnValue();
+
+	public function placeAsStripItem();
+
 }
