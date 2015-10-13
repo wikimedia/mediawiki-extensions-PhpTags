@@ -3051,6 +3051,7 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 	}
 
 	public function testRun_constant_test() {
+		wfDebug( 'PHPTags: this message must be after PHPTags test initialization. ' . __METHOD__ );
 		$this->assertEquals(
 				Runtime::runSource( 'echo PHPTAGS_TEST;' ),
 				array( 'Test' )

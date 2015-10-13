@@ -1,4 +1,5 @@
 <?php
+wfDebug( 'PHPTags test initialization' . __FILE__ );
 \PhpTags\Hooks::addJsonFile( __DIR__ . '/PhpTags_test.json' );
 const PHPTAGS_TEST = 'Test';
 const PHPTAGS_TEST_BANNED = 'Test';
@@ -15,6 +16,7 @@ const PHPTAGS_TEST_BANNED = 'Test';
 } );
 
 if ( \PhpTags\Renderer::$needInitRuntime ) {
+	wfDebug( 'PHPTags: run hook PhpTagsRuntimeFirstInit ' . __FILE__ );
 	\Hooks::run( 'PhpTagsRuntimeFirstInit' );
 	\PhpTags\Hooks::loadData();
 	\PhpTags\Runtime::$loopsLimit = 1000;
