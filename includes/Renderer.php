@@ -178,7 +178,7 @@ class Renderer {
 		}
 
 		if ( true === self::$needInitRuntime ) {
-			\wfDebugLog( 'PhpTags', 'Run hook PhpTagsRuntimeFirstInit' );
+			\wfDebug( 'PhpTags: Run hook PhpTagsRuntimeFirstInit' );
 			\Hooks::run( 'PhpTagsRuntimeFirstInit' );
 			Hooks::loadData();
 			Runtime::$loopsLimit = $wgPhpTagsMaxLoops;

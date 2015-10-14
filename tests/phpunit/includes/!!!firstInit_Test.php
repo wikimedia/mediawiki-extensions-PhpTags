@@ -1,5 +1,5 @@
 <?php
-wfDebug( 'PHPTags test initialization' . __FILE__ );
+wfDebug( 'PHPTags: test initialization ' . __FILE__ );
 \PhpTags\Hooks::addJsonFile( __DIR__ . '/PhpTags_test.json' );
 const PHPTAGS_TEST = 'Test';
 const PHPTAGS_TEST_BANNED = 'Test';
