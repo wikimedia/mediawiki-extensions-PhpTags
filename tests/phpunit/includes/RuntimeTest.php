@@ -3052,12 +3052,21 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 
 	public function testRun_constant_test() {
 		wfDebug( 'PHPTags: this message must be after PHPTags test initialization. ' . __METHOD__ );
+		if ( !defined( 'PHPTAGS_TEST' ) ) {
+			wfDebug( 'PHPTags: constant PHPTAGS_TEST is not defined, skip PhpTagsRuntimeFirstInit hook tests. ' . __METHOD__ );
+			return;
+		}
+
 		$this->assertEquals(
 				Runtime::runSource( 'echo PHPTAGS_TEST;' ),
 				array( 'Test' )
 			);
 	}
 	public function testRun_constant_test_banned() {
+		if ( !defined( 'PHPTAGS_TEST' ) ) {
+			return;
+		}
+
 		$result = Runtime::runSource( 'echo PHPTAGS_TEST_BANNED;', array('Test ban') );
 
 		$exc1 = new \PhpTags\HookException( 'Sorry, you cannot use this constant' );
@@ -3070,12 +3079,20 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 		$this->assertEquals( $result, array( (string)$exc1, (string)$exc2, false ) );
 	}
 	public function testRun_constant_class_test() {
+		if ( !defined( 'PHPTAGS_TEST' ) ) {
+			return;
+		}
+
 		$this->assertEquals(
 				Runtime::runSource( 'echo PHPTAGS_TEST_IN_CLASS;' ),
 				array( 'I am constant PHPTAGS_TEST_IN_CLASS' )
 			);
 	}
 	public function testRun_constant_class_banned_test() {
+		if ( !defined( 'PHPTAGS_TEST' ) ) {
+			return;
+		}
+
 		$result = Runtime::runSource( 'echo PHPTAGS_TEST_IN_CLASS_BANNED;', array('Test ban') );
 
 		$exc1 = new \PhpTags\HookException( 'Sorry, you cannot use this constant' );
@@ -3088,12 +3105,20 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 		$this->assertEquals( $result, array( (string)$exc1, (string)$exc2, false ) );
 	}
 	public function testRun_object_constant_test() {
+		if ( !defined( 'PHPTAGS_TEST' ) ) {
+			return;
+		}
+
 		$this->assertEquals(
 				Runtime::runSource( 'echo PhpTagsTest::OBJ_TEST;' ),
 				array( 'c_OBJ_TEST' )
 			);
 	}
 	public function testRun_object_constant_banned_test() {
+		if ( !defined( 'PHPTAGS_TEST' ) ) {
+			return;
+		}
+
 		$result = Runtime::runSource( 'echo PhpTagsTest::OBJ_TEST_BANNED;', array('Test ban') );
 
 		$exc1 = new \PhpTags\HookException( 'Sorry, you cannot use this object constant' );
@@ -3106,12 +3131,20 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 		$this->assertEquals( $result, array( (string)$exc1, (string)$exc2, false ) );
 	}
 	public function testRun_function_test() {
+		if ( !defined( 'PHPTAGS_TEST' ) ) {
+			return;
+		}
+
 		$this->assertEquals(
 				Runtime::runSource( 'echo PhpTagsTestfunction();' ),
 				array( 'f_phptagstestfunction' )
 			);
 	}
 	public function testRun_function_banned_test() {
+		if ( !defined( 'PHPTAGS_TEST' ) ) {
+			return;
+		}
+
 		$result = Runtime::runSource( 'echo PhpTagsTestfunction_BANNED();', array('Test ban') );
 
 		$exc1 = new \PhpTags\HookException( 'Sorry, you cannot use this function' );
@@ -3124,12 +3157,20 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 		$this->assertEquals( $result, array( (string)$exc1, (string)$exc2, false ) );
 	}
 	public function testRun_object_method_test() {
+		if ( !defined( 'PHPTAGS_TEST' ) ) {
+			return;
+		}
+
 		$this->assertEquals(
 				Runtime::runSource( '$obj = new PhpTagsTest(); echo $obj->myMETHOD();' ),
 				array( 'm_mymethod' )
 			);
 	}
 	public function testRun_object_method_banned_test() {
+		if ( !defined( 'PHPTAGS_TEST' ) ) {
+			return;
+		}
+
 		$result = Runtime::runSource( '$obj = new PhpTagsTest(); echo $obj->myMETHOD_BaNnEd();', array('Test ban') );
 
 		$exc1 = new \PhpTags\HookException( 'Sorry, you cannot use this method' );
@@ -3142,12 +3183,20 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 		$this->assertEquals( $result, array( (string)$exc1, (string)$exc2, false ) );
 	}
 	public function testRun_static_method_test() {
+		if ( !defined( 'PHPTAGS_TEST' ) ) {
+			return;
+		}
+
 		$this->assertEquals(
 				Runtime::runSource( 'echo PhpTagsTest::mystaticMETHOD();' ),
 				array( 's_mystaticmethod' )
 			);
 	}
 	public function testRun_static_method_banned_test() {
+		if ( !defined( 'PHPTAGS_TEST' ) ) {
+			return;
+		}
+
 		$result = Runtime::runSource( 'echo PhpTagsTest::mystaticMETHOD_BaNnEd();', array('Test ban') );
 
 		$exc1 = new \PhpTags\HookException( 'Sorry, you cannot use this static method' );
