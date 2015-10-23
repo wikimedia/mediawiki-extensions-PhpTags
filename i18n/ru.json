@@ -4,6 +4,11 @@
 			"Okras"
 		]
 	},
+	"phptags-compiler-error-category": "Страницы с неверным PhpTags-кодом",
+	"phptags-compiler-error-category-desc": "PhpTags-код, содержащий ошибку.",
+	"phptags-runtime-error-category": "Страницы с PhpTags-ошибками",
+	"phptags-runtime-error-category-desc": "Произошла ошибка при обработке кода PhpTags на этой странице.",
 	"phptags-desc": "Позволяет пользователям использовать волшебные выражения в синтаксисе языка PHP",
-	"phptags-disabled-for-namespace": "Расширение PhpTags отключено для пространства имён «$1»."
+	"phptags-disabled-for-namespace": "Расширение PhpTags отключено для пространства имён «$1».",
+	"phptags-extension-type": "Расширения PhpTags"
 }
