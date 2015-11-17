@@ -1293,6 +1293,7 @@ checkOperators:
 							$copy = array( Runtime::B_COMMAND=>Runtime::T_COPY, Runtime::B_PARAM_1=>null, Runtime::B_RESULT=>&$array[$i] );
 							$this->addValueIntoStack( $value, $copy, Runtime::B_PARAM_1, false );
 							$this->stack[] =& $copy;
+							unset( $copy );
 						} else {
 							$this->addValueIntoStack( $value, $array, $i );
 						}
@@ -1347,7 +1348,7 @@ checkOperators:
 		if ( $result === false ) { // It is simple array and can be compiled, example: $foo = array( 1, 2, 3 );
 			$result = array( Runtime::B_COMMAND=>false, Runtime::B_RESULT=>&$array );
 		} elseif ( $array ) {
-			$result[Runtime::B_PARAM_1][] = &$array;
+			$result[Runtime::B_PARAM_1][] =& $array;
 		}
 		return $result;
 	}

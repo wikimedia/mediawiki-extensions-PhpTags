@@ -2045,10 +2045,21 @@ if ( $foo + $bar ) echo "\$foo + \$bar";'),
 				Runtime::runSource('$foo=array(1); echo (string)++$foo[0];'),
 				array('2')
 			);
-	}public function testRun_echo_array_right_increment_2() {
+	}
+	public function testRun_echo_array_right_increment_2() {
 		$this->assertEquals(
 				Runtime::runSource('$foo=array(1); echo (string)++$foo[0], $foo[0];'),
 				array('2', 2)
+			);
+	}
+	public function testRun_echo_array_constructor_1() {
+		$this->assertEquals(
+				Runtime::runSource('
+$b = array( "a", "b", "c" );
+$a = array( $b[0], $b[1], $b[2] );
+echo "(" . $b[0] . $b[1] . $b[2] .")--";
+echo "(" . $a[0] . $a[1] . $a[2] .")";'),
+				array('(abc)--', '(abc)')
 			);
 	}
 

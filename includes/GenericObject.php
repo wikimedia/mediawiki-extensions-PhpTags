@@ -115,7 +115,7 @@ class GenericObject implements \Iterator {
 		return \PhpTags\Hooks::getCallInfo( \PhpTags\Hooks::INFO_RETURNS_ON_FAILURE );
 	}
 
-	// It doesn't allow illegal access to public properties inside phptag code by using foreach operator
+	// It doesn't allow illegal access to public properties inside phptag code through using foreach operator
 	public function current() {}
 	public function key() {}
 	public function next() {}
