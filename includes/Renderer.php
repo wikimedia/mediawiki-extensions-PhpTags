@@ -134,7 +134,7 @@ class Renderer {
 		if ( true === isset( self::$bytecodeCache[$revID][$md5Source] ) ) {
 			\wfDebugLog( 'PhpTags', 'Memory hiting with key ' . $revID );
 			self::$memoryHit++;
-			return self::$bytecodeCache[$revID][$md5Source];
+			return unserialize( self::$bytecodeCache[$revID][$md5Source] );
 		}
 
 		if ( $wgPhpTagsBytecodeExptime > 0 && $revID > 0 && false === isset( self::$bytecodeLoaded[$revID] ) ) {
@@ -147,21 +147,21 @@ class Renderer {
 				if ( true === isset( self::$bytecodeCache[$revID][$md5Source] ) ) {
 					\wfDebugLog( 'PhpTags', 'Cache hiting with key ' . $revID );
 					self::$cacheHit++;
-					return self::$bytecodeCache[$revID][$md5Source];
+					return unserialize( self::$bytecodeCache[$revID][$md5Source] );
 				}
 			}
 			\wfDebugLog( 'PhpTags', 'Cache missing with key ' . $revID );
 		}
 
-		$bytecode = Compiler::compile( $source, $frameTitleText );
+		$bytecode = serialize( Compiler::compile( $source, $frameTitleText ) );
 		self::$bytecodeCache[$revID][$md5Source] = $bytecode;
 		if ( $revID > 0 ) { // Don't save bytecode of unsaved pages
-			self::$bytecodeNeedsUpdate[$revID][$md5Source] = unserialize( serialize( $bytecode ) );
+			self::$bytecodeNeedsUpdate[$revID][$md5Source] = $bytecode;
 		}
 
 		self::$compileHit++;
 		Timer::addCompileTime( $parser );
-		return $bytecode;
+		return unserialize( $bytecode );
 	}
 
 	/**
