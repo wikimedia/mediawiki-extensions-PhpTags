@@ -16,7 +16,7 @@ if ( !defined( 'MEDIAWIKI' ) ) {
 }
 
 const PHPTAGS_MAJOR_VERSION = 5;
-const PHPTAGS_MINOR_VERSION = 5;
+const PHPTAGS_MINOR_VERSION = 6;
 const PHPTAGS_RELEASE_VERSION = 0;
 define( 'PHPTAGS_VERSION', PHPTAGS_MAJOR_VERSION . '.' . PHPTAGS_MINOR_VERSION . '.' . PHPTAGS_RELEASE_VERSION );
 
@@ -49,6 +49,7 @@ $wgAutoloadClasses['PhpTags\\Renderer'] = __DIR__ . '/includes/Renderer.php';
 $wgAutoloadClasses['PhpTags\\Timer'] = __DIR__ . '/includes/Renderer.php';
 $wgAutoloadClasses['PhpTags\\iRawOutput'] = __DIR__ . '/includes/iRawOutput.php';
 $wgAutoloadClasses['PhpTags\\outPrint'] = __DIR__ . '/includes/outPrint.php';
+$wgAutoloadClasses['PhpTags\\outStrip'] = __DIR__ . '/includes/outStrip.php';
 $wgAutoloadClasses['PhpTags\\ErrorHandler'] = __DIR__ . '/includes/ErrorHandler.php';
 $wgAutoloadClasses['PhpTags\\PhpTagsException'] = __DIR__ . '/includes/PhpTagsException.php';
 $wgAutoloadClasses['PhpTags\\HookException'] = __DIR__ . '/includes/HookException.php';
