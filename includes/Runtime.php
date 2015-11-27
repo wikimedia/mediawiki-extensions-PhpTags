@@ -735,23 +735,23 @@ class Runtime {
 	 */
 	private static function doIsSet ( &$value ) {
 		$variables =& self::$stack[0][self::S_VARIABLES];
-		foreach($value[self::B_PARAM_1] as $val) {
-			if( !isset($variables[ $val[self::B_PARAM_1] ]) ) { // undefined variable or variable is null
+		foreach ( $value[self::B_PARAM_1] as $val ) {
+			if ( !isset( $variables[ $val[self::B_PARAM_1] ] ) ) { // undefined variable or variable is null
 				$value[self::B_RESULT] = false;
 				return;
 			} // true, variable is defined
-			if( isset($val[self::B_ARRAY_INDEX]) ) { // Example: isset($foo[1])
+			if( isset( $val[self::B_ARRAY_INDEX] ) ) { // Example: isset($foo[1])
 				$ref =& $variables[ $val[self::B_PARAM_1] ];
 				$tmp = array_pop( $val[self::B_ARRAY_INDEX] );
 				foreach( $val[self::B_ARRAY_INDEX] as $v ) {
-					if( !isset($ref[$v]) ) { // undefined array index
+					if( !isset( $ref[$v] ) ) { // undefined array index
 						$value[self::B_RESULT] = false;
 						return;
 					}
 					$ref =& $ref[$v];
 				}
 				// @todo ->>>>>>>>>>>> | ************************************************************* | <<<<< it only for compatible with PHP 5.4 if used PHP 5.3 @see http://www.php.net/manual/en/function.isset.php Example #2 isset() on String Offsets
-				if( !isset($ref[$tmp]) || (is_string($ref) && is_string($tmp ) && $tmp  != (string)(int)$tmp ) ) {
+				if ( !isset( $ref[$tmp] ) || (is_string( $ref ) && is_string( $tmp ) && $tmp  != (string)(int)$tmp ) ) {
 					$value[self::B_RESULT] = false;
 					return;
 				}
@@ -972,6 +972,18 @@ class Runtime {
 		$ref =& $variables[$variableName];
 		if ( isset($var[self::B_ARRAY_INDEX]) ) { // Example: $foo[1]++
 			foreach ( $var[self::B_ARRAY_INDEX] as $v ) {
+				if ( $ref === true || $ref === false ) {
+					if ( $v === INF ) { // Example: $foo[]
+						$ref = array();
+					}
+				} else if ( is_scalar( $ref ) ) {
+					self::pushException( new PhpTagsException( PhpTagsException::WARNING_SCALAR_VALUE_AS_ARRAY, null ) );
+					unset( $ref );
+					$ref = null;
+					break;
+				} else if ( is_object( $ref ) ) {
+					throw new PhpTagsException( PhpTagsException::FATAL_CANNOT_USE_OBJECT_AS_ARRAY, $ref );
+				}
 				if ( $v === INF ) { // Example: $foo[]
 					$t = null;
 					$ref[] = &$t;
@@ -985,7 +997,7 @@ class Runtime {
 						}
 						$ref[$v] = null;
 						$ref =& $ref[$v];
-					} elseif ( is_array($ref) ) {
+					} else {
 						if ( !( isset($ref[$v]) || array_key_exists($v, $ref) ) ) {
 							$ref[$v] = null;
 							if( $value[self::B_COMMAND] !== self::T_EQUAL ) {
@@ -994,12 +1006,6 @@ class Runtime {
 							}
 						}
 						$ref =& $ref[$v];
-					} else { // scalar
-						// PHP Warning:  Cannot use a scalar value as an array
-						self::pushException( new PhpTagsException( PhpTagsException::WARNING_SCALAR_VALUE_AS_ARRAY, null ) );
-						unset( $ref );
-						$ref = null;
-						break;
 					}
 				}
 			}

@@ -191,6 +191,9 @@ class PhpTagsException extends \Exception {
 			case self::WARNING_ILLEGAL_OFFSET_TYPE:
 				$message = 'Illegal offset type';
 				break;
+			case self::FATAL_CANNOT_USE_OBJECT_AS_ARRAY:
+				$message = 'Cannot use object as array';
+				break;
 			default:
 				$message = "Undefined error, code {$this->code}";
 				$this->code = self::EXCEPTION_FATAL * 1000;
@@ -281,6 +284,7 @@ class PhpTagsException extends \Exception {
 	const FATAL_ACCESS_TO_UNDECLARED_STATIC_PROPERTY = 4020; // PHP Fatal error:  Access to undeclared static property: F::$rsrr
 	const FATAL_UNEXPECTED_OBJECT_TYPE = 4021; // Fatal error: Unexpected object type stdClass. in
 	const FATAL_WRONG_BREAK_LEVELS = 4022; // PHP Fatal error:  Cannot break/continue 4 levels
+	const FATAL_CANNOT_USE_OBJECT_AS_ARRAY = 4023; // Cannot use object of type %%%%%% as array
 
 	const FATAL_DENIED_FOR_NAMESPACE = 4500;
 	const FATAL_CALLFUNCTION_INVALID_HOOK = 4501;

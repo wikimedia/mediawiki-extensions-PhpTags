@@ -53,6 +53,131 @@ class RuntimeTest extends \MediaWikiTestCase {
 			);
 	}
 
+	public function testRun_echo_heredoc_1() {
+		$this->assertEquals(
+				Runtime::runSource('
+echo <<<EOT
+Example of string
+spanning multiple lines
+using heredoc syntax.
+EOT;
+'),
+				array('Example of string
+spanning multiple lines
+using heredoc syntax.
+')
+			);
+	}
+	public function testRun_echo_heredoc_2() {
+		$this->assertEquals(
+				Runtime::runSource('
+echo <<<EOT
+Example of string
+spanning multiple lines
+using "heredoc" syntax.
+EOT;
+'),
+				array('Example of string
+spanning multiple lines
+using "heredoc" syntax.
+')
+			);
+	}
+	public function testRun_echo_heredoc_3() {
+		$this->assertEquals(
+				Runtime::runSource('
+echo <<<EOT
+Example of string
+spanning multiple\n lines\n
+using "heredoc" syntax.
+EOT;
+'),
+				array('Example of string
+spanning multiple
+ lines
+
+using "heredoc" syntax.
+')
+			);
+	}
+	public function testRun_echo_heredoc_4() {
+		$this->assertEquals(
+				Runtime::runSource('
+$foo = "BAR";
+echo <<<"EOT"
+Example of string $foo
+spanning multiple lines
+using heredoc syntax.
+EOT;
+'),
+				array('Example of string BAR
+spanning multiple lines
+using heredoc syntax.
+')
+			);
+	}
+	public function testRun_echo_nowdoc_1() {
+		$this->assertEquals(
+				Runtime::runSource('
+echo <<<\'EOT\'
+Example of string
+spanning multiple lines
+using nowdoc syntax.
+EOT;
+'),
+				array('Example of string
+spanning multiple lines
+using nowdoc syntax.
+')
+			);
+	}
+	public function testRun_echo_nowdoc_2() {
+		$this->assertEquals(
+				Runtime::runSource('
+echo <<<\'EOT\'
+Example of string
+spanning multiple lines
+using "nowdoc" syntax.
+EOT;
+'),
+				array('Example of string
+spanning multiple lines
+using "nowdoc" syntax.
+')
+			);
+	}
+	public function testRun_echo_nowdoc_3() {
+		$this->assertEquals(
+				Runtime::runSource('
+echo <<<\'EOT\'
+Example of string
+spanning multiple\n lines\n
+using "nowdoc" syntax.
+EOT;
+'),
+				array('Example of string
+spanning multiple\n lines\n
+using "nowdoc" syntax.
+')
+			);
+	}
+	public function testRun_echo_nowdoc_4() {
+		$this->assertEquals(
+				Runtime::runSource('
+$foo = "BAR";
+echo <<<\'EOT\'
+Example of string $foo
+spanning multiple lines
+using nowdoc syntax.
+EOT;
+'),
+				array('Example of string $foo
+spanning multiple lines
+using nowdoc syntax.
+')
+			);
+	}
+
 	public function testRun_echo_union_1() {
 		$this->assertEquals(
 				Runtime::runSource('echo "String" . "Union";'),
@@ -2062,6 +2187,35 @@ echo "(" . $a[0] . $a[1] . $a[2] .")";'),
 				array('(abc)--', '(abc)')
 			);
 	}
+	public function testRun_echo_array_exception_1() {
+		$this->assertEquals(
+				Runtime::runSource( '$t = 5; $t[] = 4; echo $t;', array('test') ),
+				array(
+					(string) new PhpTagsException( PhpTagsException::WARNING_SCALAR_VALUE_AS_ARRAY, null, 1, 'test' ),
+					'5',
+				)
+			);
+	}
+	public function testRun_echo_array_exception_2() {
+		$this->assertEquals(
+				Runtime::runSource( '$t = "5"; $t[] = 4; echo $t;', array('test') ),
+				array(
+					(string) new PhpTagsException( PhpTagsException::WARNING_SCALAR_VALUE_AS_ARRAY, null, 1, 'test' ),
+					'5',
+				)
+			);
+	}
+	public function testRun_echo_array_no_exception_3() {
+		$this->assertEquals(
+				Runtime::runSource( '$t = null; $t[] = 4; echo $t[0];', array('test') ),
+				array( '4' )
+			);
+	}public function testRun_echo_array_no_exception_4() {
+		$this->assertEquals(
+				Runtime::runSource( '$t = false; $t[] = 4; echo $t[0];', array('test') ),
+				array( '4' )
+			);
+	}
 
 	public function testRun_print_1() {
 		$this->assertEquals(
@@ -2755,6 +2909,30 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 		$this->assertEquals(
 				Runtime::runSource('echo isset($expected_array_got_string["0 Mostel"]) ? "true" : "false";'),
 				array('false')
+			);
+	}
+	public function testRun_echo_isset_boolean_and_1() {
+		$this->assertEquals(
+				Runtime::runSource( '
+	$g = ["a" => 0]; $x = "a";
+	if ( isset( $g[$x] ) && $x !== "kf" ) {
+		echo "TRUE";
+	} else {
+	    echo "FALSE";
+	}'),
+				array( 'TRUE' )
+			);
+	}
+	public function testRun_echo_isset_boolean_or_1() {
+		$this->assertEquals(
+				Runtime::runSource( '
+	$g = ["a" => 0]; $x = "a";
+	if ( isset( $g[$x] ) || $x === "kf" ) {
+		echo "TRUE";
+	} else {
+	    echo "FALSE";
+	}'),
+				array( 'TRUE' )
 			);
 	}
 
