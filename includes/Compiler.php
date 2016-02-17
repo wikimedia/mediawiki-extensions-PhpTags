@@ -453,17 +453,12 @@ class Compiler {
 						$tmp = intval( $text, 8 );
 					}
 				} else {
-					$tmp = (int)$text;
+					$tmp = $text + 0;
 				}
 				$result = array( Runtime::B_COMMAND=>null, Runtime::B_RESULT=>$tmp, Runtime::B_TOKEN_LINE=>$this->tokenLine, Runtime::B_DEBUG=>$text );
 				break;
 			case T_DNUMBER:
-				$epos = stripos($text, 'e');
-				if ( $epos === false ) {
-					$tmp = (float)$text;
-				} else {
-					$tmp = (float)( substr($text, 0, $epos) * pow(10, substr($text, $epos+1)) );
-				}
+				$tmp = $text + 0;
 				$result = array( Runtime::B_COMMAND=>null, Runtime::B_RESULT=>$tmp, Runtime::B_TOKEN_LINE=>$this->tokenLine, Runtime::B_DEBUG=>$text );
 				break;
 			case T_CONSTANT_ENCAPSED_STRING:
