@@ -752,8 +752,7 @@ class Runtime {
 					}
 					$ref =& $ref[$v];
 				}
-				// @todo ->>>>>>>>>>>> | ************************************************************* | <<<<< it only for compatible with PHP 5.4 if used PHP 5.3 @see http://www.php.net/manual/en/function.isset.php Example #2 isset() on String Offsets
-				if ( !isset( $ref[$tmp] ) || (is_string( $ref ) && is_string( $tmp ) && $tmp  != (string)(int)$tmp ) ) {
+				if ( !isset( $ref[$tmp] ) ) {
 					$value[self::B_RESULT] = false;
 					return;
 				}
@@ -781,8 +780,7 @@ class Runtime {
 					}
 					$ref = &$ref[$v];
 				}
-				// @todo ->>>>>>>>>>>> | ************************************************************* | <<<<< it only for compatible with PHP 5.4 if used PHP 5.3 @see http://www.php.net/manual/en/function.empty.php Example #2 empty() on String Offsets
-				if( !empty($ref[$tmp]) && (is_array($ref) || !is_string( $tmp ) || $tmp  == (string)(int)$tmp ) ) {
+				if( !empty($ref[$tmp]) ) {
 					$value[self::B_RESULT] = false;
 					return;
 				}

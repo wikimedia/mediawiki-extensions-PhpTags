@@ -394,7 +394,6 @@ class Compiler {
 	}
 
 	private function stepUP( $throwEndTag = true ) {
-		static $matches = array(); // @todo remove in PHP 5.4
 		$id = $text = false;
 
 		while ( $token = next($this->tokens) ) {
@@ -412,7 +411,7 @@ class Compiler {
 			} elseif ( $id != T_COMMENT && $id != T_DOC_COMMENT && $id != T_WHITESPACE ) {;
 				break;
 			} else {
-				$this->tokenLine += preg_match_all( '#\n#', $text, $matches );
+				$this->tokenLine += preg_match_all( '#\n#', $text );
 			}
 		}
 		if ( $token === false ) {
