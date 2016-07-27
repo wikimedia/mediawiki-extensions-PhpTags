@@ -11,6 +11,8 @@ namespace PhpTags;
  */
 class Runtime {
 
+	const VERSION = 10;
+
 	##### Bytecode array indexes #####
 	const B_COMMAND = 0; // Token ID
 	const B_RESULT = 1;

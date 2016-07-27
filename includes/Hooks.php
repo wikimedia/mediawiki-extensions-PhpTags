@@ -105,7 +105,7 @@ class Hooks {
 		$key = wfMemcKey( 'phptags', 'loadJsonFiles' );
 		$cached = $cache->get( $key );
 		if ( $cached !== false &&
-				$cached['JSONLOADER'] === PHPTAGS_JSONLOADER_RELEASE  &&
+				$cached['JSONLOADER'] === JsonLoader::VERSION &&
 				$cached['jsonFiles'] === self::$jsonFiles &&
 				$cached['callbackConstants'] === self::$callbackConstants ) {
 			\wfDebugLog( 'PhpTags', __METHOD__ . '() using cache: yes' );
@@ -117,7 +117,7 @@ class Hooks {
 			$data['constantValues'] += self::loadConstantValues();
 			$data['jsonFiles'] = self::$jsonFiles;
 			$data['callbackConstants'] = self::$callbackConstants;
-			$data['JSONLOADER'] = PHPTAGS_JSONLOADER_RELEASE;
+			$data['JSONLOADER'] = JsonLoader::VERSION;
 			$cache->set( $key, $data );
 		}
 		self::$jsonFiles = null;

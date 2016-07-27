@@ -3152,6 +3152,10 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 				Runtime::runSource('echo PHPTAGS_VERSION;'),
 				array(PHPTAGS_VERSION)
 			);
+		$this->assertEquals(
+				Runtime::runSource('echo PHPTAGS_VERSION;'),
+				array(\ExtensionRegistry::getInstance()->getAllThings()['PhpTags']['version'])
+			);
 	}
 
 	public function testRun_echo_exception_1() {
