@@ -66,6 +66,7 @@ class Renderer {
 		try {
 			$bytecode = self::getBytecode( $command, $parser, $frame, $frameTitle, $frameTitleText );
 			$result = Runtime::run( $bytecode, $arguments, $scope );
+			array_shift( self::$frame );
 			$return = implode( $result );
 		} catch ( PhpTagsException $exc ) {
 			$return = (string) $exc;
@@ -93,6 +94,7 @@ class Renderer {
 		try {
 			$bytecode = self::getBytecode( $input, $parser, $frame, $frameTitle, $frameTitleText );
 			$result = Runtime::run( $bytecode, $arguments, $scope );
+			array_shift( self::$frame );
 		} catch ( PhpTagsException $exc ) {
 			$result = array( (string) $exc );
 			$parser->addTrackingCategory( 'phptags-compiler-error-category' );

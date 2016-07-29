@@ -102,3 +102,79 @@ pf empty
 {{#phptag:  }}
 !! result
 !! end
+
+!! test
+pf echo html tag div
+!! input
+{{#phptag: echo '<div>test</div>'; }}
+!! result
+<div>test</div>
+
+!! end
+
+!! test
+echo html tag div
+!! input
+<phptag> echo '<div>test</div>'; </phptag>
+!! result
+<div>test</div>
+
+!! end
+
+!! test
+pf echo html tag a
+!! input
+{{#phptag: echo '<a href="test.com">test</a>'; }}
+!! result
+<p>&lt;a href="test.com"&gt;test&lt;/a&gt;
+</p>
+!! end
+
+!! test
+echo html tag a
+!! input
+<phptag> echo '<a href="test.com">test</a>'; </phptag>
+!! result
+<p>&lt;a href="test.com"&gt;test&lt;/a&gt;
+</p>
+!! end
+
+!! test
+pf echo html tag script
+!! input
+{{#phptag: echo '<script>alert "hello!";</script>'; }}
+!! result
+<p>&lt;script&gt;alert "hello!";&lt;/script&gt;
+</p>
+!! end
+
+!! test
+echo html tag script
+!! input
+<phptag> echo '<script>alert "hello!";</script>'; </phptag>
+!! result
+<p>&lt;script&gt;alert "hello!";&lt;/script&gt;
+</p>
+!! end
+
+!! test
+pf echo html tag onmouseover
+!! input
+<div
+{{#phptag: echo ' onmouseover="alert"'; }}
+>test</div>
+!! result
+<div>test</div>
+
+!! end
+
+!! test
+echo html tag onmouseover
+!! input
+<div
+{{#phptag: echo ' onmouseover="alert"'; }}
+>test</div>
+!! result
+<div>test</div>
+
+!! end
