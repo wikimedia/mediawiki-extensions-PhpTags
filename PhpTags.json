@@ -2,18 +2,22 @@
 	"constants": {
 		"PHPTAGS_MAJOR_VERSION": {
 			"desc": "The current 'major' version of the PhpTags extension as an integer",
+			"class": "PhpTagsConstants",
 			"type": "int"
 		},
 		"PHPTAGS_MINOR_VERSION": {
 			"desc": "The current 'minor' version of the PhpTags extension as an integer",
+			"class": "PhpTagsConstants",
 			"type": "int"
 		},
 		"PHPTAGS_RELEASE_VERSION": {
 			"desc": "The current 'release' version of the PhpTags extension as an integer",
+			"class": "PhpTagsConstants",
 			"type": "int"
 		},
 		"PHPTAGS_VERSION": {
 			"desc": "The current version of the PhpTags extension as a string",
+			"class": "PhpTagsConstants",
 			"type": "string"
 		}
 	}

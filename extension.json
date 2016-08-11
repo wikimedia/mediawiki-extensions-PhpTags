@@ -1,0 +1,58 @@
+{
+	"name": "PhpTags",
+	"version": "5.9.0.27",
+	"author": "[https://www.mediawiki.org/wiki/User:Pastakhov Pavel Astakhov]",
+	"url": "https://www.mediawiki.org/wiki/Extension:PhpTags",
+	"descriptionmsg": "phptags-desc",
+	"license-name": "GPL-2.0+",
+	"type": "phptags",
+	"MessagesDirs": {
+		"PhpTags": [
+			"i18n"
+		]
+	},
+	"ExtensionMessagesFiles": {
+		"PhpTagsMagic": "PhpTags.i18n.magic.php"
+	},
+	"AutoloadClasses": {
+		"PhpTagsHooks": "PhpTags.hooks.php",
+		"PhpTags\\Renderer": "includes/Renderer.php",
+		"PhpTags\\Timer": "includes/Renderer.php",
+		"PhpTags\\iRawOutput": "includes/iRawOutput.php",
+		"PhpTags\\outPrint": "includes/outPrint.php",
+		"PhpTags\\outStrip": "includes/outStrip.php",
+		"PhpTags\\PhpTagsException": "includes/PhpTagsException.php",
+		"PhpTags\\HookException": "includes/HookException.php",
+		"PhpTags\\Compiler": "includes/Compiler.php",
+		"PhpTags\\Runtime": "includes/Runtime.php",
+		"PhpTags\\GenericObject": "includes/GenericObject.php",
+		"PhpTags\\Hooks": "includes/Hooks.php",
+		"PhpTags\\JsonLoader": "includes/JsonLoader.php",
+		"PhpTagsObjects\\PhpTagsConstants": "includes/PhpTagsConstants.php",
+		"PhpTagsObjects\\PhpTagsTestClass": "tests/phpunit/includes/PhpTagsTestClass.php"
+	},
+	"Hooks": {
+		"ParserFirstCallInit": "PhpTagsHooks::onParserFirstCallInit",
+		"PhpTagsRuntimeFirstInit": "PhpTagsHooks::onPhpTagsRuntimeFirstInit",
+		"CodeMirrorGetAdditionalResources": "PhpTagsHooks::onCodeMirrorGetAdditionalResources",
+		"ParserLimitReport": "PhpTagsHooks::onParserLimitReport",
+		"ParserAfterTidy": "PhpTagsHooks::onParserAfterTidy",
+		"ExtensionTypes": "PhpTagsHooks::onExtensionTypes",
+		"UnitTestsList": "PhpTagsHooks::onUnitTestsList"
+	},
+	"ParserTestFiles": [
+		"tests/parser/PhpTagsTests.txt"
+	],
+	"config": {
+		"TrackingCategories": [
+			"phptags-compiler-error-category",
+			"phptags-runtime-error-category"
+		],
+		"PhpTagsNamespaces": true,
+		"PhpTagsMaxLoops": 1000,
+		"PhpTagsBytecodeExptime": 2592000
+	},
+	"callback": "PhpTagsHooks::onRegistration",
+	"manifest_version": 1
+}
+

@@ -11,6 +11,8 @@ namespace PhpTags;
  */
 class Runtime {
 
+	const VERSION = 11;
+
 	##### Bytecode array indexes #####
 	const B_COMMAND = 0; // Token ID
 	const B_RESULT = 1;
@@ -27,6 +29,9 @@ class Runtime {
 	const B_HOOK_TYPE = 12; // describes PhpTags hook type, constant, function etc (self::H_...)
 	const B_METHOD = 13; // method or function name
 	const B_METHOD_KEY = 14; // method or function name in lower case
+	const B_FLAGS = 15;
+
+	const F_DONT_CHECK_PARAM1 = 1;
 
 	##### Hook types #####
 	const H_GET_CONSTANT = '_';
@@ -57,6 +62,9 @@ class Runtime {
 	const S_MEMORY = 5;
 	const S_PLACE = 6;
 	const S_VARIABLES = 7;
+
+	const R_ARRAY = 'Array';
+	const R_DUMP_OBJECT = 'object';
 
 	private static $operators = array(
 		self::T_QUOTE => 'doQuote',
@@ -161,7 +169,20 @@ class Runtime {
 	 * @param array $value
 	 */
 	private static function doQuote ( &$value ) {
-		$value[self::B_RESULT] = implode( $value[self::B_PARAM_1] );
+		$implode = array();
+		foreach ( $value[self::B_PARAM_1] as $v ) {
+			if ( $v === null || is_scalar( $v ) ) {
+				$implode[] = $v;
+			} else if ( is_array( $v ) ) {
+				self::pushException( new PhpTagsException( PhpTagsException::NOTICE_ARRAY_TO_STRING ) );
+				$implode[] = self::R_ARRAY;
+			} else if ( $v instanceof GenericObject ) {
+				$implode[] = $v->toString();
+			} else {
+				throw new PhpTagsException( PhpTagsException::FATAL_INTERNAL_ERROR, __LINE__ );
+			}
+		}
+		$value[self::B_RESULT] = implode( $implode );
 	}
 
 	/**
@@ -169,7 +190,8 @@ class Runtime {
 	 * @param array $value
 	 */
 	private static function doConcat ( &$value ) {
-		$value[self::B_RESULT] = $value[self::B_PARAM_1] . $value[self::B_PARAM_2];
+		$v = self::checkStringParams( $value[self::B_PARAM_1], $value[self::B_PARAM_2], $value[self::B_FLAGS] );
+		$value[self::B_RESULT] = $v[0] . $v[1];
 	}
 
 	/**
@@ -177,7 +199,8 @@ class Runtime {
 	 * @param array $value
 	 */
 	private static function doPlus ( &$value ) {
-		$value[self::B_RESULT] = $value[self::B_PARAM_1] + $value[self::B_PARAM_2];
+		$v = self::checkArrayParams( $value[self::B_PARAM_1], $value[self::B_PARAM_2] );
+		$value[self::B_RESULT] = $v[0] + $v[1];
 	}
 
 	/**
@@ -185,7 +208,8 @@ class Runtime {
 	 * @param array $value
 	 */
 	private static function doMinus ( &$value ) {
-		$value[self::B_RESULT] = $value[self::B_PARAM_1] - $value[self::B_PARAM_2];
+		$v = self::checkScalarParams( $value[self::B_PARAM_1], $value[self::B_PARAM_2] );
+		$value[self::B_RESULT] = $v[0] - $v[1];
 	}
 
 	/**
@@ -193,7 +217,10 @@ class Runtime {
 	 * @param array $value
 	 */
 	private static function doMul ( &$value ) {
-		$value[self::B_RESULT] = $value[self::B_PARAM_1] * $value[self::B_PARAM_2];
+		$v1 = $value[self::B_PARAM_1];
+		$v2 = $value[self::B_PARAM_2];
+		self::checkScalarParams( $v1, $v2 );
+		$value[self::B_RESULT] = $v1 * $v2;
 	}
 
 	/**
@@ -201,7 +228,15 @@ class Runtime {
 	 * @param array $value
 	 */
 	private static function doDiv ( &$value ) {
-		$value[self::B_RESULT] = $value[self::B_PARAM_1] / $value[self::B_PARAM_2];
+		$v1 = $value[self::B_PARAM_1];
+		$v2 = $value[self::B_PARAM_2];
+		self::checkScalarParams( $v1, $v2 );
+		if ( $v2 == 0 ) {
+			self::pushException( new PhpTagsException( PhpTagsException::WARNING_DIVISION_BY_ZERO ) );
+			$value[self::B_RESULT] = false;
+		} else {
+			$value[self::B_RESULT] = $v1 / $v2;
+		}
 	}
 
 	/**
@@ -209,7 +244,15 @@ class Runtime {
 	 * @param array $value
 	 */
 	private static function doMod ( &$value ) {
-		$value[self::B_RESULT] = $value[self::B_PARAM_1] % $value[self::B_PARAM_2];
+		$v1 = $value[self::B_PARAM_1];
+		$v2 = $value[self::B_PARAM_2];
+		self::checkScalarParams( $v1, $v2 );
+		if ( $v2 == 0 ) {
+			self::pushException( new PhpTagsException( PhpTagsException::WARNING_DIVISION_BY_ZERO ) );
+			$value[self::B_RESULT] = false;
+		} else {
+			$value[self::B_RESULT] = $v1 % $v2;
+		}
 	}
 
 	/**
@@ -217,7 +260,8 @@ class Runtime {
 	 * @param array $value
 	 */
 	private static function doAnd ( &$value ) {
-		$value[self::B_RESULT] = $value[self::B_PARAM_1] & $value[self::B_PARAM_2];
+		$v = self::checkObjectParams( $value[self::B_PARAM_1], $value[self::B_PARAM_2] );
+		$value[self::B_RESULT] = $v[0] & $v[1];
 	}
 
 	/**
@@ -225,7 +269,8 @@ class Runtime {
 	 * @param array $value
 	 */
 	private static function doOr ( &$value ) {
-		$value[self::B_RESULT] = $value[self::B_PARAM_1] | $value[self::B_PARAM_2];
+		$v = self::checkObjectParams( $value[self::B_PARAM_1], $value[self::B_PARAM_2] );
+		$value[self::B_RESULT] = $v[0] | $v[1];
 	}
 
 	/**
@@ -233,7 +278,8 @@ class Runtime {
 	 * @param array $value
 	 */
 	private static function doXor ( &$value ) {
-		$value[self::B_RESULT] = $value[self::B_PARAM_1] ^ $value[self::B_PARAM_2];
+		$v = self::checkObjectParams( $value[self::B_PARAM_1], $value[self::B_PARAM_2] );
+		$value[self::B_RESULT] = $v[0] ^ $v[1];
 	}
 
 	/**
@@ -241,7 +287,8 @@ class Runtime {
 	 * @param array $value
 	 */
 	private static function doShiftLeft ( &$value ) {
-		$value[self::B_RESULT] = $value[self::B_PARAM_1] << $value[self::B_PARAM_2];
+		$v = self::checkObjectParams( $value[self::B_PARAM_1], $value[self::B_PARAM_2] );
+		$value[self::B_RESULT] = $v[0] << $v[1];
 	}
 
 	/**
@@ -249,7 +296,8 @@ class Runtime {
 	 * @param array $value
 	 */
 	private static function doShiftRight ( &$value ) {
-		$value[self::B_RESULT] = $value[self::B_PARAM_1] >> $value[self::B_PARAM_2];
+		$v = self::checkObjectParams( $value[self::B_PARAM_1], $value[self::B_PARAM_2] );
+		$value[self::B_RESULT] = $v[0] >> $v[1];
 	}
 
 	/**
@@ -281,7 +329,8 @@ class Runtime {
 	 * @param array $value
 	 */
 	private static function doIsSmaller ( &$value ) {
-		$value[self::B_RESULT] = $value[self::B_PARAM_1] < $value[self::B_PARAM_2];
+		$v = self::checkObjectParams( $value[self::B_PARAM_1], $value[self::B_PARAM_2] );
+		$value[self::B_RESULT] = $v[0] < $v[1];
 	}
 
 	/**
@@ -289,7 +338,8 @@ class Runtime {
 	 * @param array $value
 	 */
 	private static function doIsGreater ( &$value ) {
-		$value[self::B_RESULT] = $value[self::B_PARAM_1] > $value[self::B_PARAM_2];
+		$v = self::checkObjectParams( $value[self::B_PARAM_1], $value[self::B_PARAM_2] );
+		$value[self::B_RESULT] = $v[0] > $v[1];
 	}
 
 	/**
@@ -297,7 +347,8 @@ class Runtime {
 	 * @param array $value
 	 */
 	private static function doIsSmallerOrEqual ( &$value ) {
-		$value[self::B_RESULT] = $value[self::B_PARAM_1] <= $value[self::B_PARAM_2];
+		$v = self::checkObjectParams( $value[self::B_PARAM_1], $value[self::B_PARAM_2] );
+		$value[self::B_RESULT] = $v[0] <= $v[1];
 	}
 
 	/**
@@ -305,7 +356,8 @@ class Runtime {
 	 * @param array $value
 	 */
 	private static function doIsGreaterOrEqual ( &$value ) {
-		$value[self::B_RESULT] = $value[self::B_PARAM_1] >= $value[self::B_PARAM_2];
+		$v = self::checkObjectParams( $value[self::B_PARAM_1], $value[self::B_PARAM_2] );
+		$value[self::B_RESULT] = $v[0] >= $v[1];
 	}
 
 	/**
@@ -313,7 +365,8 @@ class Runtime {
 	 * @param array $value
 	 */
 	private static function doIsEqual ( &$value ) {
-		$value[self::B_RESULT] = $value[self::B_PARAM_1] == $value[self::B_PARAM_2];
+		$v = self::checkObjectParams( $value[self::B_PARAM_1], $value[self::B_PARAM_2] );
+		$value[self::B_RESULT] = $v[0] == $v[1];
 	}
 
 	/**
@@ -321,7 +374,8 @@ class Runtime {
 	 * @param array $value
 	 */
 	private static function doIsNotEqual ( &$value ) {
-		$value[self::B_RESULT] = $value[self::B_PARAM_1] != $value[self::B_PARAM_2];
+		$v = self::checkObjectParams( $value[self::B_PARAM_1], $value[self::B_PARAM_2] );
+		$value[self::B_RESULT] = $v[0] != $v[1];
 	}
 
 	/**
@@ -345,10 +399,16 @@ class Runtime {
 	 * @param array $value
 	 */
 	private static function doPrint ( &$value ) {
-		if( $value[self::B_PARAM_1] instanceof GenericObject ) {
-			self::$stack[0][self::S_RETURN][] = $value[self::B_PARAM_1]->toString();
-		} else {
+		$v = $value[self::B_PARAM_1];
+		if ( is_scalar( $v ) || $v === null ) {
 			self::$stack[0][self::S_RETURN][] = $value[self::B_PARAM_1];
+		} else if( $v instanceof GenericObject ) {
+			self::$stack[0][self::S_RETURN][] = $value[self::B_PARAM_1]->toString();
+		} else if ( is_array( $v ) ) {
+			self::pushException( new PhpTagsException( PhpTagsException::NOTICE_ARRAY_TO_STRING ) );
+			self::$stack[0][self::S_RETURN][] = self::R_ARRAY;
+		} else { // Should never happen
+			throw new PhpTagsException( PhpTagsException::FATAL_INTERNAL_ERROR, __LINE__ );
 		}
 	}
 
@@ -357,7 +417,12 @@ class Runtime {
 	 * @param array $value
 	 */
 	private static function doNot ( &$value ) {
-		$value[self::B_RESULT] = ~$value[self::B_PARAM_2];
+		$v = $value[self::B_PARAM_2];
+		if ( $v === null || is_scalar( $v ) ) {
+			$value[self::B_RESULT] = ~$v;
+		} else {
+			throw new PhpTagsException( PhpTagsException::FATAL_UNSUPPORTED_OPERAND_TYPES );
+		}
 	}
 
 	/**
@@ -373,7 +438,9 @@ class Runtime {
 	 * @param array $value
 	 */
 	private static function doIntCast ( &$value ) {
-		$value[self::B_RESULT] = (int)$value[self::B_PARAM_2];
+		$tmp = null;
+		$v = self::checkObjectParams( $value[self::B_PARAM_2], $tmp );
+		$value[self::B_RESULT] = (int)$v[0];
 	}
 
 	/**
@@ -381,7 +448,9 @@ class Runtime {
 	 * @param array $value
 	 */
 	private static function doDoubleCast ( &$value ) {
-		$value[self::B_RESULT] = (double)$value[self::B_PARAM_2];
+		$tmp = null;
+		$v = self::checkObjectParams( $value[self::B_PARAM_2], $tmp, 'double' );
+		$value[self::B_RESULT] = (double)$v[0];
 	}
 
 	/**
@@ -389,7 +458,10 @@ class Runtime {
 	 * @param array $value
 	 */
 	private static function doStringCast ( &$value ) {
-		$value[self::B_RESULT] = (string)$value[self::B_PARAM_2];
+		$tmp = null;
+		$flags = 0;
+		$v = self::checkStringParams( $value[self::B_PARAM_2], $tmp, $flags );
+		$value[self::B_RESULT] = (string)$v[0];
 	}
 
 	/**
@@ -397,7 +469,15 @@ class Runtime {
 	 * @param array $value
 	 */
 	private static function doArrayCast ( &$value ) {
-		$value[self::B_RESULT] = (array)$value[self::B_PARAM_2];
+		$v = $value[self::B_PARAM_2];
+		if ( is_object( $v ) ) {
+			if ( $v instanceof GenericObject ) {
+				$v = $v->getDumpValue();
+			} else {
+				throw new PhpTagsException( PhpTagsException::FATAL_INTERNAL_ERROR, __LINE__ );
+			}
+		}
+		$value[self::B_RESULT] = (array)$v;
 	}
 
 	/**
@@ -413,7 +493,7 @@ class Runtime {
 	 * @param array $value
 	 */
 	private static function doUnsetCast ( &$value ) {
-		$value[self::B_RESULT] = (unset)$value[self::B_PARAM_2];
+		$value[self::B_RESULT] = null; //(unset)$value[self::B_PARAM_2];
 	}
 
 	/**
@@ -750,8 +830,7 @@ class Runtime {
 					}
 					$ref =& $ref[$v];
 				}
-				// @todo ->>>>>>>>>>>> | ************************************************************* | <<<<< it only for compatible with PHP 5.4 if used PHP 5.3 @see http://www.php.net/manual/en/function.isset.php Example #2 isset() on String Offsets
-				if ( !isset( $ref[$tmp] ) || (is_string( $ref ) && is_string( $tmp ) && $tmp  != (string)(int)$tmp ) ) {
+				if ( !isset( $ref[$tmp] ) ) {
 					$value[self::B_RESULT] = false;
 					return;
 				}
@@ -779,8 +858,7 @@ class Runtime {
 					}
 					$ref = &$ref[$v];
 				}
-				// @todo ->>>>>>>>>>>> | ************************************************************* | <<<<< it only for compatible with PHP 5.4 if used PHP 5.3 @see http://www.php.net/manual/en/function.empty.php Example #2 empty() on String Offsets
-				if( !empty($ref[$tmp]) && (is_array($ref) || !is_string( $tmp ) || $tmp  == (string)(int)$tmp ) ) {
+				if( !empty($ref[$tmp]) ) {
 					$value[self::B_RESULT] = false;
 					return;
 				}
@@ -866,7 +944,8 @@ class Runtime {
 	 */
 	private static function doSetConcatVal ( &$value ) {
 		$ref =& self::getVariableRef( $value );
-		$value[self::B_RESULT] = $ref .= $value[self::B_PARAM_2];
+		$v = self::checkStringParams( $ref, $value[self::B_PARAM_2], $value[self::B_FLAGS] );
+		$value[self::B_RESULT] = $ref = $v[0] . $v[1];
 	}
 
 	/**
@@ -875,7 +954,8 @@ class Runtime {
 	 */
 	private static function doSetPlusVal ( &$value ) {
 		$ref =& self::getVariableRef( $value );
-		$value[self::B_RESULT] = $ref += $value[self::B_PARAM_2];
+		$v = self::checkArrayParams( $ref, $value[self::B_PARAM_2] );
+		$value[self::B_RESULT] = $ref = $v[0] + $v[1];
 	}
 
 	/**
@@ -884,7 +964,8 @@ class Runtime {
 	 */
 	private static function doSetMinusVal ( &$value ) {
 		$ref =& self::getVariableRef( $value );
-		$value[self::B_RESULT] = $ref -= $value[self::B_PARAM_2];
+		$v = self::checkScalarParams( $ref, $value[self::B_PARAM_2] );
+		$value[self::B_RESULT] = $ref = $v[0] - $v[1];
 	}
 
 	/**
@@ -893,7 +974,8 @@ class Runtime {
 	 */
 	private static function doSetMulVal ( &$value ) {
 		$ref =& self::getVariableRef( $value );
-		$value[self::B_RESULT] = $ref *= $value[self::B_PARAM_2];
+		$v = self::checkScalarParams( $ref, $value[self::B_PARAM_2] );
+		$value[self::B_RESULT] = $ref = $v[0] * $v[1];
 	}
 
 	/**
@@ -902,7 +984,13 @@ class Runtime {
 	 */
 	private static function doSetDivVal ( &$value ) {
 		$ref =& self::getVariableRef( $value );
-		$value[self::B_RESULT] = $ref /= $value[self::B_PARAM_2];
+		$v = self::checkScalarParams( $ref, $value[self::B_PARAM_2] );
+		if ( $v[1] == 0 ) {
+			self::pushException( new PhpTagsException( PhpTagsException::WARNING_DIVISION_BY_ZERO ) );
+			$value[self::B_RESULT] = $ref = false;
+		} else {
+			$value[self::B_RESULT] = $ref = $v[0] / $v[1];
+		}
 	}
 
 	/**
@@ -911,7 +999,13 @@ class Runtime {
 	 */
 	private static function doSetModVal ( &$value ) {
 		$ref =& self::getVariableRef( $value );
-		$value[self::B_RESULT] = $ref %= $value[self::B_PARAM_2];
+		$v = self::checkScalarParams( $ref, $value[self::B_PARAM_2] );
+		if ( $v[1] == 0 ) {
+			self::pushException( new PhpTagsException( PhpTagsException::WARNING_DIVISION_BY_ZERO ) );
+			$value[self::B_RESULT] = $ref = false;
+		} else {
+			$value[self::B_RESULT] = $ref = $v[0] % $v[1];
+		}
 	}
 
 	/**
@@ -920,7 +1014,8 @@ class Runtime {
 	 */
 	private static function doSetAndVal ( &$value ) {
 		$ref =& self::getVariableRef( $value );
-		$value[self::B_RESULT] = $ref &= $value[self::B_PARAM_2];
+		$v = self::checkObjectParams( $ref, $value[self::B_PARAM_2] );
+		$value[self::B_RESULT] = $ref = $v[0] & $v[1];
 	}
 
 	/**
@@ -929,7 +1024,8 @@ class Runtime {
 	 */
 	private static function doSetOrVal ( &$value ) {
 		$ref =& self::getVariableRef( $value );
-		$value[self::B_RESULT] = $ref |= $value[self::B_PARAM_2];
+		$v = self::checkObjectParams( $ref, $value[self::B_PARAM_2] );
+		$value[self::B_RESULT] = $ref = $v[0] | $v[1];
 	}
 
 	/**
@@ -938,7 +1034,8 @@ class Runtime {
 	 */
 	private static function doSetXorVal ( &$value ) {
 		$ref =& self::getVariableRef( $value );
-		$value[self::B_RESULT] = $ref ^= $value[self::B_PARAM_2];
+		$v = self::checkObjectParams( $ref, $value[self::B_PARAM_2] );
+		$value[self::B_RESULT] = $ref = $v[0] ^ $v[1];
 	}
 
 	/**
@@ -947,7 +1044,8 @@ class Runtime {
 	 */
 	private static function doSetShiftLeftVal ( &$value ) {
 		$ref =& self::getVariableRef( $value );
-		$value[self::B_RESULT] = $ref <<= $value[self::B_PARAM_2];
+		$v = self::checkObjectParams( $ref, $value[self::B_PARAM_2] );
+		$value[self::B_RESULT] = $ref = $v[0] << $v[1];
 	}
 
 	/**
@@ -956,7 +1054,86 @@ class Runtime {
 	 */
 	private static function doSetShiftRightVal ( &$value ) {
 		$ref =& self::getVariableRef( $value );
-		$value[self::B_RESULT] = $ref <<= $value[self::B_PARAM_2];
+		$v = self::checkObjectParams( $ref, $value[self::B_PARAM_2] );
+		$value[self::B_RESULT] = $ref = $v[0] >> $v[1];
+	}
+
+	private static function checkStringParams( &$v1, &$v2, &$flags ) {
+		$return = array( $v1, $v2 );
+
+		if ( $v1 !== null && !is_scalar( $v1 ) ) {
+			if ( is_array( $v1 ) ) {
+				if ( !($flags & self::F_DONT_CHECK_PARAM1) ) {
+					self::pushException( new PhpTagsException( PhpTagsException::NOTICE_ARRAY_TO_STRING ) );
+					$return[0] = self::R_ARRAY;
+				}
+			} else if ( $v1 instanceof GenericObject ) {
+				$return[0] = $v1->toString();
+			} else {
+				throw new PhpTagsException( PhpTagsException::FATAL_INTERNAL_ERROR, __LINE__ );
+			}
+		}
+		if ( $v2 !== null && !is_scalar( $v2 ) ) {
+			if ( is_array( $v2 ) ) {
+				self::pushException( new PhpTagsException( PhpTagsException::NOTICE_ARRAY_TO_STRING ) );
+				$return[1] = self::R_ARRAY;
+			} else if ( $v2 instanceof GenericObject ) {
+				$return[1] = $v2->toString();
+			} else {
+				throw new PhpTagsException( PhpTagsException::FATAL_INTERNAL_ERROR, __LINE__ );
+			}
+		}
+
+		return $return;
+	}
+
+	private static function checkArrayParams( &$v1, &$v2 ) {
+		if ( !($v1 === null || is_scalar( $v1 )) || !($v2 === null || is_scalar( $v2 )) ) {
+			$return = self::checkObjectParams( $v1, $v2 );
+			if ( is_array( $v1 ) xor is_array( $v2 ) ) { // [1] + 1 or 1 + [1]
+				throw new PhpTagsException( PhpTagsException::FATAL_UNSUPPORTED_OPERAND_TYPES );
+			}
+		} else {
+			$return = array( $v1, $v2 );
+		}
+
+		return $return;
+	}
+
+	private static function checkScalarParams( &$v1, &$v2 ) {
+		if ( !($v1 === null || is_scalar( $v1 )) || !($v2 === null || is_scalar( $v2 )) ) {
+			$return = self::checkObjectParams( $v1, $v2 );
+			if ( is_array( $v1 ) || is_array( $v2 ) ) { // [1] + 1 or 1 + [1]
+				throw new PhpTagsException( PhpTagsException::FATAL_UNSUPPORTED_OPERAND_TYPES );
+			}
+		} else {
+			$return = array( $v1, $v2 );
+		}
+
+		return $return;
+	}
+
+	private static function checkObjectParams( &$v1, &$v2, $to = 'int' ) {
+		$return = array( $v1, $v2 );
+
+		if ( is_object( $v1 ) ) {
+			if ( $v1 instanceof GenericObject ) {
+				self::pushException( new PhpTagsException( PhpTagsException::NOTICE_OBJECT_CONVERTED, array($v1->getName(), $to) ) );
+				$return[0] = 1;
+			} else {
+				throw new PhpTagsException( PhpTagsException::FATAL_INTERNAL_ERROR, __LINE__ );
+			}
+		}
+		if ( is_object( $v2 ) ) {
+			if ( $v2 instanceof GenericObject ) {
+				self::pushException( new PhpTagsException( PhpTagsException::NOTICE_OBJECT_CONVERTED, array($v2->getName(), $to) ) );
+				$return[1] = 1;
+			} else {
+				throw new PhpTagsException( PhpTagsException::FATAL_INTERNAL_ERROR, __LINE__ );
+			}
+		}
+
+		return $return;
 	}
 
 	private static function & getVariableRef( $value ) {
@@ -1014,7 +1191,6 @@ class Runtime {
 	}
 
 	public static function run( $code, array $args, $scope = '' ) {
-		set_error_handler( '\\PhpTags\\ErrorHandler::onError' );
 		try {
 			if( false === isset( self::$variables[$scope] ) ) {
 				self::$variables[$scope] = array();
@@ -1060,17 +1236,15 @@ doit:
 			self::$ignoreErrors = false;
 		} catch ( \Exception $e ) {
 			Renderer::addRuntimeErrorCategory();
-			restore_error_handler();
 			self::$ignoreErrors = false;
 			array_shift( self::$stack );
 			throw $e;
 		}
-		restore_error_handler();
 		array_shift( self::$stack );
 		return $stack[self::S_RETURN];
 	}
 
-	static function fillList( &$values, &$parametrs, $offset = false ) {
+	private static function fillList( &$values, &$parametrs, $offset = false ) {
 		$return = array();
 
 		for ( $pkey = count( $parametrs ) - 1; $pkey >= 0; --$pkey ) {

@@ -77,6 +77,19 @@ class GenericObject implements \Iterator {
 		return $this->value;
 	}
 
+	/**
+	 * Returns value for operator (array) and functions var_dump and etc...
+	 * @since 5.9
+	 * @return array
+	 */
+	public function getDumpValue() {
+		return (array)('(' . Runtime::R_DUMP_OBJECT . ' <' . $this->getName() . '>)');
+	}
+
+	/**
+	 * Returns object's name
+	 * @return string
+	 */
 	public function getName() {
 		return $this->objectName;
 	}
@@ -100,13 +113,6 @@ class GenericObject implements \Iterator {
 
 	public static function getConstantValue( $constantName ) {
 		throw new PhpTagsException( PhpTagsException::FATAL_CALLCONSTANT_INVALID_HOOK, get_called_class() );
-	}
-
-	/**
-	 * @deprecated since you should use get_called_class()
-	 */
-	public static function getClassName() {
-		return get_called_class();
 	}
 
 	protected static function pushExceptionExpectsParameter( $index, $expect, $value) {

@@ -194,6 +194,12 @@ class PhpTagsException extends \Exception {
 			case self::FATAL_CANNOT_USE_OBJECT_AS_ARRAY:
 				$message = 'Cannot use object as array';
 				break;
+			case self::FATAL_UNSUPPORTED_OPERAND_TYPES:
+				$message = 'Unsupported operand types';
+				break;
+			case self::FATAL_INTERNAL_ERROR:
+				$message = 'Unexpected behavior of PhpTags (Internal Error):' . $arguments;
+				break;
 			default:
 				$message = "Undefined error, code {$this->code}";
 				$this->code = self::EXCEPTION_FATAL * 1000;
@@ -285,10 +291,13 @@ class PhpTagsException extends \Exception {
 	const FATAL_UNEXPECTED_OBJECT_TYPE = 4021; // Fatal error: Unexpected object type stdClass. in
 	const FATAL_WRONG_BREAK_LEVELS = 4022; // PHP Fatal error:  Cannot break/continue 4 levels
 	const FATAL_CANNOT_USE_OBJECT_AS_ARRAY = 4023; // Cannot use object of type %%%%%% as array
+	const FATAL_UNSUPPORTED_OPERAND_TYPES = 4024; // Unsupported operand types, example: [1] + 1
 
 	const FATAL_DENIED_FOR_NAMESPACE = 4500;
 	const FATAL_CALLFUNCTION_INVALID_HOOK = 4501;
 	const FATAL_CALLCONSTANT_INVALID_HOOK = 4502;
+
+	const FATAL_INTERNAL_ERROR = 4999; // Unexpected behavior
 
 	const EXCEPTION_CATCHABLE_FATAL = 5;
 	const FATAL_OBJECT_COULD_NOT_BE_CONVERTED = 5001;  //PHP Catchable fatal error:  Object of class stdClass could not be converted to string

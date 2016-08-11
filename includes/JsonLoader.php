@@ -11,6 +11,8 @@ namespace PhpTags;
  */
 class JsonLoader {
 
+	const VERSION = 3;
+
 	public static function load( $files ) {
 		$objects = array();
 		$functions = array();

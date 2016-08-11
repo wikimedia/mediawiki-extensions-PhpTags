@@ -1104,6 +1104,328 @@ echo "$a, ", $a-- + -5, ", " . --$a, ", $a.";'),
 				array('3', '2')
 			);
 	}
+	public function testRun_echo_assignment_7() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=["rrr"]; $bar="4"; $foo = $foo . $bar; echo $foo,$bar;', array('test'), 77777 ),
+				array(
+					(string) new PhpTagsException( PhpTagsException::NOTICE_ARRAY_TO_STRING, null, 1, 'test' ),
+					Runtime::R_ARRAY . 4,
+					'4',
+				)
+			);
+	}
+	public function testRun_echo_assignment_8() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo="4"; $bar=["rrr"]; $foo = $foo . $bar; echo $foo,$bar;', array('test'), 77777 ),
+				array(
+					(string) new PhpTagsException( PhpTagsException::NOTICE_ARRAY_TO_STRING, null, 1, 'test' ),
+					4 . Runtime::R_ARRAY,
+					(string) new PhpTagsException( PhpTagsException::NOTICE_ARRAY_TO_STRING, null, 1, 'test' ),
+					Runtime::R_ARRAY,
+				)
+			);
+	}
+	public function testRun_echo_assignment_9() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=["4"]; $bar=["rrr"]; $foo = $foo . $bar; echo $foo,$bar;', array('test'), 77777 ),
+				array(
+					(string) new PhpTagsException( PhpTagsException::NOTICE_ARRAY_TO_STRING, null, 1, 'test' ),
+					(string) new PhpTagsException( PhpTagsException::NOTICE_ARRAY_TO_STRING, null, 1, 'test' ),
+					Runtime::R_ARRAY . Runtime::R_ARRAY,
+					(string) new PhpTagsException( PhpTagsException::NOTICE_ARRAY_TO_STRING, null, 1, 'test' ),
+					Runtime::R_ARRAY,
+				)
+			);
+	}
+	public function testRun_echo_assignment_10() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo="4"; $bar=["rrr"]; $foo .= $bar; echo $foo,$bar;', array('test'), 77777 ),
+				array(
+					(string) new PhpTagsException( PhpTagsException::NOTICE_ARRAY_TO_STRING, null, 1, 'test' ),
+					4 . Runtime::R_ARRAY,
+					(string) new PhpTagsException( PhpTagsException::NOTICE_ARRAY_TO_STRING, null, 1, 'test' ),
+					Runtime::R_ARRAY,
+				)
+			);
+	}
+	public function testRun_echo_assignment_11() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=["4"]; $bar="rrr"; $foo .= $bar; echo $foo,$bar;', array('test'), 77777 ),
+				array(
+					(string) new PhpTagsException( PhpTagsException::NOTICE_ARRAY_TO_STRING, null, 1, 'test' ),
+					Runtime::R_ARRAY . 'rrr',
+					'rrr',
+				)
+			);
+	}
+	public function testRun_echo_assignment_12() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=["4"]; $bar=["rrr"]; $foo .= $bar; echo $foo,$bar;', array('test'), 77777 ),
+				array(
+					(string) new PhpTagsException( PhpTagsException::NOTICE_ARRAY_TO_STRING, null, 1, 'test' ),
+					(string) new PhpTagsException( PhpTagsException::NOTICE_ARRAY_TO_STRING, null, 1, 'test' ),
+					Runtime::R_ARRAY . Runtime::R_ARRAY,
+					(string) new PhpTagsException( PhpTagsException::NOTICE_ARRAY_TO_STRING, null, 1, 'test' ),
+					Runtime::R_ARRAY,
+				)
+			);
+	}
+	public function testRun_echo_assignment_13() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=["rrr"]; $bar="4"; $foo=$foo+$bar; echo $foo,$bar;', array('test'), 77777 ),
+				array( (string) new PhpTagsException( PhpTagsException::FATAL_UNSUPPORTED_OPERAND_TYPES, null, 1, 'test' ) )
+			);
+	}
+	public function testRun_echo_assignment_14() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=["rrr"]; $bar="4"; $foo+=$bar; echo $foo,$bar;', array('test'), 77777 ),
+				array( (string) new PhpTagsException( PhpTagsException::FATAL_UNSUPPORTED_OPERAND_TYPES, null, 1, 'test' ) )
+			);
+	}
+	public function testRun_echo_assignment_15() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo="rrr"; $bar=["4"]; $foo+=$bar; echo $foo,$bar;', array('test'), 77777 ),
+				array( (string) new PhpTagsException( PhpTagsException::FATAL_UNSUPPORTED_OPERAND_TYPES, null, 1, 'test' ) )
+			);
+	}
+	public function testRun_echo_assignment_16() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=["rrr"]; $bar=["4"]; $foo+=$bar; echo $foo[0];', array('test'), 77777 ),
+				array( 'rrr' )
+			);
+	}
+	public function testRun_echo_assignment_17() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=["rrr"]; $bar=["4"]; $foo = $foo + $bar; echo $foo[0];', array('test'), 77777 ),
+				array( 'rrr' )
+			);
+	}
+	public function testRun_echo_assignment_18() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=["rrr"]; $bar="4"; $foo=$foo-$bar; echo $foo,$bar;', array('test'), 77777 ),
+				array( (string) new PhpTagsException( PhpTagsException::FATAL_UNSUPPORTED_OPERAND_TYPES, null, 1, 'test' ) )
+			);
+	}
+	public function testRun_echo_assignment_19() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=["rrr"]; $bar="4"; $foo-=$bar; echo $foo,$bar;', array('test'), 77777 ),
+				array( (string) new PhpTagsException( PhpTagsException::FATAL_UNSUPPORTED_OPERAND_TYPES, null, 1, 'test' ) )
+			);
+	}
+	public function testRun_echo_assignment_20() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=["rrr"]; $bar="4"; $foo=$foo*$bar; echo $foo,$bar;', array('test'), 77777 ),
+				array( (string) new PhpTagsException( PhpTagsException::FATAL_UNSUPPORTED_OPERAND_TYPES, null, 1, 'test' ) )
+			);
+	}
+	public function testRun_echo_assignment_21() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=["rrr"]; $bar="4"; $foo*=$bar; echo $foo,$bar;', array('test'), 77777 ),
+				array( (string) new PhpTagsException( PhpTagsException::FATAL_UNSUPPORTED_OPERAND_TYPES, null, 1, 'test' ) )
+			);
+	}
+	public function testRun_echo_assignment_22() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=["rrr"]; $bar="4"; $foo=$foo/$bar; echo $foo,$bar;', array('test'), 77777 ),
+				array( (string) new PhpTagsException( PhpTagsException::FATAL_UNSUPPORTED_OPERAND_TYPES, null, 1, 'test' ) )
+			);
+	}
+	public function testRun_echo_assignment_23() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=["rrr"]; $bar="4"; $foo/=$bar; echo $foo,$bar;', array('test'), 77777 ),
+				array( (string) new PhpTagsException( PhpTagsException::FATAL_UNSUPPORTED_OPERAND_TYPES, null, 1, 'test' ) )
+			);
+	}
+	public function testRun_echo_assignment_24() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo="rrr"; $bar=["4"]; $foo=$foo%$bar; echo $foo,$bar;', array('test'), 77777 ),
+				array( (string) new PhpTagsException( PhpTagsException::FATAL_UNSUPPORTED_OPERAND_TYPES, null, 1, 'test' ) )
+			);
+	}
+	public function testRun_echo_assignment_25() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo="rrr"; $bar=["4"]; $foo%=$bar; echo $foo,$bar;', array('test'), 77777 ),
+				array( (string) new PhpTagsException( PhpTagsException::FATAL_UNSUPPORTED_OPERAND_TYPES, null, 1, 'test' ) )
+			);
+	}
+	public function testRun_echo_assignment_26() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=["4"]; $bar="rrr"; $foo = ($foo and $bar); echo $foo,$bar;', array('test'), 77777 ),
+				array( '1', 'rrr' )
+			);
+	}
+	public function testRun_echo_assignment_27() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=["4"]; $bar="rrr"; $foo = ($foo or $bar); echo $foo,$bar;', array('test'), 77777 ),
+				array( '1', 'rrr' )
+			);
+	}
+	public function testRun_echo_assignment_28() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=["4"]; $bar="rrr"; $foo = ($foo Xor $bar); echo $foo,$bar;', array('test'), 77777 ),
+				array( '', 'rrr' )
+			);
+	}
+	public function testRun_echo_assignment_29() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=["4"]; $bar="rrr"; $foo = ($foo & $bar); echo $foo,$bar;', array('test'), 77777 ),
+				array( '0', 'rrr' )
+			);
+	}
+	public function testRun_echo_assignment_30() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=["4"]; $bar="rrr"; $foo = ($foo | $bar); echo $foo,$bar;', array('test'), 77777 ),
+				array( '1', 'rrr' )
+			);
+	}
+	public function testRun_echo_assignment_31() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=["4"]; $bar="rrr"; $foo = ($foo ^ $bar); echo $foo,$bar;', array('test'), 77777 ),
+				array( '1', 'rrr' )
+			);
+	}
+	public function testRun_echo_assignment_32() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=["4"]; $bar="rrr"; $foo |= $bar; echo $foo,$bar;', array('test'), 77777 ),
+				array( '1', 'rrr' )
+			);
+	}
+	public function testRun_echo_assignment_33() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=["4"]; $bar="rrr"; $foo ^= $bar; echo $foo,$bar;', array('test'), 77777 ),
+				array( '1', 'rrr' )
+			);
+	}
+	public function testRun_echo_assignment_34() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=["4"]; $bar="rrr"; $foo &= $bar; echo $foo,$bar;', array('test'), 77777 ),
+				array( '0', 'rrr' )
+			);
+	}
+	public function testRun_echo_assignment_35() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=["4"]; $bar="rrr"; $foo = ($foo >> $bar); echo $foo,$bar;', array('test'), 77777 ),
+				array( '1', 'rrr' )
+			);
+	}
+	public function testRun_echo_assignment_36() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo="rrr"; $bar=["rrr"]; $foo = ($foo << $bar); echo $foo,$bar[0];', array('test'), 77777 ),
+				array( '0', 'rrr' )
+			);
+	}
+	public function testRun_echo_assignment_37() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=["4"]; $bar="rrr"; $foo >>= $bar; echo $foo,$bar;', array('test'), 77777 ),
+				array( '1', 'rrr' )
+			);
+	}
+	public function testRun_echo_assignment_38() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo="rrr"; $bar=["rrr"]; $foo <<= $bar; echo $foo,$bar[0];', array('test'), 77777 ),
+				array( '0', 'rrr' )
+			);
+	}
+	public function testRun_echo_assignment_39() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=["4"]; $bar="rrr"; $foo = $foo > $bar; echo $foo,$bar;', array('test'), 77777 ),
+				array( '1', 'rrr' )
+			);
+	}
+	public function testRun_echo_assignment_40() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo="rrr"; $bar=["rrr"]; $foo = $foo < $bar; echo $foo,$bar[0];', array('test'), 77777 ),
+				array( true, 'rrr' )
+			);
+	}
+	public function testRun_echo_assignment_41() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=["4"]; $bar="rrr"; $foo = $foo == $bar; echo $foo,$bar;', array('test'), 77777 ),
+				array( false, 'rrr' )
+			);
+	}
+	public function testRun_echo_assignment_42() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo="rrr"; $bar=["rrr"]; $foo = $foo != $bar; echo $foo,$bar[0];', array('test'), 77777 ),
+				array( true, 'rrr' )
+			);
+	}
+	public function testRun_echo_assignment_43() {
+		$this->assertEquals(
+				Runtime::runSource( '$bar=["rrr"]; $foo = ~$bar; echo $foo,$bar[0];', array('test'), 77777 ),
+				array( (string) new PhpTagsException( PhpTagsException::FATAL_UNSUPPORTED_OPERAND_TYPES, null, 1, 'test' ) )
+			);
+	}
+	public function testRun_echo_assignment_44() {
+		$this->assertEquals(
+				Runtime::runSource( '$bar=["rrr"]; $foo = !$bar; echo $foo === false;', array('test'), 77777 ),
+				array( true )
+			);
+	}
+	public function testRun_echo_assignment_45() {
+		$this->assertEquals(
+				Runtime::runSource( '$bar=["rrr"]; $foo=(int)$bar; echo $foo === 1;', array('test'), 77777 ),
+				array( true )
+			);
+	}
+	public function testRun_echo_assignment_46() {
+		$this->assertEquals(
+				Runtime::runSource( '$bar=["rrr"]; $foo=(double)$bar; echo $foo === (double)1;', array('test'), 77777 ),
+				array( true )
+			);
+	}
+	public function testRun_echo_assignment_47() {
+		$this->assertEquals(
+				Runtime::runSource( '$bar=["rrr"]; $foo=(string)$bar; echo $foo;', array('test'), 77777 ),
+				array(
+					(string) new PhpTagsException( PhpTagsException::NOTICE_ARRAY_TO_STRING, null, 1, 'test' ),
+					Runtime::R_ARRAY,
+				)
+			);
+	}
+	public function testRun_echo_assignment_48() {
+		$this->assertEquals(
+				Runtime::runSource( '$bar=["rrr"]; $foo=(array)$bar; echo $foo[0];', array('test'), 77777 ),
+				array( 'rrr' )
+			);
+	}
+	public function testRun_echo_assignment_49() {
+		$this->assertEquals(
+				Runtime::runSource( '$bar=["rrr"]; $foo=(bool)$bar; echo $foo === true;', array('test'), 77777 ),
+				array( true )
+			);
+	}
+	public function testRun_echo_assignment_50() {
+		$this->assertEquals(
+				Runtime::runSource( '$bar=["rrr"]; $foo=(unset)$bar; echo $foo === null;', array('test'), 77777 ),
+				array( true )
+			);
+	}
+
+	public function testRun_array_increase_test_1() {
+		$this->assertEquals(
+				Runtime::runSource( '$bar=["rrr"]; $bar++; echo $bar[0];', array('test'), 77777 ),
+				array( 'rrr' )
+			);
+	}
+	public function testRun_array_increase_test_2() {
+		$this->assertEquals(
+				Runtime::runSource( '$bar=["rrr"]; ++$bar; echo $bar[0];', array('test'), 77777 ),
+				array( 'rrr' )
+			);
+	}
+	public function testRun_array_increase_test_3() {
+		$this->assertEquals(
+				Runtime::runSource( '$bar=["rrr"]; --$bar; echo $bar[0];', array('test'), 77777 ),
+				array( 'rrr' )
+			);
+	}
+	public function testRun_array_increase_test_4() {
+		$this->assertEquals(
+				Runtime::runSource( '$bar=["rrr"]; $bar--; echo $bar[0];', array('test'), 77777 ),
+				array( 'rrr' )
+			);
+	}
 
 	public function testRun_echo_ternary_1() {
 		$this->assertEquals(
@@ -3152,6 +3474,10 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 				Runtime::runSource('echo PHPTAGS_VERSION;'),
 				array(PHPTAGS_VERSION)
 			);
+		$this->assertEquals(
+				Runtime::runSource('echo PHPTAGS_VERSION;'),
+				array(\ExtensionRegistry::getInstance()->getAllThings()['PhpTags']['version'])
+			);
 	}
 
 	public function testRun_echo_exception_1() {
@@ -3237,6 +3563,15 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 	}
 	public function testRun_echo_exception_11() {
 		$this->assertEquals( array( false ), Runtime::runSource( 'echo @(5/0);', array('Test') ) );
+	}
+	public function testRun_echo_exception_12() {
+		$this->assertEquals(
+				array(
+					(string) new PhpTagsException( PhpTagsException::WARNING_DIVISION_BY_ZERO, null, 1, 'Test' ),
+					false,
+				),
+				Runtime::runSource( 'echo 5%0;', array('Test') )
+			);
 	}
 
 	public function testRun_constant_test() {
@@ -3397,5 +3732,298 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 
 		$this->assertEquals( $result, array( (string)$exc1, (string)$exc2, false ) );
 	}
+
+	public function testRun_object_operation_test_1() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=["rrr"]; $bar=new PhpTagsTest(); $foo = $foo . $bar; echo $foo[0],$bar;', array('test'), 77777 ),
+				array(
+					(string) new PhpTagsException( PhpTagsException::NOTICE_ARRAY_TO_STRING, null, 1, 'test' ),
+					(string) new PhpTagsException( PhpTagsException::FATAL_OBJECT_COULD_NOT_BE_CONVERTED, array('PhpTagsTest', 'string'), 1, 'test' ),
+				)
+			);
+	}
+	public function testRun_object_operation_test_2() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=["rrr"]; $bar=new PhpTagsTest(); $foo = $foo + $bar; echo $foo,$bar;', array('test'), 77777 ),
+				array(
+					(string) new PhpTagsException( PhpTagsException::NOTICE_OBJECT_CONVERTED, array('PhpTagsTest', 'int'), 1, 'test' ),
+					(string) new PhpTagsException( PhpTagsException::FATAL_UNSUPPORTED_OPERAND_TYPES, null, 1, 'test' ),
+				)
+			);
+	}
+	public function testRun_object_operation_test_3() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=new PhpTagsTest(); $bar=["rrr"]; $foo += $bar; echo $foo,$bar;', array('test'), 77777 ),
+				array(
+					(string) new PhpTagsException( PhpTagsException::NOTICE_OBJECT_CONVERTED, array('PhpTagsTest', 'int'), 1, 'test' ),
+					(string) new PhpTagsException( PhpTagsException::FATAL_UNSUPPORTED_OPERAND_TYPES, null, 1, 'test' ),
+				)
+			);
+	}
+	public function testRun_object_operation_test_4() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=new PhpTagsTest(); $bar=5; $foo = $bar + $foo; echo $foo,$bar;', array('test'), 77777 ),
+				array(
+					(string) new PhpTagsException( PhpTagsException::NOTICE_OBJECT_CONVERTED, array('PhpTagsTest', 'int'), 1, 'test' ),
+					6,
+					5,
+				)
+			);
+	}
+	public function testRun_object_operation_test_5() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=new PhpTagsTest(); $bar=5; $foo = $bar - $foo; echo $foo,$bar;', array('test'), 77777 ),
+				array(
+					(string) new PhpTagsException( PhpTagsException::NOTICE_OBJECT_CONVERTED, array('PhpTagsTest', 'int'), 1, 'test' ),
+					4,
+					5,
+				)
+			);
+	}
+	public function testRun_object_operation_test_6() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=new PhpTagsTest(); $bar=5; $foo -= $bar; echo $foo,$bar;', array('test'), 77777 ),
+				array(
+					(string) new PhpTagsException( PhpTagsException::NOTICE_OBJECT_CONVERTED, array('PhpTagsTest', 'int'), 1, 'test' ),
+					-4,
+					5,
+				)
+			);
+	}
+	public function testRun_object_operation_test_7() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=new PhpTagsTest(); $bar=5; $foo = $foo > $bar; echo $foo,$bar;', array('test'), 77777 ),
+				array(
+					(string) new PhpTagsException( PhpTagsException::NOTICE_OBJECT_CONVERTED, array('PhpTagsTest', 'int'), 1, 'test' ),
+					false,
+					5,
+				)
+			);
+	}
+	public function testRun_object_operation_test_8() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=new PhpTagsTest(); $bar=5; $foo = $foo < $bar; echo $foo,$bar;', array('test'), 77777 ),
+				array(
+					(string) new PhpTagsException( PhpTagsException::NOTICE_OBJECT_CONVERTED, array('PhpTagsTest', 'int'), 1, 'test' ),
+					true,
+					5,
+				)
+			);
+	}
+	public function testRun_object_operation_test_9() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=new PhpTagsTest(); $bar=5; $foo = $bar <= $foo; echo $foo,$bar;', array('test'), 77777 ),
+				array(
+					(string) new PhpTagsException( PhpTagsException::NOTICE_OBJECT_CONVERTED, array('PhpTagsTest', 'int'), 1, 'test' ),
+					false,
+					5,
+				)
+			);
+	}
+	public function testRun_object_operation_test_10() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=new PhpTagsTest(); $bar=5; $foo = $bar >= $foo; echo $foo,$bar;', array('test'), 77777 ),
+				array(
+					(string) new PhpTagsException( PhpTagsException::NOTICE_OBJECT_CONVERTED, array('PhpTagsTest', 'int'), 1, 'test' ),
+					true,
+					5,
+				)
+			);
+	}
+	public function testRun_object_operation_test_11() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=new PhpTagsTest(); $bar=5; $foo = $bar == $foo; echo $foo,$bar;', array('test'), 77777 ),
+				array(
+					(string) new PhpTagsException( PhpTagsException::NOTICE_OBJECT_CONVERTED, array('PhpTagsTest', 'int'), 1, 'test' ),
+					false,
+					5,
+				)
+			);
+	}
+	public function testRun_object_operation_test_12() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=new PhpTagsTest(); $bar=5; $foo = $bar != $foo; echo $foo,$bar;', array('test'), 77777 ),
+				array(
+					(string) new PhpTagsException( PhpTagsException::NOTICE_OBJECT_CONVERTED, array('PhpTagsTest', 'int'), 1, 'test' ),
+					true,
+					5,
+				)
+			);
+	}
+	public function testRun_object_operation_test_13() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=new PhpTagsTest(); $bar=5; $foo = $bar === $foo; echo $foo,$bar;', array('test'), 77777 ),
+				array(
+					false,
+					5,
+				)
+			);
+	}
+	public function testRun_object_operation_test_14() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=new PhpTagsTest(); $bar=5; $foo = $bar !== $foo; echo $foo,$bar;', array('test'), 77777 ),
+				array(
+					true,
+					5,
+				)
+			);
+	}
+	public function testRun_object_operation_test_15() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=new PhpTagsTest(); $bar=8; $foo = $bar | $foo; echo $foo,$bar;', array('test'), 77777 ),
+				array(
+					(string) new PhpTagsException( PhpTagsException::NOTICE_OBJECT_CONVERTED, array('PhpTagsTest', 'int'), 1, 'test' ),
+					9,
+					8,
+				)
+			);
+	}
+	public function testRun_object_operation_test_16() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=new PhpTagsTest(); $bar=8; $foo |= $bar; echo $foo,$bar;', array('test'), 77777 ),
+				array(
+					(string) new PhpTagsException( PhpTagsException::NOTICE_OBJECT_CONVERTED, array('PhpTagsTest', 'int'), 1, 'test' ),
+					9,
+					8,
+				)
+			);
+	}
+	public function testRun_object_operation_test_17() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=new PhpTagsTest(); $bar=8; $foo = $bar >> $foo; echo $foo,$bar;', array('test'), 77777 ),
+				array(
+					(string) new PhpTagsException( PhpTagsException::NOTICE_OBJECT_CONVERTED, array('PhpTagsTest', 'int'), 1, 'test' ),
+					4,
+					8,
+				)
+			);
+	}
+	public function testRun_object_operation_test_18() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=new PhpTagsTest(); $bar=8; $foo <<= $bar; echo $foo,$bar;', array('test'), 77777 ),
+				array(
+					(string) new PhpTagsException( PhpTagsException::NOTICE_OBJECT_CONVERTED, array('PhpTagsTest', 'int'), 1, 'test' ),
+					256,
+					8,
+				)
+			);
+	}
+	public function testRun_object_operation_test_19() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=new PhpTagsTest(); $bar=8; $foo = $bar && $foo; echo $foo,$bar;', array('test'), 77777 ),
+				array(
+					true,
+					8,
+				)
+			);
+	}
+	public function testRun_object_operation_test_20() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=new PhpTagsTest(); $bar= ~$foo; echo $foo,$bar;', array('test'), 77777 ),
+				array( (string) new PhpTagsException( PhpTagsException::FATAL_UNSUPPORTED_OPERAND_TYPES, null, 1, 'test' ) )
+			);
+	}
+	public function testRun_object_operation_test_21() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=new PhpTagsTest(); $bar= !$foo; echo $bar === false;', array('test'), 77777 ),
+				array( true	)
+			);
+	}
+	public function testRun_object_operation_test_22() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=new PhpTagsTest(); $bar=(int)$foo; echo $bar;', array('test'), 77777 ),
+				array(
+					(string) new PhpTagsException( PhpTagsException::NOTICE_OBJECT_CONVERTED, array('PhpTagsTest', 'int'), 1, 'test' ),
+					1,
+				)
+			);
+	}
+	public function testRun_object_operation_test_23() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=new PhpTagsTest(); $bar=(double)$foo; echo $bar;', array('test'), 77777 ),
+				array(
+					(string) new PhpTagsException( PhpTagsException::NOTICE_OBJECT_CONVERTED, array('PhpTagsTest', 'double'), 1, 'test' ),
+					1,
+				)
+			);
+	}
+	public function testRun_object_operation_test_24() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=new PhpTagsTest(); $bar=(string)$foo; echo $bar;', array('test'), 77777 ),
+				array(
+					(string) new PhpTagsException( PhpTagsException::FATAL_OBJECT_COULD_NOT_BE_CONVERTED, array('PhpTagsTest', 'string'), 1, 'test' ),
+				)
+			);
+	}
+	public function testRun_object_operation_test_25() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=new PhpTagsTest(); $bar=(array)$foo; echo $bar[0];', array('test'), 77777 ),
+				array( '(object <PhpTagsTest>)' )
+			);
+	}
+	public function testRun_object_operation_test_26() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=new PhpTagsTest(); $bar=(bool)$foo; echo $bar === true;', array('test'), 77777 ),
+				array( true )
+			);
+	}
+	public function testRun_object_operation_test_27() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=new PhpTagsTest(); $bar=(unset)$foo; echo $bar === null;', array('test'), 77777 ),
+				array( true )
+			);
+	}
+
+	public function testRun_object_increase_test_1() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=new PhpTagsTest(); $foo++; echo $foo;', array('test'), 77777 ),
+				array(
+					(string) new PhpTagsException( PhpTagsException::FATAL_OBJECT_COULD_NOT_BE_CONVERTED, array('PhpTagsTest', 'string'), 1, 'test' ),
+				)
+			);
+	}
+	public function testRun_object_increase_test_2() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=new PhpTagsTest(); ++$foo; echo $foo;', array('test'), 77777 ),
+				array(
+					(string) new PhpTagsException( PhpTagsException::FATAL_OBJECT_COULD_NOT_BE_CONVERTED, array('PhpTagsTest', 'string'), 1, 'test' ),
+				)
+			);
+	}
+	public function testRun_object_increase_test_3() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=new PhpTagsTest(); --$foo; echo $foo;', array('test'), 77777 ),
+				array(
+					(string) new PhpTagsException( PhpTagsException::FATAL_OBJECT_COULD_NOT_BE_CONVERTED, array('PhpTagsTest', 'string'), 1, 'test' ),
+				)
+			);
+	}
+	public function testRun_object_increase_test_4() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=new PhpTagsTest(); $foo--; echo $foo;', array('test'), 77777 ),
+				array(
+					(string) new PhpTagsException( PhpTagsException::FATAL_OBJECT_COULD_NOT_BE_CONVERTED, array('PhpTagsTest', 'string'), 1, 'test' ),
+				)
+			);
+	}
+
+	public function testRun_array_quote_test_1() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=["bar"]; echo "$foo";', array('test'), 77777 ),
+				array(
+					(string) new PhpTagsException( PhpTagsException::NOTICE_ARRAY_TO_STRING, null, 1, 'test' ),
+					Runtime::R_ARRAY,
+				)
+			);
+	}
+	public function testRun_object_quote_test_1() {
+		$this->assertEquals(
+				Runtime::runSource( '$foo=new PhpTagsTest(); echo "$foo";', array('test'), 77777 ),
+				array(
+					(string) new PhpTagsException( PhpTagsException::FATAL_OBJECT_COULD_NOT_BE_CONVERTED, array('PhpTagsTest', 'string'), 1, 'test' ),
+				)
+			);
+	}
+
 
 }
