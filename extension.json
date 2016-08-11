@@ -1,6 +1,6 @@
 {
 	"name": "PhpTags",
-	"version": "5.8.1",
+	"version": "5.9",
 	"author": "[https://www.mediawiki.org/wiki/User:Pastakhov Pavel Astakhov]",
 	"url": "https://www.mediawiki.org/wiki/Extension:PhpTags",
 	"descriptionmsg": "phptags-desc",
@@ -21,7 +21,6 @@
 		"PhpTags\\iRawOutput": "includes/iRawOutput.php",
 		"PhpTags\\outPrint": "includes/outPrint.php",
 		"PhpTags\\outStrip": "includes/outStrip.php",
-		"PhpTags\\ErrorHandler": "includes/ErrorHandler.php",
 		"PhpTags\\PhpTagsException": "includes/PhpTagsException.php",
 		"PhpTags\\HookException": "includes/HookException.php",
 		"PhpTags\\Compiler": "includes/Compiler.php",

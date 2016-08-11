@@ -605,7 +605,7 @@ checkOperators:
 						// PHP Parse error:  syntax error, unexpected $id
 						throw new PhpTagsException( PhpTagsException::PARSE_SYNTAX_ERROR_UNEXPECTED, array( $this->id ), $this->tokenLine, $this->place );
 					}
-					if ( $owner === false && $variable[Runtime::B_COMMAND] === Runtime::T_VARIABLE ) {
+					if ( $owner === false && $variable[Runtime::B_COMMAND] === Runtime::T_VARIABLE ) { // $foo = <value> or $foo += <value>
 						$return = array(
 							Runtime::B_COMMAND => self::$runtimeOperators[$id],
 							Runtime::B_PARAM_1 => $variable,
@@ -613,6 +613,7 @@ checkOperators:
 							Runtime::B_RESULT => null,
 							Runtime::B_TOKEN_LINE => $this->tokenLine,
 							Runtime::B_DEBUG => $text,
+							Runtime::B_FLAGS => ($cannotRead === true && $id !== '=') ? Runtime::F_DONT_CHECK_PARAM1 : 0,
 						);
 						$this->addValueIntoStack( $val, $return, Runtime::B_PARAM_2 );
 						return $return; // *********** EXIT ***********
@@ -966,6 +967,7 @@ checkOperators:
 					Runtime::B_RESULT => null,
 					Runtime::B_TOKEN_LINE => $this->tokenLine,
 					Runtime::B_DEBUG => $text,
+					Runtime::B_FLAGS => 0,
 				);
 				$didit = $this->addValueIntoStack( $value, $operator, Runtime::B_PARAM_1, false ); // Add the first value into the stack
 
