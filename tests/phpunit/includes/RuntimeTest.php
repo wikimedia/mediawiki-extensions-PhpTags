@@ -3735,6 +3735,10 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 	}
 
 	public function testRun_object_operation_test_1() {
+		if ( !defined( 'PHPTAGS_TEST' ) ) {
+			return;
+		}
+
 		$this->assertEquals(
 				Runtime::runSource( '$foo=["rrr"]; $bar=new PhpTagsTest(); $foo = $foo . $bar; echo $foo[0],$bar;', array('test'), 77777 ),
 				array(
@@ -3744,6 +3748,10 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 			);
 	}
 	public function testRun_object_operation_test_2() {
+		if ( !defined( 'PHPTAGS_TEST' ) ) {
+			return;
+		}
+
 		$this->assertEquals(
 				Runtime::runSource( '$foo=["rrr"]; $bar=new PhpTagsTest(); $foo = $foo + $bar; echo $foo,$bar;', array('test'), 77777 ),
 				array(
@@ -3753,6 +3761,10 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 			);
 	}
 	public function testRun_object_operation_test_3() {
+		if ( !defined( 'PHPTAGS_TEST' ) ) {
+			return;
+		}
+
 		$this->assertEquals(
 				Runtime::runSource( '$foo=new PhpTagsTest(); $bar=["rrr"]; $foo += $bar; echo $foo,$bar;', array('test'), 77777 ),
 				array(
@@ -3762,6 +3774,10 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 			);
 	}
 	public function testRun_object_operation_test_4() {
+		if ( !defined( 'PHPTAGS_TEST' ) ) {
+			return;
+		}
+
 		$this->assertEquals(
 				Runtime::runSource( '$foo=new PhpTagsTest(); $bar=5; $foo = $bar + $foo; echo $foo,$bar;', array('test'), 77777 ),
 				array(
@@ -3772,6 +3788,10 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 			);
 	}
 	public function testRun_object_operation_test_5() {
+		if ( !defined( 'PHPTAGS_TEST' ) ) {
+			return;
+		}
+
 		$this->assertEquals(
 				Runtime::runSource( '$foo=new PhpTagsTest(); $bar=5; $foo = $bar - $foo; echo $foo,$bar;', array('test'), 77777 ),
 				array(
@@ -3782,6 +3802,10 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 			);
 	}
 	public function testRun_object_operation_test_6() {
+		if ( !defined( 'PHPTAGS_TEST' ) ) {
+			return;
+		}
+
 		$this->assertEquals(
 				Runtime::runSource( '$foo=new PhpTagsTest(); $bar=5; $foo -= $bar; echo $foo,$bar;', array('test'), 77777 ),
 				array(
@@ -3792,6 +3816,10 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 			);
 	}
 	public function testRun_object_operation_test_7() {
+		if ( !defined( 'PHPTAGS_TEST' ) ) {
+			return;
+		}
+
 		$this->assertEquals(
 				Runtime::runSource( '$foo=new PhpTagsTest(); $bar=5; $foo = $foo > $bar; echo $foo,$bar;', array('test'), 77777 ),
 				array(
@@ -3802,6 +3830,10 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 			);
 	}
 	public function testRun_object_operation_test_8() {
+		if ( !defined( 'PHPTAGS_TEST' ) ) {
+			return;
+		}
+
 		$this->assertEquals(
 				Runtime::runSource( '$foo=new PhpTagsTest(); $bar=5; $foo = $foo < $bar; echo $foo,$bar;', array('test'), 77777 ),
 				array(
@@ -3812,6 +3844,10 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 			);
 	}
 	public function testRun_object_operation_test_9() {
+		if ( !defined( 'PHPTAGS_TEST' ) ) {
+			return;
+		}
+
 		$this->assertEquals(
 				Runtime::runSource( '$foo=new PhpTagsTest(); $bar=5; $foo = $bar <= $foo; echo $foo,$bar;', array('test'), 77777 ),
 				array(
@@ -3822,6 +3858,10 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 			);
 	}
 	public function testRun_object_operation_test_10() {
+		if ( !defined( 'PHPTAGS_TEST' ) ) {
+			return;
+		}
+
 		$this->assertEquals(
 				Runtime::runSource( '$foo=new PhpTagsTest(); $bar=5; $foo = $bar >= $foo; echo $foo,$bar;', array('test'), 77777 ),
 				array(
@@ -3832,6 +3872,10 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 			);
 	}
 	public function testRun_object_operation_test_11() {
+		if ( !defined( 'PHPTAGS_TEST' ) ) {
+			return;
+		}
+
 		$this->assertEquals(
 				Runtime::runSource( '$foo=new PhpTagsTest(); $bar=5; $foo = $bar == $foo; echo $foo,$bar;', array('test'), 77777 ),
 				array(
@@ -3842,6 +3886,10 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 			);
 	}
 	public function testRun_object_operation_test_12() {
+		if ( !defined( 'PHPTAGS_TEST' ) ) {
+			return;
+		}
+
 		$this->assertEquals(
 				Runtime::runSource( '$foo=new PhpTagsTest(); $bar=5; $foo = $bar != $foo; echo $foo,$bar;', array('test'), 77777 ),
 				array(
@@ -3852,6 +3900,10 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 			);
 	}
 	public function testRun_object_operation_test_13() {
+		if ( !defined( 'PHPTAGS_TEST' ) ) {
+			return;
+		}
+
 		$this->assertEquals(
 				Runtime::runSource( '$foo=new PhpTagsTest(); $bar=5; $foo = $bar === $foo; echo $foo,$bar;', array('test'), 77777 ),
 				array(
@@ -3861,6 +3913,10 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 			);
 	}
 	public function testRun_object_operation_test_14() {
+		if ( !defined( 'PHPTAGS_TEST' ) ) {
+			return;
+		}
+
 		$this->assertEquals(
 				Runtime::runSource( '$foo=new PhpTagsTest(); $bar=5; $foo = $bar !== $foo; echo $foo,$bar;', array('test'), 77777 ),
 				array(
@@ -3870,6 +3926,10 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 			);
 	}
 	public function testRun_object_operation_test_15() {
+		if ( !defined( 'PHPTAGS_TEST' ) ) {
+			return;
+		}
+
 		$this->assertEquals(
 				Runtime::runSource( '$foo=new PhpTagsTest(); $bar=8; $foo = $bar | $foo; echo $foo,$bar;', array('test'), 77777 ),
 				array(
@@ -3880,6 +3940,10 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 			);
 	}
 	public function testRun_object_operation_test_16() {
+		if ( !defined( 'PHPTAGS_TEST' ) ) {
+			return;
+		}
+
 		$this->assertEquals(
 				Runtime::runSource( '$foo=new PhpTagsTest(); $bar=8; $foo |= $bar; echo $foo,$bar;', array('test'), 77777 ),
 				array(
@@ -3890,6 +3954,10 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 			);
 	}
 	public function testRun_object_operation_test_17() {
+		if ( !defined( 'PHPTAGS_TEST' ) ) {
+			return;
+		}
+
 		$this->assertEquals(
 				Runtime::runSource( '$foo=new PhpTagsTest(); $bar=8; $foo = $bar >> $foo; echo $foo,$bar;', array('test'), 77777 ),
 				array(
@@ -3900,6 +3968,10 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 			);
 	}
 	public function testRun_object_operation_test_18() {
+		if ( !defined( 'PHPTAGS_TEST' ) ) {
+			return;
+		}
+
 		$this->assertEquals(
 				Runtime::runSource( '$foo=new PhpTagsTest(); $bar=8; $foo <<= $bar; echo $foo,$bar;', array('test'), 77777 ),
 				array(
@@ -3910,6 +3982,10 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 			);
 	}
 	public function testRun_object_operation_test_19() {
+		if ( !defined( 'PHPTAGS_TEST' ) ) {
+			return;
+		}
+
 		$this->assertEquals(
 				Runtime::runSource( '$foo=new PhpTagsTest(); $bar=8; $foo = $bar && $foo; echo $foo,$bar;', array('test'), 77777 ),
 				array(
@@ -3919,18 +3995,30 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 			);
 	}
 	public function testRun_object_operation_test_20() {
+		if ( !defined( 'PHPTAGS_TEST' ) ) {
+			return;
+		}
+
 		$this->assertEquals(
 				Runtime::runSource( '$foo=new PhpTagsTest(); $bar= ~$foo; echo $foo,$bar;', array('test'), 77777 ),
 				array( (string) new PhpTagsException( PhpTagsException::FATAL_UNSUPPORTED_OPERAND_TYPES, null, 1, 'test' ) )
 			);
 	}
 	public function testRun_object_operation_test_21() {
+		if ( !defined( 'PHPTAGS_TEST' ) ) {
+			return;
+		}
+
 		$this->assertEquals(
 				Runtime::runSource( '$foo=new PhpTagsTest(); $bar= !$foo; echo $bar === false;', array('test'), 77777 ),
 				array( true	)
 			);
 	}
 	public function testRun_object_operation_test_22() {
+		if ( !defined( 'PHPTAGS_TEST' ) ) {
+			return;
+		}
+
 		$this->assertEquals(
 				Runtime::runSource( '$foo=new PhpTagsTest(); $bar=(int)$foo; echo $bar;', array('test'), 77777 ),
 				array(
@@ -3940,6 +4028,10 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 			);
 	}
 	public function testRun_object_operation_test_23() {
+		if ( !defined( 'PHPTAGS_TEST' ) ) {
+			return;
+		}
+
 		$this->assertEquals(
 				Runtime::runSource( '$foo=new PhpTagsTest(); $bar=(double)$foo; echo $bar;', array('test'), 77777 ),
 				array(
@@ -3949,6 +4041,10 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 			);
 	}
 	public function testRun_object_operation_test_24() {
+		if ( !defined( 'PHPTAGS_TEST' ) ) {
+			return;
+		}
+
 		$this->assertEquals(
 				Runtime::runSource( '$foo=new PhpTagsTest(); $bar=(string)$foo; echo $bar;', array('test'), 77777 ),
 				array(
@@ -3957,18 +4053,30 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 			);
 	}
 	public function testRun_object_operation_test_25() {
+		if ( !defined( 'PHPTAGS_TEST' ) ) {
+			return;
+		}
+
 		$this->assertEquals(
 				Runtime::runSource( '$foo=new PhpTagsTest(); $bar=(array)$foo; echo $bar[0];', array('test'), 77777 ),
 				array( '(object <PhpTagsTest>)' )
 			);
 	}
 	public function testRun_object_operation_test_26() {
+		if ( !defined( 'PHPTAGS_TEST' ) ) {
+			return;
+		}
+
 		$this->assertEquals(
 				Runtime::runSource( '$foo=new PhpTagsTest(); $bar=(bool)$foo; echo $bar === true;', array('test'), 77777 ),
 				array( true )
 			);
 	}
 	public function testRun_object_operation_test_27() {
+		if ( !defined( 'PHPTAGS_TEST' ) ) {
+			return;
+		}
+
 		$this->assertEquals(
 				Runtime::runSource( '$foo=new PhpTagsTest(); $bar=(unset)$foo; echo $bar === null;', array('test'), 77777 ),
 				array( true )
@@ -3976,6 +4084,10 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 	}
 
 	public function testRun_object_increase_test_1() {
+		if ( !defined( 'PHPTAGS_TEST' ) ) {
+			return;
+		}
+
 		$this->assertEquals(
 				Runtime::runSource( '$foo=new PhpTagsTest(); $foo++; echo $foo;', array('test'), 77777 ),
 				array(
@@ -3984,6 +4096,10 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 			);
 	}
 	public function testRun_object_increase_test_2() {
+		if ( !defined( 'PHPTAGS_TEST' ) ) {
+			return;
+		}
+
 		$this->assertEquals(
 				Runtime::runSource( '$foo=new PhpTagsTest(); ++$foo; echo $foo;', array('test'), 77777 ),
 				array(
@@ -3992,6 +4108,10 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 			);
 	}
 	public function testRun_object_increase_test_3() {
+		if ( !defined( 'PHPTAGS_TEST' ) ) {
+			return;
+		}
+
 		$this->assertEquals(
 				Runtime::runSource( '$foo=new PhpTagsTest(); --$foo; echo $foo;', array('test'), 77777 ),
 				array(
@@ -4000,6 +4120,10 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 			);
 	}
 	public function testRun_object_increase_test_4() {
+		if ( !defined( 'PHPTAGS_TEST' ) ) {
+			return;
+		}
+
 		$this->assertEquals(
 				Runtime::runSource( '$foo=new PhpTagsTest(); $foo--; echo $foo;', array('test'), 77777 ),
 				array(
@@ -4018,6 +4142,10 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 			);
 	}
 	public function testRun_object_quote_test_1() {
+		if ( !defined( 'PHPTAGS_TEST' ) ) {
+			return;
+		}
+
 		$this->assertEquals(
 				Runtime::runSource( '$foo=new PhpTagsTest(); echo "$foo";', array('test'), 77777 ),
 				array(
@@ -4025,6 +4153,5 @@ echo isset($expected_array_got_string[0]) ? "true" : "false";'),
 				)
 			);
 	}
-
 
 }
