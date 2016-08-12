@@ -121,8 +121,8 @@ class Renderer {
 	 * @return array
 	 */
 	private static function getBytecode( $source, $parser, $frame, $frameTitle, $frameTitleText ) {
-		global $wgPhpTagsBytecodeExptime, $wgPhpTagsCounter;
-		$wgPhpTagsCounter++;
+		global $wgPhpTagsBytecodeExptime, $wgPhpTagsCallsCounter;
+		$wgPhpTagsCallsCounter++;
 
 		static $parserTitle = false;
 		if ( $parserTitle === false ) {
@@ -136,7 +136,7 @@ class Renderer {
 		if ( true === isset( self::$bytecodeCache[$revID][$md5Source] ) ) {
 			\wfDebugLog( 'PhpTags', 'Memory hiting with key ' . $revID );
 			self::$memoryHit++;
-			return self::$bytecodeCache[$revID][$md5Source];
+			return unserialize( self::$bytecodeCache[$revID][$md5Source] );
 		}
 
 		if ( $wgPhpTagsBytecodeExptime > 0 && $revID > 0 && false === isset( self::$bytecodeLoaded[$revID] ) ) {
@@ -144,26 +144,26 @@ class Renderer {
 			$key = \wfMemcKey( 'PhpTags', $revID );
 			$data = $cache->get( $key );
 			self::$bytecodeLoaded[$revID] = true;
-			if ( $data !== false && $data[0] === PHPTAGS_RUNTIME_RELEASE ) {
+			if ( $data !== false && $data[0] === Runtime::VERSION ) {
 				self::$bytecodeCache[$revID] = $data[1];
 				if ( true === isset( self::$bytecodeCache[$revID][$md5Source] ) ) {
 					\wfDebugLog( 'PhpTags', 'Cache hiting with key ' . $revID );
 					self::$cacheHit++;
-					return self::$bytecodeCache[$revID][$md5Source];
+					return unserialize( self::$bytecodeCache[$revID][$md5Source] );
 				}
 			}
 			\wfDebugLog( 'PhpTags', 'Cache missing with key ' . $revID );
 		}
 
-		$bytecode = Compiler::compile( $source, $frameTitleText );
+		$bytecode = serialize( Compiler::compile( $source, $frameTitleText ) );
 		self::$bytecodeCache[$revID][$md5Source] = $bytecode;
 		if ( $revID > 0 ) { // Don't save bytecode of unsaved pages
-			self::$bytecodeNeedsUpdate[$revID][$md5Source] = unserialize( serialize( $bytecode ) );
+			self::$bytecodeNeedsUpdate[$revID][$md5Source] = $bytecode;
 		}
 
 		self::$compileHit++;
 		Timer::addCompileTime( $parser );
-		return $bytecode;
+		return unserialize( $bytecode );
 	}
 
 	/**
@@ -180,7 +180,7 @@ class Renderer {
 		}
 
 		if ( true === self::$needInitRuntime ) {
-			\wfDebugLog( 'PhpTags', 'Run hook PhpTagsRuntimeFirstInit' );
+			\wfDebug( 'PhpTags: Run hook PhpTagsRuntimeFirstInit' );
 			\Hooks::run( 'PhpTagsRuntimeFirstInit' );
 			Hooks::loadData();
 			Runtime::$loopsLimit = $wgPhpTagsMaxLoops;
@@ -197,7 +197,7 @@ class Renderer {
 		$cache = \wfGetCache( CACHE_ANYTHING );
 		foreach ( self::$bytecodeNeedsUpdate as $revID => $data ) {
 			$key = wfMemcKey( 'PhpTags', $revID );
-			$cache->set( $key, array(PHPTAGS_RUNTIME_RELEASE, $data), $wgPhpTagsBytecodeExptime );
+			$cache->set( $key, array(Runtime::VERSION, $data), $wgPhpTagsBytecodeExptime );
 			\wfDebugLog( 'PhpTags', 'Save compiled bytecode to cache with key ' . $revID );
 		}
 		self::$bytecodeNeedsUpdate = array();
@@ -206,8 +206,8 @@ class Renderer {
 	public static function reset() {
 		self::writeLimitReport();
 
-		global $wgPhpTagsCounter;
-		$wgPhpTagsCounter = 0;
+		global $wgPhpTagsCallsCounter;
+		$wgPhpTagsCallsCounter = 0;
 		Runtime::reset();
 		Timer::reset();
 		self::$bytecodeCache = array();
@@ -240,7 +240,7 @@ class Renderer {
 	}
 
 	public static function writeLimitReport() {
-		global $wgPhpTagsCounter, $wgPhpTagsLimitReport;
+		global $wgPhpTagsCallsCounter, $wgPhpTagsLimitReport;
 
 		$time = Timer::getRunTime();
 		$compileTime = Timer::getCompileTime();
@@ -252,7 +252,7 @@ Compiler: %.3f sec ( usage: %d, cache: %d, memory: %d )
 Total   : %.3f sec
 -----------------------------------------------------------
 ',
-				$wgPhpTagsCounter,
+				$wgPhpTagsCallsCounter,
 				$time - $compileTime,
 				$compileTime,
 				self::$compileHit,
@@ -341,6 +341,32 @@ Total   : %.3f sec
 		if ( true !== self::$parser->incrementExpensiveFunctionCount() ) {
 			throw new PhpTagsException( PhpTagsException::FATAL_CALLED_MANY_EXPENSIVE_FUNCTION );
 		}
+	}
+
+	/**
+	 *
+	 * @see Parser::insertStripItem()
+	 * @param string $text
+	 * @return string
+	 */
+	public static function insertNoWiki( $text ) {
+		$parser = self::$parser;
+		if ( $parser === null ) { // skip in php unit tests
+			return $text;
+		}
+		$rnd = "{$parser->mUniqPrefix}-phptags-{$parser->mMarkerIndex}-" . \Parser::MARKER_SUFFIX;
+		$parser->mMarkerIndex++;
+		$parser->mStripState->addNoWiki( $rnd, $text );
+		return $rnd;
+	}
+
+
+	public static function insertStripItem( $text ) {
+		$parser = self::$parser;
+		if ( $parser === null ) { // skip in php unit tests
+			return $text;
+		}
+		return $parser->insertStripItem( $text );
 	}
 
 }

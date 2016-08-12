@@ -77,6 +77,19 @@ class GenericObject implements \Iterator {
 		return $this->value;
 	}
 
+	/**
+	 * Returns value for operator (array) and functions var_dump and etc...
+	 * @since 5.9
+	 * @return array
+	 */
+	public function getDumpValue() {
+		return (array)('(' . Runtime::R_DUMP_OBJECT . ' <' . $this->getName() . '>)');
+	}
+
+	/**
+	 * Returns object's name
+	 * @return string
+	 */
 	public function getName() {
 		return $this->objectName;
 	}
@@ -115,7 +128,7 @@ class GenericObject implements \Iterator {
 		return \PhpTags\Hooks::getCallInfo( \PhpTags\Hooks::INFO_RETURNS_ON_FAILURE );
 	}
 
-	// It doesn't allow illegal access to public properties inside phptag code by using foreach operator
+	// It doesn't allow illegal access to public properties inside phptag code through using foreach operator
 	public function current() {}
 	public function key() {}
 	public function next() {}

@@ -105,7 +105,7 @@ class Hooks {
 		$key = wfMemcKey( 'phptags', 'loadJsonFiles' );
 		$cached = $cache->get( $key );
 		if ( $cached !== false &&
-				$cached['JSONLOADER'] === PHPTAGS_JSONLOADER_RELEASE  &&
+				$cached['JSONLOADER'] === JsonLoader::VERSION &&
 				$cached['jsonFiles'] === self::$jsonFiles &&
 				$cached['callbackConstants'] === self::$callbackConstants ) {
 			\wfDebugLog( 'PhpTags', __METHOD__ . '() using cache: yes' );
@@ -117,7 +117,7 @@ class Hooks {
 			$data['constantValues'] += self::loadConstantValues();
 			$data['jsonFiles'] = self::$jsonFiles;
 			$data['callbackConstants'] = self::$callbackConstants;
-			$data['JSONLOADER'] = PHPTAGS_JSONLOADER_RELEASE;
+			$data['JSONLOADER'] = JsonLoader::VERSION;
 			$cache->set( $key, $data );
 		}
 		self::$jsonFiles = null;
@@ -406,13 +406,24 @@ class Hooks {
 	}
 
 	/**
-	 * @deprecated since version 5.2.0
+	 *
 	 * @param type $name
 	 * @param type $object
 	 * @param type $value
 	 */
 	public static function callSetObjectsProperty( $name, $object, $value ) {
-		return self::callSetObjectProperty( $value, strtolower( $name ), $object );
+		$oldValue = self::$value;
+		self::$value = array(
+			Runtime::B_HOOK_TYPE => Runtime::H_SET_OBJECT_PROPERTY,
+			Runtime::B_METHOD => $name,
+			Runtime::B_METHOD_KEY => null,
+			Runtime::B_OBJECT => $object,
+		);
+
+		$return = self::callSetObjectProperty( $value, strtolower( $name ), $object );
+
+		self::$value = $oldValue;
+		return $return;
 	}
 
 	/**
@@ -422,7 +433,7 @@ class Hooks {
 	 * @param \PhpTags\GenericObject $object
 	 * @return mixded
 	 */
-	public static function callSetObjectProperty( $value, $propertyKey, $object ) {
+	private static function callSetObjectProperty( $value, $propertyKey, $object ) {
 		if ( false === $object instanceof GenericObject ) {
 			Runtime::pushException( new PhpTagsException( PhpTagsException::WARNING_ATTEMPT_TO_ASSIGN_PROPERTY ) );
 		}
@@ -464,6 +475,7 @@ class Hooks {
 			$objectKey = strtolower( $calledObjectName );
 		}
 
+		$oldValue = self::$value;
 		self::$value = array(
 			Runtime::B_HOOK_TYPE => Runtime::H_NEW_OBJECT,
 			Runtime::B_METHOD => '__construct',
@@ -492,6 +504,7 @@ class Hooks {
 			}
 			throw new PhpTagsException( PhpTagsException::FATAL_OBJECT_NOT_CREATED, $message );
 		}
+		self::$value = $oldValue;
 		return $newObject;
 	}
 

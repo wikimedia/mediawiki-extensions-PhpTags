@@ -60,14 +60,14 @@ class PhpTagsHooks {
 
 	/**
 	 *
-	 * @global int $wgPhpTagsCounter
+	 * @global int $wgPhpTagsCallsCounter
 	 * @param Parser $parser
 	 * @param string $text
 	 * @return boolean
 	 */
 	public static function onParserAfterTidy( $parser, &$text ) {
-		global $wgPhpTagsCounter;
-		if ( $wgPhpTagsCounter > 0 ) {
+		global $wgPhpTagsCallsCounter;
+		if ( $wgPhpTagsCallsCounter > 0 ) {
 			\PhpTags\Renderer::onParserAfterTidy( $parser, $text );
 		}
 		return true;
@@ -98,6 +98,16 @@ class PhpTagsHooks {
 		$testDir = __DIR__ . '/tests/phpunit';
 		$files = array_merge( $files, glob( "$testDir/includes/*Test.php" ) );
 		return true;
+	}
+
+	public static function onRegistration() {
+		global $wgPhpTagsLimitReport, $wgPhpTagsCallsCounter;
+
+		$wgPhpTagsLimitReport = false;
+		$wgPhpTagsCallsCounter = 0;
+
+		define ( 'PHPTAGS_HOOK_RELEASE', 8 );
+		define ( 'PHPTAGS_VERSION', '5.9.0.26' ); //@todo remove later, it only for backward compatibility
 	}
 
 }

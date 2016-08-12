@@ -1,14 +1,14 @@
 {
-    "@metadata": {
-        "authors": [
-            "pastakhov"
-        ]
-    },
-    "phptags-compiler-error-category": "Pages with invalid PhpTags code",
-    "phptags-compiler-error-category-desc": "The PhpTags code has an error in it.",
-    "phptags-runtime-error-category": "Pages with PhpTags errors",
-    "phptags-runtime-error-category-desc": "There was an error when processing PhpTags code on the page.",
-    "phptags-desc": "Allows users to use the Magic expressions with PHP language syntax",
-    "phptags-disabled-for-namespace": "Extension PhpTags is disabled for the namespace \"$1\".",
-    "phptags-extension-type": "PhpTags extensions"
+	"@metadata": {
+		"authors": [
+			"pastakhov"
+		]
+	},
+	"phptags-compiler-error-category": "Pages with invalid PhpTags code",
+	"phptags-compiler-error-category-desc": "The PhpTags code has an error in it.",
+	"phptags-runtime-error-category": "Pages with PhpTags errors",
+	"phptags-runtime-error-category-desc": "There was an error when processing PhpTags code on the page.",
+	"phptags-desc": "Allows users to use the Magic expressions with PHP language syntax",
+	"phptags-disabled-for-namespace": "Extension PhpTags is disabled for the namespace \"$1\".",
+	"phptags-extension-type": "PhpTags extensions"
 }

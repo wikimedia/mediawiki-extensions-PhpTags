@@ -4,6 +4,11 @@
 			"Beta16"
 		]
 	},
+	"phptags-compiler-error-category": "Pagine con codice PhpTags non valido",
+	"phptags-compiler-error-category-desc": "Il codice PhpTags contiene un errore.",
+	"phptags-runtime-error-category": "Pagine con errori PhpTags",
+	"phptags-runtime-error-category-desc": "Si è verificato un errore durante l'elaborazione del codice PhpTags nella pagina.",
 	"phptags-desc": "Consente agli utenti di utilizzare le espressioni Magic con la sintassi del linguaggio PHP",
-	"phptags-disabled-for-namespace": "L'estensione PhpTags è disabilitata per il namespace \"$1\"."
+	"phptags-disabled-for-namespace": "L'estensione PhpTags è disabilitata per il namespace \"$1\".",
+	"phptags-extension-type": "Estensioni PhpTags"
 }

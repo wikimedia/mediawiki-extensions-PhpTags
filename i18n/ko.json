@@ -1,0 +1,14 @@
+{
+	"@metadata": {
+		"authors": [
+			"Revi",
+			"Ykhwong"
+		]
+	},
+	"phptags-compiler-error-category": "잘못된 PhpTags 코드를 포함한 문서",
+	"phptags-compiler-error-category-desc": "PhpTags 코드에 문제가 있습니다.",
+	"phptags-runtime-error-category": "PhpTags 오류가 있는 문서",
+	"phptags-runtime-error-category-desc": "PhpTags 코드를 처리하던 중 오류가 발생했습니다.",
+	"phptags-disabled-for-namespace": "PhpTags 확장 기능이 \"$1\" 이름공간에서 활성화되지 않았습니다.",
+	"phptags-extension-type": "PhpTags 확장 기능"
+}
