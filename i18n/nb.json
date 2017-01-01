@@ -1,0 +1,14 @@
+{
+	"@metadata": {
+		"authors": [
+			"Jon Harald Søby"
+		]
+	},
+	"phptags-compiler-error-category": "Sider med ugyldig PhpTags-kode",
+	"phptags-compiler-error-category-desc": "PhpTags-koden har en feil.",
+	"phptags-runtime-error-category": "Sider med PhpTags-feil",
+	"phptags-runtime-error-category-desc": "En feil oppsto under prosessering av PhpTags-kode på siden.",
+	"phptags-desc": "Lar brukere bruke magiske uttrykk med PHP-syntaks",
+	"phptags-disabled-for-namespace": "Utvidelsen PhpTags er slått av for navnerommet «$1».",
+	"phptags-extension-type": "PhpTags-utvidelser"
+}
