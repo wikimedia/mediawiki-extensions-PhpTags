@@ -9,6 +9,9 @@ namespace PhpTags;
  * @author Pavel Astakhov <pastakhov@yandex.ru>
  * @licence GNU General Public Licence 2.0 or later
  */
+
+use UtfNormal\Validator;
+
 class Renderer {
 
 	static $cacheHit = 0;
@@ -79,7 +82,7 @@ class Renderer {
 		Timer::stop( $parser );
 
 		wfProfileOut( __METHOD__ );
-		return \UtfNormal::cleanUp( $return );
+		return Validator::cleanUp( $return );
 	}
 
 	public static function runTagHook( $input, array $args, \Parser $parser, \PPFrame $frame ) {
