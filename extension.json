@@ -6,6 +6,9 @@
 	"descriptionmsg": "phptags-desc",
 	"license-name": "GPL-2.0+",
 	"type": "phptags",
+	"requires": {
+		"MediaWiki": ">= 1.25.0"
+	},
 	"MessagesDirs": {
 		"PhpTags": [
 			"i18n"
