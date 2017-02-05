@@ -46,11 +46,11 @@
 	"ParserTestFiles": [
 		"tests/parser/PhpTagsTests.txt"
 	],
+	"TrackingCategories": [
+		"phptags-compiler-error-category",
+		"phptags-runtime-error-category"
+	],
 	"config": {
-		"TrackingCategories": [
-			"phptags-compiler-error-category",
-			"phptags-runtime-error-category"
-		],
 		"PhpTagsNamespaces": true,
 		"PhpTagsMaxLoops": 1000,
 		"PhpTagsBytecodeExptime": 2592000
