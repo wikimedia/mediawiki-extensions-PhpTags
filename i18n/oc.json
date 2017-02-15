@@ -4,6 +4,7 @@
 			"Cedric31"
 		]
 	},
+	"phptags-compiler-error-category": "Paginas amb un còdi PhpTags incorrècte",
 	"phptags-runtime-error-category": "Paginas amb d'errors de PhpTags",
 	"phptags-extension-type": "Extensions de PhpTags"
 }
