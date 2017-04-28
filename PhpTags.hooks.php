@@ -42,24 +42,6 @@ class PhpTagsHooks {
 
 	/**
 	 *
-	 * @param array $extResources
-	 * @param array $extMode
-	 */
-	public static function onCodeMirrorGetAdditionalResources( &$extResources, &$extMode ) {
-		$extResources['scripts']['lib/codemirror/mode/php/php.js'] = true;
-		$extResources['scripts']['lib/codemirror/mode/htmlmixed/htmlmixed.js'] = true;
-		$extResources['scripts']['lib/codemirror/mode/xml/xml.js'] = true;
-		$extResources['scripts']['lib/codemirror/mode/javascript/javascript.js'] = true;
-		$extResources['scripts']['lib/codemirror/mode/css/css.js'] = true;
-		$extResources['scripts']['lib/codemirror/mode/clike/clike.js'] = true;
-
-		$extMode['tag']['phptag'] = 'text/x-php';
-
-		return true;
-	}
-
-	/**
-	 *
 	 * @global int $wgPhpTagsCallsCounter
 	 * @param Parser $parser
 	 * @param string $text
@@ -107,7 +89,7 @@ class PhpTagsHooks {
 		$wgPhpTagsCallsCounter = 0;
 
 		define ( 'PHPTAGS_HOOK_RELEASE', 8 );
-		define ( 'PHPTAGS_VERSION', '5.9' ); //@todo remove later, it only for backward compatibility
+		define ( 'PHPTAGS_VERSION', '5.10' ); //@todo remove later, it only for backward compatibility
 	}
 
 }

@@ -1,6 +1,6 @@
 {
 	"name": "PhpTags",
-	"version": "5.9",
+	"version": "5.10",
 	"author": "[https://www.mediawiki.org/wiki/User:Pastakhov Pavel Astakhov]",
 	"url": "https://www.mediawiki.org/wiki/Extension:PhpTags",
 	"descriptionmsg": "phptags-desc",
@@ -37,7 +37,6 @@
 	"Hooks": {
 		"ParserFirstCallInit": "PhpTagsHooks::onParserFirstCallInit",
 		"PhpTagsRuntimeFirstInit": "PhpTagsHooks::onPhpTagsRuntimeFirstInit",
-		"CodeMirrorGetAdditionalResources": "PhpTagsHooks::onCodeMirrorGetAdditionalResources",
 		"ParserLimitReport": "PhpTagsHooks::onParserLimitReport",
 		"ParserAfterTidy": "PhpTagsHooks::onParserAfterTidy",
 		"ExtensionTypes": "PhpTagsHooks::onExtensionTypes",
@@ -55,6 +54,12 @@
 		"PhpTagsMaxLoops": 1000,
 		"PhpTagsBytecodeExptime": 2592000
 	},
+	"CodeMirrorTagModes": {
+		"phptag": "text/x-php"
+	},
+	"CodeMirrorPluginModules": [
+		"ext.CodeMirror.lib.mode.php"
+	],
 	"callback": "PhpTagsHooks::onRegistration",
 	"manifest_version": 1
 }
