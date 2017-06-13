@@ -5,7 +5,7 @@
 			"Macofe"
 		]
 	},
-	"phptags-compiler-error-category": "Páginas con código PhpTags inválido",
+	"phptags-compiler-error-category": "Páginas con código PhpTags no válido",
 	"phptags-compiler-error-category-desc": "El código de PhpTags tiene un error.",
 	"phptags-runtime-error-category": "Páginas con errores de PhpTags",
 	"phptags-runtime-error-category-desc": "Se produjo un error al procesar el código PhpTags en la página.",
