@@ -48,7 +48,6 @@ class Renderer {
 	 * @param array $args
 	 */
 	public static function runParserFunction( $parser, $frame, $args ) {
-		wfProfileIn( __METHOD__ );
 		Timer::start( $parser );
 
 		$command = array_shift($args);
@@ -81,12 +80,10 @@ class Renderer {
 
 		Timer::stop( $parser );
 
-		wfProfileOut( __METHOD__ );
 		return Validator::cleanUp( $return );
 	}
 
 	public static function runTagHook( $input, array $args, \Parser $parser, \PPFrame $frame ) {
-		wfProfileIn( __METHOD__ );
 		Timer::start( $parser );
 
 		$frameTitle = $frame->getTitle();
@@ -109,7 +106,6 @@ class Renderer {
 
 		Timer::stop( $parser );
 		$return = self::insertGeneral( $parser, $parser->recursiveTagParse( implode($result), $frame ) );
-		wfProfileOut( __METHOD__ );
 		return $return;
 	}
 
@@ -268,7 +264,6 @@ Total   : %.3f sec
 
 	public static function onParserAfterTidy( $parser, &$text ) {
 		global $wgPhpTagsBytecodeExptime;
-		wfProfileIn( __METHOD__ );
 
 		if ( self::$globalVariablesScript ) {
 			$vars = array();
@@ -286,7 +281,6 @@ Total   : %.3f sec
 		}
 		self::reset();
 
-		wfProfileOut( __METHOD__ );
 		return true;
 	}
 
