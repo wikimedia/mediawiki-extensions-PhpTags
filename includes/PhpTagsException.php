@@ -234,8 +234,9 @@ class PhpTagsException extends \Exception {
 				break;
 		}
 
-		//return "$message in $place on line $line\n";
-		return \Html::element( 'span', array('class'=>'error'), "PhpTags $messageType:  $message in $place on line $line" ) . '<br />';
+		$messageTrimed = trim( preg_replace( '/\s+/', ' ', $message ) );
+		//return "$messageTrimed in $place on line $line\n";
+		return \Html::element( 'span', array('class'=>'error'), "PhpTags $messageType:  $messageTrimed in $place on line $line" ) . '<br />';
 
 	}
 
