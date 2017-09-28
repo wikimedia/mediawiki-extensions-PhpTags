@@ -369,19 +369,26 @@ Total   : %.3f sec
 }
 
 class Timer {
-	private static $times = array();
+	private static $times = [];
 	private static $runTime = 0;
 	private static $compile = 0;
+	private static $reset = false; // allows to make a postponed reset
 
 	public static function start( $parser ) {
 		array_unshift( self::$times, $parser->mOutput->getTimeSinceStart( 'cpu' ) );
 	}
 
 	public static function stop( $parser ) {
-		if ( false === isset(self::$times[1]) ) {
+		if ( !isset( self::$times[1] ) ) { // count the latest stop calling only
 			self::$runTime += $parser->mOutput->getTimeSinceStart( 'cpu' ) - self::$times[0];
 		}
 		array_shift( self::$times );
+
+		if ( self::$reset && !self::$times ) { // make a postponed reset
+			self::$reset = false;
+			self::$runTime = 0;
+			self::$compile = 0;
+		}
 	}
 
 	public static function addCompileTime( $parser ) {
@@ -397,9 +404,20 @@ class Timer {
 	}
 
 	public static function reset() {
-		self::$times = array();
+		if ( self::$times ) { // the stop function was not called
+			self::$reset = true; // postpone the real reset until the stop function is called
+			return;
+		}
+		self::realReset();
+	}
+
+	private static function realReset() {
+		self::$times = [];
 		self::$runTime = 0;
 		self::$compile = 0;
+		if ( self::$reset ) {
+			self::$reset = false;
+		}
 	}
 
 }

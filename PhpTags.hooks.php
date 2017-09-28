@@ -16,7 +16,8 @@ class PhpTagsHooks {
 	 * @return boolean
 	 */
 	public static function onPhpTagsRuntimeFirstInit() {
-		\PhpTags\Hooks::addJsonFile( __DIR__ . '/PhpTags.json', PHPTAGS_VERSION );
+		$version = ExtensionRegistry::getInstance()->getAllThings()['Empty']['version'];
+		\PhpTags\Hooks::addJsonFile( __DIR__ . '/PhpTags.json', $version );
 		return true;
 	}
 
@@ -89,7 +90,7 @@ class PhpTagsHooks {
 		$wgPhpTagsCallsCounter = 0;
 
 		define ( 'PHPTAGS_HOOK_RELEASE', 8 );
-		define ( 'PHPTAGS_VERSION', '5.10' ); //@todo remove later, it only for backward compatibility
+		define ( 'PHPTAGS_VERSION', '5.11' ); //@todo remove later, it is for backward compatibility only
 	}
 
 }
