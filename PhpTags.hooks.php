@@ -16,7 +16,7 @@ class PhpTagsHooks {
 	 * @return boolean
 	 */
 	public static function onPhpTagsRuntimeFirstInit() {
-		$version = ExtensionRegistry::getInstance()->getAllThings()['Empty']['version'];
+		$version = ExtensionRegistry::getInstance()->getAllThings()['PhpTags']['version'];
 		\PhpTags\Hooks::addJsonFile( __DIR__ . '/PhpTags.json', $version );
 		return true;
 	}
