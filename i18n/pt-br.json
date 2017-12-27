@@ -1,0 +1,14 @@
+{
+	"@metadata": {
+		"authors": [
+			"Eduardo Addad de Oliveira"
+		]
+	},
+	"phptags-compiler-error-category": "Páginas com código PhpTags inválido",
+	"phptags-compiler-error-category-desc": "Páginas com erros no código PhpTags.",
+	"phptags-runtime-error-category": "Páginas com erros PhpTags",
+	"phptags-runtime-error-category-desc": "Ocorreu um erro ao processar o código PhpTags da página.",
+	"phptags-desc": "Permitir que os utilizadores usem as expressões mágicas com a sintaxe da linguagem PHP",
+	"phptags-disabled-for-namespace": "A extensão PhpTags está desativada para o espaço nominal \"$1\".",
+	"phptags-extension-type": "Extensões PhpTags"
+}
