@@ -1,0 +1,14 @@
+{
+	"@metadata": {
+		"authors": [
+			"Kly"
+		]
+	},
+	"phptags-compiler-error-category": "帶有無效 PHP 標籤代碼的頁面",
+	"phptags-compiler-error-category-desc": "含有 PHP 標籤代碼錯誤。",
+	"phptags-runtime-error-category": "帶有錯誤 PHP 標籤的頁面",
+	"phptags-runtime-error-category-desc": "處理此頁面的 PHP 標籤代碼時發生錯誤。",
+	"phptags-desc": "允許使用者使用帶 PHP 語法的魔術表達式",
+	"phptags-disabled-for-namespace": "名稱空間「$1」停用了擴充 PHP 標籤。",
+	"phptags-extension-type": "PHP 標籤擴充"
+}
