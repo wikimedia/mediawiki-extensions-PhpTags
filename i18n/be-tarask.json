@@ -5,5 +5,6 @@
 		]
 	},
 	"phptags-compiler-error-category": "Старонкі зь няслушным кодам PhpTags",
-	"phptags-compiler-error-category-desc": "Код PhpTags утрымлівае памылку."
+	"phptags-compiler-error-category-desc": "Код PhpTags утрымлівае памылку.",
+	"phptags-runtime-error-category": "Старонкі з памылкамі PhpTags"
 }
