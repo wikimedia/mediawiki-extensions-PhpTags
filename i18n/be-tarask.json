@@ -8,5 +8,6 @@
 	"phptags-compiler-error-category-desc": "Код PhpTags утрымлівае памылку.",
 	"phptags-runtime-error-category": "Старонкі з памылкамі PhpTags",
 	"phptags-runtime-error-category-desc": "Адбылася памылка пры апрацоўцы коду PhpTags на гэтай старонцы.",
-	"phptags-desc": "Дазваляе ўдзельнікам ужываць магічныя выразы з дапамогай сынтаксысу мовы PHP"
+	"phptags-desc": "Дазваляе ўдзельнікам ужываць магічныя выразы з дапамогай сынтаксысу мовы PHP",
+	"phptags-disabled-for-namespace": "Пашырэньне PhpTags адключанае для прасторы назваў «$1»."
 }
