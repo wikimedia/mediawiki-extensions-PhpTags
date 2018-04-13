@@ -42,9 +42,6 @@
 		"ExtensionTypes": "PhpTagsHooks::onExtensionTypes",
 		"UnitTestsList": "PhpTagsHooks::onUnitTestsList"
 	},
-	"ParserTestFiles": [
-		"tests/parser/PhpTagsTests.txt"
-	],
 	"TrackingCategories": [
 		"phptags-compiler-error-category",
 		"phptags-runtime-error-category"
