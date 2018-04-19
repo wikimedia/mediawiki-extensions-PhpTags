@@ -72,17 +72,6 @@ class PhpTagsHooks {
 		return true;
 	}
 
-	/**
-	 *
-	 * @param array $files
-	 * @return boolean
-	 */
-	public static function onUnitTestsList( &$files ) {
-		$testDir = __DIR__ . '/tests/phpunit';
-		$files = array_merge( $files, glob( "$testDir/includes/*Test.php" ) );
-		return true;
-	}
-
 	public static function onRegistration() {
 		global $wgPhpTagsLimitReport, $wgPhpTagsCallsCounter;
 

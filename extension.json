@@ -39,8 +39,7 @@
 		"PhpTagsRuntimeFirstInit": "PhpTagsHooks::onPhpTagsRuntimeFirstInit",
 		"ParserLimitReport": "PhpTagsHooks::onParserLimitReport",
 		"ParserAfterTidy": "PhpTagsHooks::onParserAfterTidy",
-		"ExtensionTypes": "PhpTagsHooks::onExtensionTypes",
-		"UnitTestsList": "PhpTagsHooks::onUnitTestsList"
+		"ExtensionTypes": "PhpTagsHooks::onExtensionTypes"
 	},
 	"TrackingCategories": [
 		"phptags-compiler-error-category",
