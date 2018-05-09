@@ -1,8 +1,15 @@
 {
 	"@metadata": {
 		"authors": [
-			"Mr. Ibrahem"
+			"Mr. Ibrahem",
+			"ديفيد"
 		]
 	},
-	"phptags-runtime-error-category": "صفحات بها أخطاء في تعليم الصيغة"
+	"phptags-compiler-error-category": "صفحات تحتوي على رمز PhpTags غير صالح",
+	"phptags-compiler-error-category-desc": "يحتوي رمز PhpTags على خطأ فيه.",
+	"phptags-runtime-error-category": "صفحات بها أخطاء في تعليم الصيغة",
+	"phptags-runtime-error-category-desc": "حدث خطأ عند معالجة رمز PhpTags في الصفحة.",
+	"phptags-desc": "يسمح للمستخدمين باستخدام تعبيرات سحرية مع صيغة لغة PHP",
+	"phptags-disabled-for-namespace": "تم تعطيل ملحق PhpTags لنطاق \"$1\".",
+	"phptags-extension-type": "امتدادات PhpTags"
 }
