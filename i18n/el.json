@@ -1,0 +1,14 @@
+{
+	"@metadata": {
+		"authors": [
+			"Nikosgranturismogt"
+		]
+	},
+	"phptags-compiler-error-category": "Σελίδες με μη έγκυρο κώδικα PhpTags",
+	"phptags-compiler-error-category-desc": "Ο κώδικας PhpTags έχει ένα σφάλμα σε αυτόν.",
+	"phptags-runtime-error-category": "Σελίδες με σφάλματα PhpTags",
+	"phptags-runtime-error-category-desc": "Υπήρξε ένα σφάλμα κατά τη διάρκεια επεξεργασίας του κώδικα PhpTags στη σελίδα.",
+	"phptags-desc": "Επιτρέπει στους χρήστες να χρησιμοποιήσουν μαγικές εκφράσεις με την γλωσσική σύνταξη PHP",
+	"phptags-disabled-for-namespace": "Η επέκταση PhpTags είναι απενεργοποιημένη για τον ονοματοχώρο \"$1\".",
+	"phptags-extension-type": "Επεκτάσεις PhpTags"
+}
