@@ -161,7 +161,8 @@ class Runtime {
 
 	private static function popUp() {
 		$stack =& self::$stack[0];
-		list( $stack[self::S_RUNNING][ $stack[self::S_RUN_INDEX] ][self::B_RESULT], $stack[self::S_RUNNING], $stack[self::S_RUN_INDEX], $stack[self::S_COUNT], $stack[self::S_LOOPS_OWNER] ) = array_pop( $stack[self::S_MEMORY] );
+		list( $bResult, $stack[self::S_RUNNING], $stack[self::S_RUN_INDEX], $stack[self::S_COUNT], $stack[self::S_LOOPS_OWNER] ) = array_pop( $stack[self::S_MEMORY] );
+		$stack[self::S_RUNNING][ $stack[self::S_RUN_INDEX] ][self::B_RESULT] = $bResult;
 	}
 
 	/**
@@ -1225,7 +1226,12 @@ doit:
 					$call = $operators[ $value[self::B_COMMAND] ];
 					self::$call( $value );
 				}
-			} while( list($runCode[$runIndex][self::B_RESULT], $runCode, $runIndex, $c, $loopsOwner) = array_pop($memory) );
+				$memLast = array_pop( $memory );
+				if ( $memLast ) {
+					list( $bResult, $runCode, $runIndex, $c, $loopsOwner) = $memLast;
+					$runCode[$runIndex][self::B_RESULT] = $bResult;
+				}
+			} while ( $memLast );
 		} catch ( PhpTagsException $e ) {
 			self::pushException( $e );
 			if ( $e->isFatal() !== true && ($call === $operators[self::T_HOOK] || $call === $operators[self::T_NEW]) ) {
