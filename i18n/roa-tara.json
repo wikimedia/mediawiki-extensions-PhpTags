@@ -4,6 +4,11 @@
 			"Joetaras"
 		]
 	},
+	"phptags-compiler-error-category": "Pàggene cu codece de PhpTags invalide",
+	"phptags-compiler-error-category-desc": "'U codece PhpTags tène 'n'errore.",
+	"phptags-runtime-error-category": "Pàggene cu errore PhpTags",
+	"phptags-runtime-error-category-desc": "Ha assute 'n'errore duranne 'u processamende d'u codece PhpTags de sta pàgene.",
 	"phptags-desc": "Permette a l'utinde de ausà le espressiune Maggeche cu 'a sindasse d'u linguagge PHP",
-	"phptags-disabled-for-namespace": "Estenzione PhpTags jè disabbilitate pe stu namespace \"$1\"."
+	"phptags-disabled-for-namespace": "Estenzione PhpTags jè disabbilitate pe stu namespace \"$1\".",
+	"phptags-extension-type": "Estenziune PhpTags"
 }
