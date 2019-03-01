@@ -261,7 +261,7 @@ class Runtime {
 	 * @param array $value
 	 */
 	private static function doAnd ( &$value ) {
-		$v = self::checkObjectParams( $value[self::B_PARAM_1], $value[self::B_PARAM_2] );
+		$v = self::checkNumericParams( $value[self::B_PARAM_1], $value[self::B_PARAM_2] );
 		$value[self::B_RESULT] = $v[0] & $v[1];
 	}
 
@@ -270,7 +270,7 @@ class Runtime {
 	 * @param array $value
 	 */
 	private static function doOr ( &$value ) {
-		$v = self::checkObjectParams( $value[self::B_PARAM_1], $value[self::B_PARAM_2] );
+		$v = self::checkNumericParams( $value[self::B_PARAM_1], $value[self::B_PARAM_2] );
 		$value[self::B_RESULT] = $v[0] | $v[1];
 	}
 
@@ -279,7 +279,7 @@ class Runtime {
 	 * @param array $value
 	 */
 	private static function doXor ( &$value ) {
-		$v = self::checkObjectParams( $value[self::B_PARAM_1], $value[self::B_PARAM_2] );
+		$v = self::checkNumericParams( $value[self::B_PARAM_1], $value[self::B_PARAM_2] );
 		$value[self::B_RESULT] = $v[0] ^ $v[1];
 	}
 
@@ -288,7 +288,7 @@ class Runtime {
 	 * @param array $value
 	 */
 	private static function doShiftLeft ( &$value ) {
-		$v = self::checkObjectParams( $value[self::B_PARAM_1], $value[self::B_PARAM_2] );
+		$v = self::checkNumericParams( $value[self::B_PARAM_1], $value[self::B_PARAM_2] );
 		$value[self::B_RESULT] = $v[0] << $v[1];
 	}
 
@@ -297,7 +297,7 @@ class Runtime {
 	 * @param array $value
 	 */
 	private static function doShiftRight ( &$value ) {
-		$v = self::checkObjectParams( $value[self::B_PARAM_1], $value[self::B_PARAM_2] );
+		$v = self::checkNumericParams( $value[self::B_PARAM_1], $value[self::B_PARAM_2] );
 		$value[self::B_RESULT] = $v[0] >> $v[1];
 	}
 
@@ -608,16 +608,18 @@ class Runtime {
 	 */
 	private static function doAs ( &$value ) {
 		// $value[PHPTAGS_STACK_RESULT] is always array, checked in self::doForeach()
-		$tmp = each( $value[self::B_RESULT] ); // 'each' can return false and null
-		if ( ! $tmp ) { // it is last element
+		$k = key( $value[self::B_RESULT] );
+		if ( $k === null ) {
+			// it is the latest element in the array
 			self::popUp();
 		}
 
 		$variables =& self::$stack[0][self::S_VARIABLES];
-		$variables[ $value[self::B_PARAM_1] ] = $tmp[1]; // save value
+		$variables[ $value[self::B_PARAM_1] ] = current( $value[self::B_RESULT] ); // save value
 		if ( $value[self::B_PARAM_2] !== false ) { // T_DOUBLE_ARROW Example: while ( $foo as $key=>$value )
-			$variables[ $value[self::B_PARAM_2] ] = $tmp[0]; // save key
+			$variables[ $value[self::B_PARAM_2] ] = $k; // save key
 		}
+		next( $value[self::B_RESULT] );
 	}
 
 	/**
@@ -1015,7 +1017,7 @@ class Runtime {
 	 */
 	private static function doSetAndVal ( &$value ) {
 		$ref =& self::getVariableRef( $value );
-		$v = self::checkObjectParams( $ref, $value[self::B_PARAM_2] );
+		$v = self::checkNumericParams( $ref, $value[self::B_PARAM_2] );
 		$value[self::B_RESULT] = $ref = $v[0] & $v[1];
 	}
 
@@ -1025,7 +1027,7 @@ class Runtime {
 	 */
 	private static function doSetOrVal ( &$value ) {
 		$ref =& self::getVariableRef( $value );
-		$v = self::checkObjectParams( $ref, $value[self::B_PARAM_2] );
+		$v = self::checkNumericParams( $ref, $value[self::B_PARAM_2] );
 		$value[self::B_RESULT] = $ref = $v[0] | $v[1];
 	}
 
@@ -1035,7 +1037,7 @@ class Runtime {
 	 */
 	private static function doSetXorVal ( &$value ) {
 		$ref =& self::getVariableRef( $value );
-		$v = self::checkObjectParams( $ref, $value[self::B_PARAM_2] );
+		$v = self::checkNumericParams( $ref, $value[self::B_PARAM_2] );
 		$value[self::B_RESULT] = $ref = $v[0] ^ $v[1];
 	}
 
@@ -1045,7 +1047,7 @@ class Runtime {
 	 */
 	private static function doSetShiftLeftVal ( &$value ) {
 		$ref =& self::getVariableRef( $value );
-		$v = self::checkObjectParams( $ref, $value[self::B_PARAM_2] );
+		$v = self::checkNumericParams( $ref, $value[self::B_PARAM_2] );
 		$value[self::B_RESULT] = $ref = $v[0] << $v[1];
 	}
 
@@ -1055,7 +1057,7 @@ class Runtime {
 	 */
 	private static function doSetShiftRightVal ( &$value ) {
 		$ref =& self::getVariableRef( $value );
-		$v = self::checkObjectParams( $ref, $value[self::B_PARAM_2] );
+		$v = self::checkNumericParams( $ref, $value[self::B_PARAM_2] );
 		$value[self::B_RESULT] = $ref = $v[0] >> $v[1];
 	}
 
@@ -1090,12 +1092,12 @@ class Runtime {
 
 	private static function checkArrayParams( &$v1, &$v2 ) {
 		if ( !($v1 === null || is_scalar( $v1 )) || !($v2 === null || is_scalar( $v2 )) ) {
-			$return = self::checkObjectParams( $v1, $v2 );
+			$return = self::checkNumericParams( $v1, $v2 );
 			if ( is_array( $v1 ) xor is_array( $v2 ) ) { // [1] + 1 or 1 + [1]
 				throw new PhpTagsException( PhpTagsException::FATAL_UNSUPPORTED_OPERAND_TYPES );
 			}
 		} else {
-			$return = array( $v1, $v2 );
+			$return = self::checkNumericParams( $v1, $v2 );
 		}
 
 		return $return;
@@ -1103,14 +1105,28 @@ class Runtime {
 
 	private static function checkScalarParams( &$v1, &$v2 ) {
 		if ( !($v1 === null || is_scalar( $v1 )) || !($v2 === null || is_scalar( $v2 )) ) {
-			$return = self::checkObjectParams( $v1, $v2 );
+			$return = self::checkNumericParams( $v1, $v2 );
 			if ( is_array( $v1 ) || is_array( $v2 ) ) { // [1] + 1 or 1 + [1]
 				throw new PhpTagsException( PhpTagsException::FATAL_UNSUPPORTED_OPERAND_TYPES );
 			}
 		} else {
-			$return = array( $v1, $v2 );
+			$return = self::checkNumericParams( $v1, $v2 );
 		}
 
+		return $return;
+	}
+
+	private static function checkNumericParams( &$v1, &$v2 ) {
+		list( $t1, $t2 ) = self::checkObjectParams( $v1, $v2 );
+		$return = [ $t1, $t2 ];
+		if ( $t1 !== null && !is_numeric( $t1 ) && !is_array( $t1 ) && !is_bool( $t1 ) ) {
+			self::pushException( new PhpTagsException( PhpTagsException::WARNING_NON_NUMERIC_VALUE ) );
+			$return[0] = (int)$t1;
+		}
+		if ( $t2 !== null && !is_numeric( $t2 ) && !is_array( $t2 ) && !is_bool( $t2 ) ) {
+			self::pushException( new PhpTagsException( PhpTagsException::WARNING_NON_NUMERIC_VALUE ) );
+			$return[1] = (int)$t2;
+		}
 		return $return;
 	}
 
