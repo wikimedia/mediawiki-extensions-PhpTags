@@ -1185,7 +1185,10 @@ echo "$a, ", $a-- + -5, ", " . --$a, ", $a.";'),
 	public function testRun_echo_assignment_15() {
 		$this->assertEquals(
 				Runtime::runSource( '$foo="rrr"; $bar=["4"]; $foo+=$bar; echo $foo,$bar;', array('test'), 77777 ),
-				array( (string) new PhpTagsException( PhpTagsException::FATAL_UNSUPPORTED_OPERAND_TYPES, null, 1, 'test' ) )
+				array(
+					(string) new PhpTagsException( PhpTagsException::WARNING_NON_NUMERIC_VALUE, null, 1, 'test' ),
+					(string) new PhpTagsException( PhpTagsException::FATAL_UNSUPPORTED_OPERAND_TYPES, null,	1, 'test'),
+				)
 			);
 	}
 	public function testRun_echo_assignment_16() {
@@ -1239,13 +1242,19 @@ echo "$a, ", $a-- + -5, ", " . --$a, ", $a.";'),
 	public function testRun_echo_assignment_24() {
 		$this->assertEquals(
 				Runtime::runSource( '$foo="rrr"; $bar=["4"]; $foo=$foo%$bar; echo $foo,$bar;', array('test'), 77777 ),
-				array( (string) new PhpTagsException( PhpTagsException::FATAL_UNSUPPORTED_OPERAND_TYPES, null, 1, 'test' ) )
+				array(
+					(string) new PhpTagsException( PhpTagsException::WARNING_NON_NUMERIC_VALUE, null, 1, 'test' ),
+					(string) new PhpTagsException( PhpTagsException::FATAL_UNSUPPORTED_OPERAND_TYPES, null, 1, 'test' ),
+				)
 			);
 	}
 	public function testRun_echo_assignment_25() {
 		$this->assertEquals(
 				Runtime::runSource( '$foo="rrr"; $bar=["4"]; $foo%=$bar; echo $foo,$bar;', array('test'), 77777 ),
-				array( (string) new PhpTagsException( PhpTagsException::FATAL_UNSUPPORTED_OPERAND_TYPES, null, 1, 'test' ) )
+				array(
+					(string) new PhpTagsException( PhpTagsException::WARNING_NON_NUMERIC_VALUE, null, 1, 'test' ),
+					(string) new PhpTagsException( PhpTagsException::FATAL_UNSUPPORTED_OPERAND_TYPES, null, 1, 'test' ),
+				)
 			);
 	}
 	public function testRun_echo_assignment_26() {
@@ -1269,61 +1278,61 @@ echo "$a, ", $a-- + -5, ", " . --$a, ", $a.";'),
 	public function testRun_echo_assignment_29() {
 		$this->assertEquals(
 				Runtime::runSource( '$foo=["4"]; $bar="rrr"; $foo = ($foo & $bar); echo $foo,$bar;', array('test'), 77777 ),
-				array( '0', 'rrr' )
+				array( (string) new PhpTagsException( PhpTagsException::WARNING_NON_NUMERIC_VALUE, null, 1, 'test' ), '0', 'rrr' )
 			);
 	}
 	public function testRun_echo_assignment_30() {
 		$this->assertEquals(
 				Runtime::runSource( '$foo=["4"]; $bar="rrr"; $foo = ($foo | $bar); echo $foo,$bar;', array('test'), 77777 ),
-				array( '1', 'rrr' )
+				array( (string) new PhpTagsException( PhpTagsException::WARNING_NON_NUMERIC_VALUE, null, 1, 'test' ), '1', 'rrr' )
 			);
 	}
 	public function testRun_echo_assignment_31() {
 		$this->assertEquals(
 				Runtime::runSource( '$foo=["4"]; $bar="rrr"; $foo = ($foo ^ $bar); echo $foo,$bar;', array('test'), 77777 ),
-				array( '1', 'rrr' )
+				array( (string) new PhpTagsException( PhpTagsException::WARNING_NON_NUMERIC_VALUE, null, 1, 'test' ), '1', 'rrr' )
 			);
 	}
 	public function testRun_echo_assignment_32() {
 		$this->assertEquals(
 				Runtime::runSource( '$foo=["4"]; $bar="rrr"; $foo |= $bar; echo $foo,$bar;', array('test'), 77777 ),
-				array( '1', 'rrr' )
+				array( (string) new PhpTagsException( PhpTagsException::WARNING_NON_NUMERIC_VALUE, null, 1, 'test' ), '1', 'rrr' )
 			);
 	}
 	public function testRun_echo_assignment_33() {
 		$this->assertEquals(
 				Runtime::runSource( '$foo=["4"]; $bar="rrr"; $foo ^= $bar; echo $foo,$bar;', array('test'), 77777 ),
-				array( '1', 'rrr' )
+				array( (string) new PhpTagsException( PhpTagsException::WARNING_NON_NUMERIC_VALUE, null, 1, 'test' ), '1', 'rrr' )
 			);
 	}
 	public function testRun_echo_assignment_34() {
 		$this->assertEquals(
 				Runtime::runSource( '$foo=["4"]; $bar="rrr"; $foo &= $bar; echo $foo,$bar;', array('test'), 77777 ),
-				array( '0', 'rrr' )
+				array( (string) new PhpTagsException( PhpTagsException::WARNING_NON_NUMERIC_VALUE, null, 1, 'test' ), '0', 'rrr' )
 			);
 	}
 	public function testRun_echo_assignment_35() {
 		$this->assertEquals(
 				Runtime::runSource( '$foo=["4"]; $bar="rrr"; $foo = ($foo >> $bar); echo $foo,$bar;', array('test'), 77777 ),
-				array( '1', 'rrr' )
+				array( (string) new PhpTagsException( PhpTagsException::WARNING_NON_NUMERIC_VALUE, null, 1, 'test' ), '1', 'rrr' )
 			);
 	}
 	public function testRun_echo_assignment_36() {
 		$this->assertEquals(
 				Runtime::runSource( '$foo="rrr"; $bar=["rrr"]; $foo = ($foo << $bar); echo $foo,$bar[0];', array('test'), 77777 ),
-				array( '0', 'rrr' )
+				array( (string) new PhpTagsException( PhpTagsException::WARNING_NON_NUMERIC_VALUE, null, 1, 'test' ), '0', 'rrr' )
 			);
 	}
 	public function testRun_echo_assignment_37() {
 		$this->assertEquals(
 				Runtime::runSource( '$foo=["4"]; $bar="rrr"; $foo >>= $bar; echo $foo,$bar;', array('test'), 77777 ),
-				array( '1', 'rrr' )
+				array( (string) new PhpTagsException( PhpTagsException::WARNING_NON_NUMERIC_VALUE, null, 1, 'test' ), '1', 'rrr' )
 			);
 	}
 	public function testRun_echo_assignment_38() {
 		$this->assertEquals(
 				Runtime::runSource( '$foo="rrr"; $bar=["rrr"]; $foo <<= $bar; echo $foo,$bar[0];', array('test'), 77777 ),
-				array( '0', 'rrr' )
+				array( (string) new PhpTagsException( PhpTagsException::WARNING_NON_NUMERIC_VALUE, null, 1, 'test' ), '0', 'rrr' )
 			);
 	}
 	public function testRun_echo_assignment_39() {
@@ -2356,8 +2365,14 @@ if ( $foo + $bar ) echo "\$foo + \$bar";'),
 	}
 	public function testRun_echo_empty_array_push_3() {
 		$this->assertEquals(
-				Runtime::runSource('$foo=array(); $foo[]+="v"; $foo[]-="b"; $foo[].="n"; echo $foo[0],$foo[1],$foo[2];'),
-				array('0', '0', 'n')
+				Runtime::runSource('$foo=array(); $foo[]+="v"; $foo[]-="b"; $foo[].="n"; echo $foo[0],$foo[1],$foo[2];', array('test'), 77777),
+				array(
+					(string) new PhpTagsException( PhpTagsException::WARNING_NON_NUMERIC_VALUE, null, 1, 'test' ),
+					(string) new PhpTagsException( PhpTagsException::WARNING_NON_NUMERIC_VALUE, null, 1, 'test' ),
+					'0',
+					'0',
+					'n',
+				)
 			);
 	}
 	public function testRun_echo_empty_array_push_4() {
@@ -2368,8 +2383,17 @@ if ( $foo + $bar ) echo "\$foo + \$bar";'),
 	}
 	public function testRun_echo_empty_array_push_5() {
 		$this->assertEquals(
-				Runtime::runSource('$foo=array(); $foo[]*="v"; $foo[]+="b"; $foo[]-="n"; $foo[]&="m"; echo $foo[0],$foo[1],$foo[2],$foo[3];'),
-				array(0, 0, 0, 0)
+				Runtime::runSource('$foo=array(); $foo[]*="v"; $foo[]+="b"; $foo[]-="n"; $foo[]&="m"; echo $foo[0],$foo[1],$foo[2],$foo[3];', array('test'), 77777),
+				array(
+					(string) new PhpTagsException( PhpTagsException::WARNING_NON_NUMERIC_VALUE, null, 1, 'test' ),
+					(string) new PhpTagsException( PhpTagsException::WARNING_NON_NUMERIC_VALUE, null, 1, 'test' ),
+					(string) new PhpTagsException( PhpTagsException::WARNING_NON_NUMERIC_VALUE, null, 1, 'test' ),
+					(string) new PhpTagsException( PhpTagsException::WARNING_NON_NUMERIC_VALUE, null, 1, 'test' ),
+					0,
+					0,
+					0,
+					0,
+				)
 			);
 	}
 	public function testRun_echo_empty_array_push_6() {
