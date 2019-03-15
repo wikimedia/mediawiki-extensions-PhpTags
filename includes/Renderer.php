@@ -351,7 +351,7 @@ Total   : %.3f sec
 		if ( $parser === null ) { // skip in php unit tests
 			return $text;
 		}
-		$rnd = "{$parser->mUniqPrefix}-phptags-{$parser->mMarkerIndex}-" . \Parser::MARKER_SUFFIX;
+		$rnd = \Parser::MARKER_PREFIX . "-phptags-{$parser->mMarkerIndex}-" . \Parser::MARKER_SUFFIX;
 		$parser->mMarkerIndex++;
 		$parser->mStripState->addNoWiki( $rnd, $text );
 		return $rnd;
