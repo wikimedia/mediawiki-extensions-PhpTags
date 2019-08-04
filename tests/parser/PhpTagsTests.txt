@@ -109,7 +109,6 @@ pf echo html tag div
 {{#phptag: echo '<div>test</div>'; }}
 !! result
 <div>test</div>
-
 !! end
 
 !! test
@@ -118,7 +117,6 @@ echo html tag div
 <phptag> echo '<div>test</div>'; </phptag>
 !! result
 <div>test</div>
-
 !! end
 
 !! test
@@ -165,7 +163,6 @@ pf echo html tag onmouseover
 >test</div>
 !! result
 <div>test</div>
-
 !! end
 
 !! test
@@ -176,5 +173,4 @@ echo html tag onmouseover
 >test</div>
 !! result
 <div>test</div>
-
 !! end
