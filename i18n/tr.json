@@ -1,0 +1,14 @@
+{
+	"@metadata": {
+		"authors": [
+			"BaRaN6161 TURK"
+		]
+	},
+	"phptags-compiler-error-category": "Geçersiz PhpTags kodu olan sayfalar",
+	"phptags-compiler-error-category-desc": "PhpTags kodunun içinde bir hata var.",
+	"phptags-runtime-error-category": "PhpTags hataları olan sayfalar",
+	"phptags-runtime-error-category-desc": "Sayfadaki PhpTags kodunu işlerken bir hata oluştu.",
+	"phptags-desc": "Kullanıcıların Sihir ifadelerini PHP dili sözdizimi ile kullanmalarına izin verir",
+	"phptags-disabled-for-namespace": "PhpTags uzantısı \"$1\" ad alanı için devre dışı bırakıldı.",
+	"phptags-extension-type": "PhpTags uzantıları"
+}
