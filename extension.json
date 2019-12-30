@@ -31,7 +31,9 @@
 		"PhpTags\\GenericObject": "includes/GenericObject.php",
 		"PhpTags\\Hooks": "includes/Hooks.php",
 		"PhpTags\\JsonLoader": "includes/JsonLoader.php",
-		"PhpTagsObjects\\PhpTagsConstants": "includes/PhpTagsConstants.php",
+		"PhpTagsObjects\\PhpTagsConstants": "includes/PhpTagsConstants.php"
+	},
+	"TestAutoloadClasses": {
 		"PhpTagsObjects\\PhpTagsTestClass": "tests/phpunit/includes/PhpTagsTestClass.php"
 	},
 	"Hooks": {
