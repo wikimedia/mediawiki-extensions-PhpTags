@@ -1,3 +1,5 @@
+!! Version 2
+
 !! article
 argv 0 test page
 !! text
@@ -25,152 +27,152 @@ argv foo test page
 
 !! test
 argv 0 test
-!! input
+!! wikitext
 {{:argv 0 test page}}
-!! result
+!! html
 <p>Argv 0 test page
 </p>
 !! end
 
 !! test
 argv 1 test
-!! input
+!! wikitext
 {{:argv 1 test page|Hello}}
-!! result
+!! html
 <p>Hello
 </p>
 !! end
 
 !! test
 argv 7 test
-!! input
+!! wikitext
 {{:argv 7 test page|7=Seven}}
-!! result
+!! html
 <p>Seven
 </p>
 !! end
 
 !! test
 argv foo test
-!! input
+!! wikitext
 {{:argv foo test page|foo=bar}}
-!! result
+!! html
 <p>bar
 </p>
 !! end
 
 !! test
 echo null true false
-!! input
+!! wikitext
 <phptag> echo null, true, false; </phptag>
-!! result
+!! html
 <p>1
 </p>
 !! end
 
 !! test
 tag nothing
-!! input
+!! wikitext
 <phptag></phptag>
-!! result
+!! html
 !! end
 
 !! test
 tag empty
-!! input
+!! wikitext
 <phptag>  </phptag>
-!! result
+!! html
 !! end
 
 !! test
 tag empty and ;
-!! input
+!! wikitext
 <phptag> ; </phptag>
-!! result
+!! html
 !! end
 
 !! test
 pf nothing
-!! input
+!! wikitext
 {{#phptag:}}
-!! result
+!! html
 !! end
 
 !! test
 pf empty
-!! input
+!! wikitext
 {{#phptag:  }}
-!! result
+!! html
 !! end
 
 !! test
 pf echo html tag div
-!! input
+!! wikitext
 {{#phptag: echo '<div>test</div>'; }}
-!! result
+!! html
 <div>test</div>
 !! end
 
 !! test
 echo html tag div
-!! input
+!! wikitext
 <phptag> echo '<div>test</div>'; </phptag>
-!! result
+!! html
 <div>test</div>
 !! end
 
 !! test
 pf echo html tag a
-!! input
+!! wikitext
 {{#phptag: echo '<a href="test.com">test</a>'; }}
-!! result
+!! html
 <p>&lt;a href="test.com"&gt;test&lt;/a&gt;
 </p>
 !! end
 
 !! test
 echo html tag a
-!! input
+!! wikitext
 <phptag> echo '<a href="test.com">test</a>'; </phptag>
-!! result
+!! html
 <p>&lt;a href="test.com"&gt;test&lt;/a&gt;
 </p>
 !! end
 
 !! test
 pf echo html tag script
-!! input
+!! wikitext
 {{#phptag: echo '<script>alert "hello!";</script>'; }}
-!! result
+!! html
 <p>&lt;script&gt;alert "hello!";&lt;/script&gt;
 </p>
 !! end
 
 !! test
 echo html tag script
-!! input
+!! wikitext
 <phptag> echo '<script>alert "hello!";</script>'; </phptag>
-!! result
+!! html
 <p>&lt;script&gt;alert "hello!";&lt;/script&gt;
 </p>
 !! end
 
 !! test
 pf echo html tag onmouseover
-!! input
+!! wikitext
 <div
 {{#phptag: echo ' onmouseover="alert"'; }}
 >test</div>
-!! result
+!! html
 <div>test</div>
 !! end
 
 !! test
 echo html tag onmouseover
-!! input
+!! wikitext
 <div
 {{#phptag: echo ' onmouseover="alert"'; }}
 >test</div>
-!! result
+!! html
 <div>test</div>
 !! end
