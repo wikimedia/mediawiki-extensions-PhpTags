@@ -1,8 +1,8 @@
 {
 	"@metadata": {
 		"authors": [
-			"pastakhov",
-			"Umherirrender"
+			"Umherirrender",
+			"pastakhov"
 		]
 	},
 	"phptags-compiler-error-category": "Name of the [[mw:Help:Tracking categories|tracking category]] for pages saved with invalid PhpTags code",
