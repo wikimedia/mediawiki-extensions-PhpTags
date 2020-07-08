@@ -11,18 +11,32 @@ namespace PhpTags;
  */
 class HookException extends PhpTagsException {
 
+	/**
+	 * HookException constructor.
+	 * @param string $message
+	 * @param int $code
+	 */
 	public function __construct( $message, $code = self::EXCEPTION_WARNING ) {
 		parent::__construct( $code, $message );
 	}
 
+	/**
+	 * @return bool
+	 */
 	public function isFatal() {
 		return $this->code > self::EXCEPTION_WARNING;
 	}
 
+	/**
+	 * @return bool
+	 */
 	public function isCatchable() {
 		return $this->code !== self::EXCEPTION_FATAL;
 	}
 
+	/**
+	 * @return string
+	 */
 	public function __toString() {
 		$arguments = $this->params;
 		$originalFullName = $this->hookCallInfo[Hooks::INFO_ORIGINAL_FULL_NAME];

@@ -16,24 +16,29 @@ class outStrip implements iRawOutput {
 	 *
 	 * @param mixed $returnValue
 	 * @param string $strip
-	 * @param bool $raw
-	 * @param string|false $element
-	 * @param array $attribs
-	 * @param array $sheath
 	 */
 	public function __construct( $returnValue, $strip ) {
 		$this->returnValue = $returnValue;
 		$this->strip = $strip;
 	}
 
+	/**
+	 * @return string
+	 */
 	public function __toString() {
 		return $this->strip;
 	}
 
+	/**
+	 * @return mixed
+	 */
 	public function getReturnValue() {
 		return $this->returnValue;
 	}
 
+	/**
+	 * @return string
+	 */
 	public function placeAsStripItem() {
 		return $this->strip;
 	}

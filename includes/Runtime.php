@@ -1,6 +1,8 @@
 <?php
 namespace PhpTags;
 
+use Exception;
+
 /**
  * The runtime class of the extension PhpTags.
  *
@@ -136,6 +138,9 @@ class Runtime {
 		self::T_SR_EQUAL => 'doSetShiftRightVal',
 	);
 
+	/**
+	 *
+	 */
 	public static function reset() {
 		global $wgPhpTagsMaxLoops;
 
@@ -146,10 +151,23 @@ class Runtime {
 		self::$ignoreErrors = false;
 	}
 
+	/**
+	 * @param string $code
+	 * @param array $args
+	 * @param string $scope
+	 * @return mixed
+	 * @throws PhpTagsException
+	 * @throws Exception
+	 */
 	public static function runSource( $code, array $args = array(), $scope = '' ) {
 		return self::run( Compiler::compile( $code ), $args, $scope );
 	}
 
+	/**
+	 * @param $newCode
+	 * @param $newLoopsOwner
+	 * @param $refReturn
+	 */
 	private static function pushDown( $newCode, $newLoopsOwner, &$refReturn ) {
 		$stack =& self::$stack[0];
 		$stack[self::S_MEMORY][] = array( &$refReturn, $stack[self::S_RUNNING], $stack[self::S_RUN_INDEX], $stack[self::S_COUNT], $stack[self::S_LOOPS_OWNER] );
@@ -159,6 +177,9 @@ class Runtime {
 		$stack[self::S_LOOPS_OWNER] = $newLoopsOwner;
 	}
 
+	/**
+	 *
+	 */
 	private static function popUp() {
 		$stack =& self::$stack[0];
 		list( $bResult, $stack[self::S_RUNNING], $stack[self::S_RUN_INDEX], $stack[self::S_COUNT], $stack[self::S_LOOPS_OWNER] ) = array_pop( $stack[self::S_MEMORY] );
@@ -168,6 +189,7 @@ class Runtime {
 	/**
 	 * self::T_QUOTE
 	 * @param array $value
+	 * @throws PhpTagsException
 	 */
 	private static function doQuote ( &$value ) {
 		$implode = array();
@@ -189,6 +211,7 @@ class Runtime {
 	/**
 	 * self::T_CONCAT
 	 * @param array $value
+	 * @throws PhpTagsException
 	 */
 	private static function doConcat ( &$value ) {
 		$v = self::checkStringParams( $value[self::B_PARAM_1], $value[self::B_PARAM_2], $value[self::B_FLAGS] );
@@ -198,6 +221,7 @@ class Runtime {
 	/**
 	 * self::T_PLUS
 	 * @param array $value
+	 * @throws PhpTagsException
 	 */
 	private static function doPlus ( &$value ) {
 		$v = self::checkArrayParams( $value[self::B_PARAM_1], $value[self::B_PARAM_2] );
@@ -207,6 +231,7 @@ class Runtime {
 	/**
 	 * self::T_MINUS
 	 * @param array $value
+	 * @throws PhpTagsException
 	 */
 	private static function doMinus ( &$value ) {
 		$v = self::checkScalarParams( $value[self::B_PARAM_1], $value[self::B_PARAM_2] );
@@ -216,6 +241,7 @@ class Runtime {
 	/**
 	 * self::T_MUL
 	 * @param array $value
+	 * @throws PhpTagsException
 	 */
 	private static function doMul ( &$value ) {
 		$v1 = $value[self::B_PARAM_1];
@@ -227,6 +253,7 @@ class Runtime {
 	/**
 	 * self::T_DIV
 	 * @param array $value
+	 * @throws PhpTagsException
 	 */
 	private static function doDiv ( &$value ) {
 		$v1 = $value[self::B_PARAM_1];
@@ -243,6 +270,7 @@ class Runtime {
 	/**
 	 * self::T_MOD
 	 * @param array $value
+	 * @throws PhpTagsException
 	 */
 	private static function doMod ( &$value ) {
 		$v1 = $value[self::B_PARAM_1];
@@ -328,6 +356,7 @@ class Runtime {
 	/**
 	 * self::T_IS_SMALLER
 	 * @param array $value
+	 * @throws PhpTagsException
 	 */
 	private static function doIsSmaller ( &$value ) {
 		$v = self::checkObjectParams( $value[self::B_PARAM_1], $value[self::B_PARAM_2] );
@@ -337,6 +366,7 @@ class Runtime {
 	/**
 	 * self::T_IS_GREATER
 	 * @param array $value
+	 * @throws PhpTagsException
 	 */
 	private static function doIsGreater ( &$value ) {
 		$v = self::checkObjectParams( $value[self::B_PARAM_1], $value[self::B_PARAM_2] );
@@ -346,6 +376,7 @@ class Runtime {
 	/**
 	 * self::T_IS_SMALLER_OR_EQUAL
 	 * @param array $value
+	 * @throws PhpTagsException
 	 */
 	private static function doIsSmallerOrEqual ( &$value ) {
 		$v = self::checkObjectParams( $value[self::B_PARAM_1], $value[self::B_PARAM_2] );
@@ -355,6 +386,7 @@ class Runtime {
 	/**
 	 * self::T_IS_GREATER_OR_EQUAL
 	 * @param array $value
+	 * @throws PhpTagsException
 	 */
 	private static function doIsGreaterOrEqual ( &$value ) {
 		$v = self::checkObjectParams( $value[self::B_PARAM_1], $value[self::B_PARAM_2] );
@@ -364,6 +396,7 @@ class Runtime {
 	/**
 	 * self::T_IS_EQUAL
 	 * @param array $value
+	 * @throws PhpTagsException
 	 */
 	private static function doIsEqual ( &$value ) {
 		$v = self::checkObjectParams( $value[self::B_PARAM_1], $value[self::B_PARAM_2] );
@@ -373,6 +406,7 @@ class Runtime {
 	/**
 	 * self::T_IS_NOT_EQUAL
 	 * @param array $value
+	 * @throws PhpTagsException
 	 */
 	private static function doIsNotEqual ( &$value ) {
 		$v = self::checkObjectParams( $value[self::B_PARAM_1], $value[self::B_PARAM_2] );
@@ -398,6 +432,7 @@ class Runtime {
 	/**
 	 * self::T_PRINT outputs the value
 	 * @param array $value
+	 * @throws PhpTagsException
 	 */
 	private static function doPrint ( &$value ) {
 		$v = $value[self::B_PARAM_1];
@@ -1207,35 +1242,43 @@ class Runtime {
 		return $ref;
 	}
 
-	public static function run( $code, array $args, $scope = '' ) {
-		try {
-			if( false === isset( self::$variables[$scope] ) ) {
-				self::$variables[$scope] = array();
-			}
-			$stack = array(
-				self::S_RETURN => array(),
-				self::S_RUNNING => $code,
-				self::S_RUN_INDEX => -1,
-				self::S_COUNT => count( $code ),
-				self::S_LOOPS_OWNER => null,
-				self::S_MEMORY => array(),
-				self::S_PLACE => isset( $args[0] ) ? $args[0] : '', // Page name for static variables and error messages
-				self::S_VARIABLES => & self::$variables[$scope],
-			);
-			$stack[self::S_VARIABLES]['argv'] = $args;
-			$stack[self::S_VARIABLES]['argc'] = count( $args );
-			$stack[self::S_VARIABLES]['GLOBALS'] =& self::$globalVariables;
+	/**
+	 * @param array $code
+	 * @param array $args
+	 * @param string $scope
+	 * @return mixed
+	 * @throws Exception
+	 */
+	public static function run( array $code, array $args, $scope = '' ) {
+		if ( false === isset( self::$variables[$scope] ) ) {
+			self::$variables[$scope] = array();
+		}
+		$stack = array(
+			self::S_RETURN => array(),
+			self::S_RUNNING => $code,
+			self::S_RUN_INDEX => -1,
+			self::S_COUNT => count( $code ),
+			self::S_LOOPS_OWNER => null,
+			self::S_MEMORY => array(),
+			self::S_PLACE => isset( $args[0] ) ? $args[0] : '', // Page name for static variables and error messages
+			self::S_VARIABLES => & self::$variables[$scope],
+		);
+		$stack[self::S_VARIABLES]['argv'] = $args;
+		$stack[self::S_VARIABLES]['argc'] = count( $args );
+		$stack[self::S_VARIABLES]['GLOBALS'] =& self::$globalVariables;
 
-			$runCode =& $stack[self::S_RUNNING];
-			$runIndex =& $stack[self::S_RUN_INDEX];
-			$loopsOwner =& $stack[self::S_LOOPS_OWNER];
-			$memory =& $stack[self::S_MEMORY];
-			$c =& $stack[self::S_COUNT];
-			$operators = self::$operators;
+		$runCode =& $stack[self::S_RUNNING];
+		$runIndex =& $stack[self::S_RUN_INDEX];
+		$loopsOwner =& $stack[self::S_LOOPS_OWNER];
+		$memory =& $stack[self::S_MEMORY];
+		$c =& $stack[self::S_COUNT];
+		$operators = self::$operators;
 
-			array_unshift( self::$stack, null );
-			self::$stack[0] =& $stack;
+		array_unshift( self::$stack, null );
+		self::$stack[0] =& $stack;
+
 doit:
+		try {
 			do {
 				for ( ++$runIndex; $runIndex < $c; ++$runIndex ) {
 					$value =& $runCode[$runIndex];
@@ -1256,7 +1299,7 @@ doit:
 			}
 			$runCode[$runIndex][self::B_RESULT] = null;
 			self::$ignoreErrors = false;
-		} catch ( \Exception $e ) {
+		} catch ( Exception $e ) {
 			Renderer::addRuntimeErrorCategory();
 			self::$ignoreErrors = false;
 			array_shift( self::$stack );
@@ -1266,15 +1309,15 @@ doit:
 		return $stack[self::S_RETURN];
 	}
 
-	private static function fillList( &$values, &$parametrs, $offset = false ) {
+	private static function fillList( &$values, &$parameters, $offset = false ) {
 		$return = array();
 
-		for ( $pkey = count( $parametrs ) - 1; $pkey >= 0; --$pkey ) {
-			$param = $parametrs[$pkey];
-			if ( $param === null ) { // skip emty params. Example: list(, $bar) = $array;
+		for ( $pkey = count( $parameters ) - 1; $pkey >= 0; --$pkey ) {
+			$param = $parameters[$pkey];
+			if ( $param === null ) { // skip empty params. Example: list(, $bar) = $array;
 				continue;
 			}
-			if( $param[self::B_COMMAND] == self::T_LIST ) { // T_LIST inside other T_LIST. Example: list($a, list($b, $c)) = array(1, array(2, 3));
+			if ( $param[self::B_COMMAND] == self::T_LIST ) { // T_LIST inside other T_LIST. Example: list($a, list($b, $c)) = array(1, array(2, 3));
 				if ( is_array($values) && isset($values[$pkey]) ) {
 					$return[$pkey] = self::fillList( $values[$pkey], $param[self::B_PARAM_1] );
 				} else { // list() works with array only @todo support strings
@@ -1285,7 +1328,7 @@ doit:
 			}
 			// $param is variable
 			$ref =& self::$stack[0][self::S_VARIABLES][ $param[self::B_PARAM_1] ];
-			if ( isset($param[self::B_ARRAY_INDEX]) ) { // Example: list($foo[0], $foo[1]) = $array;
+			if ( isset( $param[self::B_ARRAY_INDEX] ) ) { // Example: list($foo[0], $foo[1]) = $array;
 				foreach ( $param[self::B_ARRAY_INDEX] as $v ) {
 					if (  $v === INF ) { // Example: $foo[]
 						$t = null;
@@ -1293,15 +1336,15 @@ doit:
 						$ref = &$t;
 						unset( $t );
 					} else {
-						if ( !isset($ref[$v]) ) {
+						if ( !isset( $ref[$v] ) ) {
 							$ref[$v] = null;
 						}
 						$ref = &$ref[$v];
 					}
 				}
 			}
-			if ( is_array($values) ) {
-				if ( isset($values[$pkey]) || array_key_exists($pkey, $values) ) {
+			if ( is_array( $values ) ) {
+				if ( isset( $values[$pkey] ) || array_key_exists( $pkey, $values ) ) {
 					$ref = $values[$pkey];
 				} else {
 					$ref = null;
@@ -1318,7 +1361,7 @@ doit:
 		if ( self::$ignoreErrors === false ) {
 			$stack =& self::$stack[0];
 			if ( $exc->tokenLine === null ) {
-				$exc->tokenLine = $stack[self::S_RUNNING][ $stack[self::S_RUN_INDEX] ][self::B_TOKEN_LINE];
+				$exc->tokenLine = $stack[self::S_RUNNING][ $stack[self::S_RUN_INDEX] ][self::B_TOKEN_LINE] ?? null;
 			}
 			$exc->place = $stack[self::S_PLACE];
 			$stack[self::S_RETURN][] = (string) $exc;

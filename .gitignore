@@ -20,6 +20,8 @@ cscope.out
 ## NetBeans
 nbproject*
 project.index
+## Idea
+/.idea
 ## Sublime
 sublime-*
 sftp-config.json

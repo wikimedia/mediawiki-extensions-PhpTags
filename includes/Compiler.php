@@ -1,6 +1,8 @@
 <?php
 namespace PhpTags;
 
+use Exception;
+
 if ( false === defined( 'T_ONUMBER' ) ) { // T_ONUMBER defined in HHVM only
 	define( 'T_ONUMBER', -20140814094314 );
 }
@@ -133,6 +135,9 @@ class Compiler {
 	private $stackMemory = array();
 	private $ignoreErrors = false;
 
+	/**
+	 * Compiler constructor.
+	 */
 	function __construct() {
 		if ( !self::$precedencesMatrix ) {
 			self::$operatorsPrecedence[13] = self::$assignmentOperators;
@@ -145,6 +150,7 @@ class Compiler {
 	/**
 	 * Make The Lexical analysis and fill $this->tokens
 	 * @param string $source PHP source code
+	 * @throws PhpTagsException
 	 */
 	private function setTokensFromSource( $source ) {
 		$tokens = token_get_all( "<?php $source ?>" );
@@ -155,11 +161,23 @@ class Compiler {
 		$this->stepUP( false );
 	}
 
+	/**
+	 * @param $source
+	 * @param string $place
+	 * @return array
+	 * @throws PhpTagsException
+	 */
 	public static function compile( $source, $place = 'Command line code' ) {
 		$instance = new self();
 		return $instance->getBytecode( $source, $place );
 	}
 
+	/**
+	 * @param $source
+	 * @param $place
+	 * @return array
+	 * @throws PhpTagsException
+	 */
 	private function getBytecode( $source, $place ) {
 		$this->place = $place;
 		$this->setTokensFromSource( $source );
@@ -167,12 +185,22 @@ class Compiler {
 		return $this->stack;
 	}
 
+	/**
+	 * @param $endToken
+	 * @param bool $throwEndTag
+	 * @throws PhpTagsException
+	 */
 	private function stepBlockOperators( $endToken, $throwEndTag = true ) {
 		while ( $this->id != $endToken ) {
 			$this->stepFirstOperator( $throwEndTag ) ||	$this->stepFirsValue( $throwEndTag );
 		}
 	}
 
+	/**
+	 * @param bool $throwEndTag
+	 * @return bool
+	 * @throws PhpTagsException
+	 */
 	private function stepFirstOperator( $throwEndTag = true ) {
 		$id = $this->id;
 		$text = $this->text;
@@ -324,6 +352,12 @@ class Compiler {
 		return false;
 	}
 
+	/**
+	 * @param $functionName
+	 * @param bool $objectName
+	 * @return array
+	 * @throws PhpTagsException
+	 */
 	private function & getFunctionParameters( $functionName, $objectName = false ) {
 		$funcKey = $functionName[Runtime::B_RESULT] ? strtolower( $functionName[Runtime::B_RESULT] ) : null;
 		$result = array();
@@ -375,6 +409,12 @@ class Compiler {
 		return $result;
 	}
 
+	/**
+	 * @param string $operator
+	 * @param bool $owner
+	 * @return array|bool
+	 * @throws PhpTagsException
+	 */
 	private function & getNextValue( $operator = ',', $owner = false ) {
 		$val =& $this->stepValue( $owner ); // Get a value
 		if ( $val !== false ) { // The value was received
@@ -393,6 +433,10 @@ class Compiler {
 		return $val;
 	}
 
+	/**
+	 * @param bool $throwEndTag
+	 * @throws PhpTagsException
+	 */
 	private function stepUP( $throwEndTag = true ) {
 		$id = $text = false;
 
@@ -408,7 +452,7 @@ class Compiler {
 			if ( $throwEndTag && $id === T_CLOSE_TAG ) {
 				// PHP Parse error:  syntax error, unexpected '$end'
 				throw new PhpTagsException( PhpTagsException::PARSE_SYNTAX_ERROR_UNEXPECTED, array( '$end' ), $this->tokenLine, $this->place );
-			} elseif ( $id != T_COMMENT && $id != T_DOC_COMMENT && $id != T_WHITESPACE ) {;
+			} elseif ( $id != T_COMMENT && $id != T_DOC_COMMENT && $id != T_WHITESPACE ) {
 				break;
 			} else {
 				$this->tokenLine += preg_match_all( '#\n#', $text );
@@ -423,11 +467,17 @@ class Compiler {
 		$this->text = $text;
 	}
 
+	/**
+	 *
+	 */
 	private function stack_push_memory() {
 		$this->stackMemory[] = $this->stack;
 		$this->stack = array();
 	}
 
+	/**
+	 *
+	 */
 	private function stack_pop_memory() {
 		if ( $this->stackMemory ) {
 			$this->stack = array_pop( $this->stackMemory );
@@ -436,6 +486,11 @@ class Compiler {
 		}
 	}
 
+	/**
+	 * @param bool|array $owner
+	 * @return mixed
+	 * @throws PhpTagsException
+	 */
 	private function & stepValue( $owner = false ) {
 		$result = false;
 
@@ -598,7 +653,7 @@ checkOperators:
 
 				$id = $this->id;
 				$text = $this->text;
-				if ( in_array($id, self::$assignmentOperators) ) { // It is assignment operator
+				if ( in_array( $id, self::$assignmentOperators ) ) { // It is assignment operator
 					$this->stepUP();
 					$val =& $this->getNextValue( '=' );
 					if ( $val == false ) { // Example: $foo=;
@@ -940,6 +995,12 @@ checkOperators:
 		return $result;
 	}
 
+	/**
+	 * @param $value
+	 * @param $precedence
+	 * @return mixed
+	 * @throws PhpTagsException
+	 */
 	private function & getOperator( &$value, $precedence ) {
 		$result = false;
 		while ( true ) {
@@ -990,6 +1051,11 @@ checkOperators:
 		return $result;
 	}
 
+	/**
+	 * @param $value
+	 * @return mixed
+	 * @throws PhpTagsException
+	 */
 	private function & getTernaryOperator( &$value ) {
 		static $ternaryOperators = array();
 		$result = false;
@@ -1187,6 +1253,13 @@ checkOperators:
 		return $result;
 	}
 
+	/**
+	 * @param bool $allowElse
+	 * @param $throwEndTag
+	 * @param bool $isDoWhile
+	 * @return mixed
+	 * @throws PhpTagsException
+	 */
 	private function & stepIfConstruct( $allowElse, $throwEndTag, $isDoWhile = false ) {
 		$return = false;
 		$text = $this->text; // if
@@ -1278,6 +1351,11 @@ checkOperators:
 		return $return;
 	}
 
+	/**
+	 * @param $startToken
+	 * @return array
+	 * @throws PhpTagsException
+	 */
 	private function & stepArrayConstruct( $startToken ) {
 		$key = false;
 		$result = false;
@@ -1355,6 +1433,11 @@ checkOperators:
 		return $result;
 	}
 
+	/**
+	 * @param $throwEndTag
+	 * @return bool
+	 * @throws PhpTagsException
+	 */
 	private function stepDoConstruct( $throwEndTag ) {
 		$this->stack_push_memory();
 		$this->stepUP();
@@ -1389,6 +1472,11 @@ checkOperators:
 		return true;
 	}
 
+	/**
+	 * @param bool $throwEndTag
+	 * @return bool
+	 * @throws PhpTagsException
+	 */
 	private function stepWhileConstruct( $throwEndTag = true ) {
 		$this->stack_push_memory();
 		$operator =& $this->stepIfConstruct( false, $throwEndTag );
@@ -1408,6 +1496,11 @@ checkOperators:
 		return true;
 	}
 
+	/**
+	 * @param $throwEndTag
+	 * @return bool
+	 * @throws PhpTagsException
+	 */
 	private function stepForConstruct( $throwEndTag ) {
 		$text = $this->text; // for
 		$tokenLine = $this->tokenLine;
@@ -1471,6 +1564,10 @@ checkOperators:
 		return true;
 	}
 
+	/**
+	 * @param $end
+	 * @throws PhpTagsException
+	 */
 	private function stepForExpression( $end ) {
 		while ( true ) {
 			$value =& $this->getNextValue();
@@ -1492,10 +1589,19 @@ checkOperators:
 		}
 	}
 
+	/**
+	 * @param $throwEndTag
+	 * @todo
+	 */
 	private function stepSwitchConstruct( $throwEndTag ) {
 
 	}
 
+	/**
+	 * @param bool $throwEndTag
+	 * @return bool
+	 * @throws PhpTagsException
+	 */
 	private function stepForeachConstruct( $throwEndTag = true ) {
 		$text = $this->text; // foreach
 		$tokenLine = $this->tokenLine;
@@ -1597,6 +1703,12 @@ checkOperators:
 		return true;
 	}
 
+	/**
+	 * @param $result
+	 * @param $isStatic
+	 * @return mixed
+	 * @throws PhpTagsException
+	 */
 	private function & stepMethodChaining( &$result, $isStatic ) {
 		do {
 			$this->stepUP();
@@ -1741,6 +1853,10 @@ checkOperators:
 		return $return;
 	}
 
+	/**
+	 * @param $throwEndTag
+	 * @throws PhpTagsException
+	 */
 	private function stepFirsValue( $throwEndTag ) {
 		$value =& $this->getNextValue();
 		if ( $value ) { // Example: $foo=1;
@@ -1758,4 +1874,3 @@ checkOperators:
 	}
 
 }
-

@@ -1,6 +1,8 @@
 <?php
 namespace PhpTags;
 
+use Html;
+
 /**
  * The error exception class of the extension PHP Tags.
  *
@@ -15,6 +17,13 @@ class PhpTagsException extends \Exception {
 	public $place;
 	protected $hookCallInfo;
 
+	/**
+	 * PhpTagsException constructor.
+	 * @param int $code
+	 * @param mixed $arguments
+	 * @param null|int $tokenLine
+	 * @param string $place
+	 */
 	public function __construct( $code = 0, $arguments = null, $tokenLine = null, $place = '' ) {
 		parent::__construct('', $code);
 		$this->params = $arguments;
@@ -23,17 +32,26 @@ class PhpTagsException extends \Exception {
 		$this->hookCallInfo = Hooks::getCallInfo();
 	}
 
+	/**
+	 * @return bool
+	 */
 	public function isFatal() {
 		return intval( $this->code / 1000 ) > self::EXCEPTION_WARNING;
 	}
 
+	/**
+	 * @return bool
+	 */
 	public function isCatchable() {
 		return intval( $this->code / 1000 ) !== self::EXCEPTION_FATAL;
 	}
 
+	/**
+	 * @return string
+	 */
 	public function __toString() {
 		$arguments = $this->params;
-		$originalFullName = $this->hookCallInfo[Hooks::INFO_ORIGINAL_FULL_NAME];
+		$originalFullName = $this->hookCallInfo[Hooks::INFO_ORIGINAL_FULL_NAME] ?? '';
 
 		switch ( $this->code ) {
 			case self::PARSE_SYNTAX_ERROR_UNEXPECTED:
@@ -111,6 +129,7 @@ class PhpTagsException extends \Exception {
 				$message = "Too many arguments for $originalFullName, expected $arguments";
 				break;
 			case self::NOTICE_OBJECT_CONVERTED:
+			case self::FATAL_OBJECT_COULD_NOT_BE_CONVERTED:
 				$message = "Object of class {$arguments[0]} could not be converted to {$arguments[1]}";
 				break;
 			case self::NOTICE_ARRAY_TO_STRING:
@@ -157,9 +176,6 @@ class PhpTagsException extends \Exception {
 				break;
 			case self::FATAL_MUST_EXTENDS_GENERIC:
 				$message = "Class $arguments must extends class '\\PhpTags\\GenericObject'";
-				break;
-			case self::FATAL_OBJECT_COULD_NOT_BE_CONVERTED:
-				$message = "Object of class {$arguments[0]} could not be converted to {$arguments[1]}";
 				break;
 			case self::FATAL_NONSTATIC_CALLED_STATICALLY: // @todo have not used
 				$message = "Non-static method $originalFullName cannot be called statically";
@@ -239,7 +255,7 @@ class PhpTagsException extends \Exception {
 
 		$messageTrimed = trim( preg_replace( '/\s+/', ' ', $message ) );
 		//return "$messageTrimed in $place on line $line\n";
-		return \Html::element( 'span', array('class'=>'error'), "PhpTags $messageType:  $messageTrimed in $place on line $line" ) . '<br />';
+		return Html::element( 'span', array('class'=>'error'), "PhpTags $messageType:  $messageTrimed in $place on line $line" ) . '<br />';
 
 	}
 

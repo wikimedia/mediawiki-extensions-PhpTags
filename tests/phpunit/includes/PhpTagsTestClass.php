@@ -1,7 +1,9 @@
 <?php
 namespace PhpTagsObjects;
 
-class PhpTagsTestClass extends \PhpTags\GenericObject {
+use PhpTags\GenericObject;
+
+class PhpTagsTestClass extends GenericObject {
 
 	public static function __callStatic( $name, $arguments ) {
 		return $name;
@@ -11,6 +13,10 @@ class PhpTagsTestClass extends \PhpTags\GenericObject {
 		return $name;
 	}
 
+	/**
+	 * @param string $constantName
+	 * @return string
+	 */
 	public static function getConstantValue( $constantName ) {
 		return 'I am constant ' . $constantName;
 	}

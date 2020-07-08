@@ -1,5 +1,8 @@
 <?php
 namespace PhpTags;
+
+use Html;
+
 /**
  * The outPrint class of the extension PHP Tags.
  *
@@ -21,7 +24,6 @@ class outPrint implements iRawOutput {
 	 * @param bool $raw
 	 * @param string|false $element
 	 * @param array $attribs
-	 * @param array $sheath
 	 */
 	public function __construct( $returnValue, $content, $raw=false, $element='pre', $attribs = array() ) {
 		$this->returnValue = $returnValue;
@@ -30,17 +32,26 @@ class outPrint implements iRawOutput {
 		$this->attribs = $attribs;
 	}
 
+	/**
+	 * @return string
+	 */
 	public function __toString() {
 		if ( $this->element ) {
-			return \Html::rawElement( $this->element, $this->attribs, $this->content );
+			return Html::rawElement( $this->element, $this->attribs, $this->content );
 		}
 		return $this->content;
 	}
 
+	/**
+	 * @return mixed
+	 */
 	public function getReturnValue() {
 		return $this->returnValue;
 	}
 
+	/**
+	 * @return string
+	 */
 	public function placeAsStripItem() {
 		$this->content = Renderer::insertNoWiki( $this->content );
 		return Renderer::insertStripItem( $this );

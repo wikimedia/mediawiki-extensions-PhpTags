@@ -1,6 +1,9 @@
 <?php
 namespace PhpTags;
 
+use FormatJson;
+use MWException;
+
 /**
  * @todo Description
  *
@@ -13,7 +16,12 @@ class JsonLoader {
 
 	const VERSION = 3;
 
-	public static function load( $files ) {
+	/**
+	 * @param array $files
+	 * @return array
+	 * @throws MWException
+	 */
+	public static function load( array $files ) {
 		$objects = array();
 		$functions = array();
 		$constants = array();
@@ -21,15 +29,15 @@ class JsonLoader {
 		foreach ( $files as $f ) {
 			$fileName = $f[0];
 			if ( is_readable( $fileName ) !== true ) {
-				throw new \MWException( __METHOD__ . ": JSON file is not readable: $fileName" );
+				throw new MWException( __METHOD__ . ": JSON file is not readable: $fileName" );
 			}
 			$json = file_get_contents( $fileName );
 			if ( $json === false ) {
-				throw new \MWException( __METHOD__ . ": Cannot read JSON file: $fileName" );
+				throw new MWException( __METHOD__ . ": Cannot read JSON file: $fileName" );
 			}
-			$data = \FormatJson::decode( $json, true );
+			$data = FormatJson::decode( $json, true );
 			if ( $data === null ) {
-				throw new \MWException( __METHOD__ . ": Invalid JSON file: $fileName" );
+				throw new MWException( __METHOD__ . ": Invalid JSON file: $fileName" );
 			}
 
 			if ( isset( $data['objects'] ) ) {
@@ -45,12 +53,17 @@ class JsonLoader {
 		return array( 'objects'=>$objects, 'functions'=>$functions, 'constants'=>$constants, 'constantValues'=>$constantValues );
 	}
 
-	private static function loadObjects( $data, &$objects ) {
+	/**
+	 * @param array $data
+	 * @param array $objects
+	 * @throws MWException
+	 */
+	private static function loadObjects( array $data, array &$objects ) {
 		foreach ( $data as $key => $value ) {
 			if ( isset( $value['alias'] ) ) {
 				$alias = strtolower( $value['alias'] );
 				if ( false === isset( $objects[$alias] ) ) {
-					throw new \MWException( __METHOD__ . ": Bad alias '$alias' for object '$key' in JSON file" );
+					throw new MWException( __METHOD__ . ": Bad alias '$alias' for object '$key' in JSON file" );
 				}
 				$objects[ strtolower( $key ) ] =& $objects[$alias];
 				continue;
@@ -62,7 +75,7 @@ class JsonLoader {
 			if ( isset( $value['parent'] ) ) {
 				$parent = $value['parent'];
 				if ( false === isset( $data[$parent] ) ) {
-					throw new \MWException( __METHOD__ . ": Bad parent '$parent' for object '$key' in JSON file" );
+					throw new MWException( __METHOD__ . ": Bad parent '$parent' for object '$key' in JSON file" );
 				}
 				self::loadParentObject( $data, $parent, $methods, $staticMethods, $properties, $staticProperties );
 			}
@@ -76,7 +89,17 @@ class JsonLoader {
 		}
 	}
 
-	private static function loadParentObject( $objects, $parent, &$methods, &$staticMethods, &$properties, &$staticProperties ) {
+	/**
+	 * @param array $objects
+	 * @param string $parent
+	 * @param array $methods
+	 * @param array $staticMethods
+	 * @param array $properties
+	 * @param array $staticProperties
+	 */
+	private static function loadParentObject(
+		array $objects, $parent, array &$methods, array &$staticMethods, array &$properties, array &$staticProperties
+	) {
 		static $cache = array();
 		if ( false === isset( $cache[$parent] ) ) {
 			$cache[$parent] = array( array(), array(), array(), array() );
@@ -86,10 +109,18 @@ class JsonLoader {
 		$staticMethods += $cache[$parent][1];
 		$properties += $cache[$parent][2];
 		$staticProperties += $cache[$parent][3];
-		return;
 	}
 
-	private static function loadObjectMethodsAndProperties( $value, &$methods, &$staticMethods, &$properties, &$staticProperties ) {
+	/**
+	 * @param array $value
+	 * @param array $methods
+	 * @param array $staticMethods
+	 * @param array $properties
+	 * @param array $staticProperties
+	 */
+	private static function loadObjectMethodsAndProperties(
+		array $value, array &$methods, array &$staticMethods, array &$properties, array &$staticProperties
+	) {
 		if ( isset( $value['METHODS'] ) ) {
 			self::loadObjectMethods( $value['METHODS'], $methods );
 		}
@@ -104,15 +135,24 @@ class JsonLoader {
 		}
 	}
 
-	private static function loadObjectMethods( $data, &$methods ) {
+	/**
+	 * @param array $data
+	 * @param array $methods
+	 * @throws MWException
+	 */
+	private static function loadObjectMethods( array $data, array &$methods ) {
 		foreach ( $data as $key => $value ) {
 			$expects = self::getExpects( $value, 'method' );
-			$onfailure = self::getReturnsOnFailure( $value );
-			$methods[strtolower($key)] = array( $expects, $key, $onfailure );
+			$onFailure = self::getReturnsOnFailure( $value );
+			$methods[strtolower($key)] = array( $expects, $key, $onFailure );
 		}
 	}
 
-	private static function loadObjectProperties( $data, &$properties ) {
+	/**
+	 * @param array $data
+	 * @param array $properties
+	 */
+	private static function loadObjectProperties( array $data, array &$properties ) {
 		foreach ( $data as $key => $value ) {
 			if ( isset( $value['readonly'] ) ) {
 				continue;
@@ -122,7 +162,12 @@ class JsonLoader {
 		}
 	}
 
-	private static function loadFunctions( $data, &$functions ) {
+	/**
+	 * @param array $data
+	 * @param array $functions
+	 * @throws MWException
+	 */
+	private static function loadFunctions( array $data, array &$functions ) {
 		foreach ( $data as $key => $value ) {
 			if ( isset( $value['alias'] ) ) {
 				$alias = $value['alias'];
@@ -135,12 +180,18 @@ class JsonLoader {
 
 			$class = $value['class'];
 			$expects = self::getExpects( $value, 'function' );
-			$onfailure = self::getReturnsOnFailure( $value );
-			$functions[strtolower($key)] = array( $expects, $key, $class, $onfailure );
+			$onFailure = self::getReturnsOnFailure( $value );
+			$functions[strtolower($key)] = array( $expects, $key, $class, $onFailure );
 		}
 	}
 
-	private static function getExpects( $value, $itis ) {
+	/**
+	 * @param array $value
+	 * @param string $itIs
+	 * @return array
+	 * @throws MWException
+	 */
+	private static function getExpects( array $value, $itIs ) {
 		$min = 0;
 		$max = 0;
 		$reference = false;
@@ -170,7 +221,7 @@ class JsonLoader {
 					$expects[Hooks::EXPECTS_REFERENCE_PARAMETERS] = $reference;
 					return $expects;
 				} elseif ( $min !== $max ) {
-					throw new \MWException( __METHOD__ . ": Default value is missed in $max param of $itis $value in JSON file" );
+					throw new MWException( __METHOD__ . ": Default value is missed in $max param of $itIs $value in JSON file" );
 				} else {
 					$min++;
 				}
@@ -193,6 +244,10 @@ class JsonLoader {
 		return $expects;
 	}
 
+	/**
+	 * @param string $type
+	 * @return int
+	 */
 	private static function getType( $type ) {
 		switch ( $type ) {
 			case 'array':
@@ -216,7 +271,12 @@ class JsonLoader {
 		}
 	}
 
-	private static function loadConstants( $data, &$constants, &$constantValues ) {
+	/**
+	 * @param array $data
+	 * @param array $constants
+	 * @param array $constantValues
+	 */
+	private static function loadConstants( array $data, array &$constants, array &$constantValues ) {
 		foreach ( $data as $key => $value ) {
 			if ( isset( $value['class'] ) ) {
 				$constants[$key] = $value['class'];
@@ -226,9 +286,14 @@ class JsonLoader {
 		}
 	}
 
-	private static function getReturnsOnFailure( $value ) {
+	/**
+	 * @param array $value
+	 * @return mixed
+	 * @throws MWException
+	 */
+	private static function getReturnsOnFailure( array $value ) {
 		if ( isset( $value['onfailure'] ) ) {
-			switch ($value['onfailure'] ) {
+			switch ( $value['onfailure'] ) {
 				case 'false':
 					return false;
 				case 'true':
@@ -238,7 +303,7 @@ class JsonLoader {
 				case 'null':
 					return null;
 				default:
-					throw new \MWException( __METHOD__ . ": wrong value '{$value['onfailure']}' for failure field in JSON file" );
+					throw new MWException( __METHOD__ . ": wrong value '{$value['onfailure']}' for failure field in JSON file" );
 			}
 		}
 		return null;

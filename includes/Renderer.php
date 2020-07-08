@@ -10,6 +10,11 @@ namespace PhpTags;
  * @licence GNU General Public Licence 2.0 or later
  */
 
+use Exception;
+use MWException;
+use Parser;
+use PPFrame;
+use Title;
 use UtfNormal\Validator;
 
 class Renderer {
@@ -18,8 +23,6 @@ class Renderer {
 	static $memoryHit = 0;
 	static $compileHit = 0;
 	static $needInitRuntime = true;
-
-	static $globalVariablesScript = array();
 
 	private static $scopes = array();
 	private static $nextScopeID = 0;
@@ -31,7 +34,7 @@ class Renderer {
 
 	/**
 	 * Parser
-	 * @var \Parser
+	 * @var Parser
 	 */
 	private static $parser;
 
@@ -40,11 +43,12 @@ class Renderer {
 	private static $bytecodeLoaded = array();
 	private static $parserCacheDisabled = false;
 	private static $errorCategoryAdded = false;
+	public static $globalVariablesScript = [];
 
 	/**
 	 *
-	 * @param \Parser $parser
-	 * @param \PPFrame $frame
+	 * @param Parser $parser
+	 * @param PPFrame $frame
 	 * @param array $args
 	 */
 	public static function runParserFunction( $parser, $frame, $args ) {
@@ -72,9 +76,9 @@ class Renderer {
 			$return = implode( $result );
 		} catch ( PhpTagsException $exc ) {
 			$return = (string) $exc;
-		} catch ( \MWException $exc ) {
+		} catch ( MWException $exc ) {
 			throw $exc;
-		} catch ( \Exception $exc ) {
+		} catch ( Exception $exc ) {
 			$return = $exc->getTraceAsString();
 		}
 
@@ -167,19 +171,20 @@ class Renderer {
 
 	/**
 	 *
-	 * @param \Parser $parser
-	 * @param \PPFrame $frame
-	 * @throws \PhpTags\PhpTagsException
+	 * @param Parser $parser
+	 * @param PPFrame $frame
+	 * @param Title $frameTitle
 	 * @return null
+	 * @throws PhpTagsException
 	 */
 	private static function initialize( $parser, $frame, $frameTitle ) {
 		global $wgPhpTagsNamespaces, $wgPhpTagsMaxLoops;
-		if ( true !== $wgPhpTagsNamespaces && false === isset( $wgPhpTagsNamespaces[$frameTitle->getNamespace()] ) ) {
+		if ( $wgPhpTagsNamespaces !== true && !( $wgPhpTagsNamespaces[$frameTitle->getNamespace()] ?? false ) ) {
 			throw new PhpTagsException( PhpTagsException::FATAL_DENIED_FOR_NAMESPACE, $frameTitle->getNsText() );
 		}
 
 		if ( true === self::$needInitRuntime ) {
-			\wfDebug( 'PhpTags: Run hook PhpTagsRuntimeFirstInit' );
+			wfDebug( 'PhpTags: Run hook PhpTagsRuntimeFirstInit' );
 			\Hooks::run( 'PhpTagsRuntimeFirstInit' );
 			Hooks::loadData();
 			Runtime::$loopsLimit = $wgPhpTagsMaxLoops;
@@ -193,11 +198,11 @@ class Renderer {
 	private static function updateBytecodeCache() {
 		global $wgPhpTagsBytecodeExptime;
 
-		$cache = \wfGetCache( CACHE_ANYTHING );
+		$cache = wfGetCache( CACHE_ANYTHING );
 		foreach ( self::$bytecodeNeedsUpdate as $revID => $data ) {
 			$key = wfMemcKey( 'PhpTags', $revID );
 			$cache->set( $key, array(Runtime::VERSION, $data), $wgPhpTagsBytecodeExptime );
-			\wfDebugLog( 'PhpTags', 'Save compiled bytecode to cache with key ' . $revID );
+			wfDebugLog( 'PhpTags', 'Save compiled bytecode to cache with key ' . $revID );
 		}
 		self::$bytecodeNeedsUpdate = array();
 	}
@@ -207,11 +212,11 @@ class Renderer {
 
 		global $wgPhpTagsCallsCounter;
 		$wgPhpTagsCallsCounter = 0;
+
 		Runtime::reset();
 		Timer::reset();
 		self::$bytecodeCache = array();
 		self::$bytecodeLoaded = array();
-		self::$globalVariablesScript = array();
 		self::$parserCacheDisabled = false;
 		self::$errorCategoryAdded = false;
 		self::$scopes = array();
@@ -220,15 +225,15 @@ class Renderer {
 
 	/**
 	 *
-	 * @param \Parser $parser
+	 * @param Parser $parser
 	 * @param string $text
 	 * @return string
 	 */
-	private static function insertGeneral( \Parser $parser, $text ) {
+	private static function insertGeneral( Parser $parser, $text ) {
 		return $parser->insertStripItem( $text );
 	}
 
-	public static function getScopeID( \PPFrame $frame ) {
+	public static function getScopeID( PPFrame $frame ) {
 		foreach ( self::$scopes as $value ) {
 			if ( $value[0] === $frame ) {
 				return $value[1];
@@ -265,16 +270,18 @@ Total   : %.3f sec
 	public static function onParserAfterTidy( $parser, &$text ) {
 		global $wgPhpTagsBytecodeExptime;
 
-		if ( self::$globalVariablesScript ) {
+		$scriptVariables = self::getScriptVariable();
+
+		if ( $scriptVariables ) {
 			$vars = array();
-			foreach ( self::$globalVariablesScript as $key=> $value ) {
+			foreach ( $scriptVariables as $key => $value ) {
 				$vars["ext.phptags.$key"] = $value;
 			}
-			$text .= \Html::inlineScript(
+			$text = \Html::inlineScript(
 				\ResourceLoader::makeLoaderConditionalScript(
 					\ResourceLoader::makeConfigSetScript( $vars )
 				)
-			);
+			) . $text;
 		}
 		if ( $wgPhpTagsBytecodeExptime > 0 && self::$bytecodeNeedsUpdate ) {
 			self::updateBytecodeCache();
@@ -314,7 +321,7 @@ Total   : %.3f sec
 
 		global $wgOut;
 
-		self::$parser->getOutput()->updateCacheExpiry( 0 );
+		self::$parser->disableCache();
 		$wgOut->enableClientCache( false );
 		self::$parserCacheDisabled = true;
 	}
@@ -364,6 +371,62 @@ Total   : %.3f sec
 			return $text;
 		}
 		return $parser->insertStripItem( $text );
+	}
+
+	public static function getScriptVariable( array $path = [] ) {
+		$parser = self::getParser();
+		if ( !$parser ) {
+			return null;
+		}
+		$data = $parser->getOutput()->getExtensionData( 'PhpTagsVariable' );
+		if ( !$data ) {
+			return null;
+		}
+		$ret = &$data;
+
+		$path = (array)$path;
+		if ( !$path ) {
+			return $ret;
+		}
+		$latest = array_pop( $path );
+
+		foreach ( $path as $k ) {
+			if ( !isset( $ret[$k] ) ) {
+				return null;
+			} elseif ( !is_array( $ret[$k] ) ) {
+				return null;
+			}
+			$ret = &$ret[$k];
+		}
+		return $ret[$latest] ?? null;
+	}
+
+	public static function setScriptVariable( array $path, $value ) {
+		$path = (array)$path;
+		if ( !$path ) {
+			return false;
+		}
+		$latest = array_pop( $path );
+
+		$parser = self::getParser();
+		$parserOutput = $parser->getOutput();
+		$data = $parserOutput->getExtensionData( 'PhpTagsVariable' );
+		if ( !$data ) {
+			$data = [];
+		}
+		$ret = &$data;
+
+		foreach ( $path as $k ) {
+			if ( !isset( $ret[$k] ) ) {
+				$ret[$k] = [];
+			} elseif ( !is_array( $ret[$k] ) ) {
+				return false;
+			}
+			$ret = &$ret[$k];
+		}
+		$ret[$latest] = $value;
+		$parserOutput->setExtensionData( 'PhpTagsVariable', $data );
+		return true;
 	}
 
 }

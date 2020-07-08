@@ -1,5 +1,7 @@
 <?php
 
+use PhpTags\Renderer;
+
 
 /**
  * PhpTags MediaWiki Hooks.
@@ -51,7 +53,7 @@ class PhpTagsHooks {
 	public static function onParserAfterTidy( $parser, &$text ) {
 		global $wgPhpTagsCallsCounter;
 		if ( $wgPhpTagsCallsCounter > 0 ) {
-			\PhpTags\Renderer::onParserAfterTidy( $parser, $text );
+			Renderer::onParserAfterTidy( $parser, $text );
 		}
 		return true;
 	}
