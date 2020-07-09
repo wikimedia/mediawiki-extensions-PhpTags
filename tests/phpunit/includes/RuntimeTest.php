@@ -12,9 +12,12 @@ class RuntimeTest extends MediaWikiTestCase {
 	protected function setUp(): void {
 		parent::setUp();
 
-		static $initialised = false;
+		self::initializePhpTagsForTesting();
+		$this->setTemporaryHook( 'PhpTagsBeforeCallRuntimeHook', 'PhpTags\\RuntimeTest::onPhpTagsBeforeCallRuntimeHook' );
+	}
 
-		if ( !$initialised && Renderer::$needInitRuntime ) {
+	public static function initializePhpTagsForTesting() {
+		if ( !defined( 'PHPTAGS_TEST' ) ) {
 			wfDebug( 'PHPTags: test initialization ' . __FILE__ );
 
 			PhpTagsHooks::addJsonFile( __DIR__ . '/PhpTags_test.json' );
@@ -25,21 +28,19 @@ class RuntimeTest extends MediaWikiTestCase {
 			MWHooks::run( 'PhpTagsRuntimeFirstInit' );
 			PhpTagsHooks::loadData();
 			Runtime::$loopsLimit = 1000;
-			Renderer::$needInitRuntime = false;
-			$initialised = true;
 		}
+	}
 
-		$this->setTemporaryHook( 'PhpTagsBeforeCallRuntimeHook', function ( $hookType, $objectName, $methodName, $values ) {
-			if ( $hookType === Runtime::H_GET_CONSTANT || $hookType === Runtime::H_GET_OBJECT_CONSTANT ) {
-				$methodName = strtolower( $methodName );
-			}
-			if ( substr( $methodName, -6 ) === 'banned' ) {
-				$hookTypeString = PhpTagsHooks::getCallInfo( PhpTagsHooks::INFO_HOOK_TYPE_STRING );
-				Runtime::pushException( new PhpTagsHookException( "Sorry, you cannot use this $hookTypeString" ) );
-				return false;
-			}
-			return true;
-		} );
+	public static function onPhpTagsBeforeCallRuntimeHook( $hookType, $objectName, $methodName, $values ) {
+		if ( $hookType === Runtime::H_GET_CONSTANT || $hookType === Runtime::H_GET_OBJECT_CONSTANT ) {
+			$methodName = strtolower( $methodName );
+		}
+		if ( substr( $methodName, -6 ) === 'banned' ) {
+			$hookTypeString = PhpTagsHooks::getCallInfo( PhpTagsHooks::INFO_HOOK_TYPE_STRING );
+			Runtime::pushException( new PhpTagsHookException( "Sorry, you cannot use this $hookTypeString" ) );
+			return false;
+		}
+		return true;
 	}
 
 	public function testRun_echo_null_1() {
