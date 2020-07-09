@@ -22,10 +22,10 @@ class JsonLoader {
 	 * @throws MWException
 	 */
 	public static function load( array $files ) {
-		$objects = array();
-		$functions = array();
-		$constants = array();
-		$constantValues = array();
+		$objects = [];
+		$functions = [];
+		$constants = [];
+		$constantValues = [];
 		foreach ( $files as $f ) {
 			$fileName = $f[0];
 			if ( is_readable( $fileName ) !== true ) {
@@ -50,7 +50,7 @@ class JsonLoader {
 				self::loadConstants( $data['constants'], $constants, $constantValues );
 			}
 		}
-		return array( 'objects'=>$objects, 'functions'=>$functions, 'constants'=>$constants, 'constantValues'=>$constantValues );
+		return [ 'objects'=>$objects, 'functions'=>$functions, 'constants'=>$constants, 'constantValues'=>$constantValues ];
 	}
 
 	/**
@@ -68,10 +68,10 @@ class JsonLoader {
 				$objects[ strtolower( $key ) ] =& $objects[$alias];
 				continue;
 			}
-			$methods = array();
-			$staticMethods = array();
-			$properties = array();
-			$staticProperties = array();
+			$methods = [];
+			$staticMethods = [];
+			$properties = [];
+			$staticProperties = [];
 			if ( isset( $value['parent'] ) ) {
 				$parent = $value['parent'];
 				if ( false === isset( $data[$parent] ) ) {
@@ -85,7 +85,7 @@ class JsonLoader {
 			$class = $value['class'];
 			self::loadObjectMethodsAndProperties( $value, $methods, $staticMethods, $properties, $staticProperties );
 			//                                      0       1         2               3            4                  5
-			$objects[ strtolower( $key ) ] = array( $class, $methods, $staticMethods, $properties, $staticProperties, $key );
+			$objects[ strtolower( $key ) ] = [ $class, $methods, $staticMethods, $properties, $staticProperties, $key ];
 		}
 	}
 
@@ -100,9 +100,9 @@ class JsonLoader {
 	private static function loadParentObject(
 		array $objects, $parent, array &$methods, array &$staticMethods, array &$properties, array &$staticProperties
 	) {
-		static $cache = array();
+		static $cache = [];
 		if ( false === isset( $cache[$parent] ) ) {
-			$cache[$parent] = array( array(), array(), array(), array() );
+			$cache[$parent] = [ [], [], [], [] ];
 			self::loadObjectMethodsAndProperties( $objects[$parent], $cache[$parent][0], $cache[$parent][1], $cache[$parent][2], $cache[$parent][3] );
 		}
 		$methods += $cache[$parent][0];
@@ -144,7 +144,7 @@ class JsonLoader {
 		foreach ( $data as $key => $value ) {
 			$expects = self::getExpects( $value, 'method' );
 			$onFailure = self::getReturnsOnFailure( $value );
-			$methods[strtolower($key)] = array( $expects, $key, $onFailure );
+			$methods[strtolower($key)] = [ $expects, $key, $onFailure ];
 		}
 	}
 
@@ -158,7 +158,7 @@ class JsonLoader {
 				continue;
 			}
 			$type = self::getType( $value['type'] );
-			$properties[strtolower($key)] = array( $type, $key );
+			$properties[strtolower($key)] = [ $type, $key ];
 		}
 	}
 
@@ -182,7 +182,7 @@ class JsonLoader {
 			$expects = self::getExpects( $value, 'function' );
 			$onFailure = self::getReturnsOnFailure( $value );
 			$lcKey = strtolower( $key );
-			$functions[$lcKey] = array( $expects, $key, $class, $onFailure, $lcKey );
+			$functions[$lcKey] = [ $expects, $key, $class, $onFailure, $lcKey ];
 		}
 	}
 
@@ -196,8 +196,8 @@ class JsonLoader {
 		$min = 0;
 		$max = 0;
 		$reference = false;
-		$refArray = array();
-		$expects = array();
+		$refArray = [];
+		$expects = [];
 		foreach ( $value['parameters'] as $param ) {
 			$type = self::getType( $param['type'] );
 			if ( isset( $param['refarray'] ) ) {

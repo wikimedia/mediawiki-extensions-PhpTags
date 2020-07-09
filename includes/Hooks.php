@@ -49,39 +49,39 @@ class Hooks {
 	 * self::$constantValues[ constant_name ] = constant_value
 	 * @var array
 	 */
-	private static $constantValues = array();
+	private static $constantValues = [];
 
 	/**
 	 * Array of constant's hooks
 	 * self::$constants[ constant_name ] = class of constant for calling
 	 * @var array
 	 */
-	private static $constants = array();
+	private static $constants = [];
 
 	/**
 	 * Array of function's hooks
 	 * self::$functions[ function_name ] = class of function for calling
 	 * @var array
 	 */
-	private static $functions = array();
+	private static $functions = [];
 
 	/**
 	 * Array of object's hooks
 	 * @var array
 	 */
-	private static $objects = array();
+	private static $objects = [];
 
 	/**
 	 * List of json files for loading
 	 * @var array
 	 */
-	private static $jsonFiles = array();
+	private static $jsonFiles = [];
 
 	/**
 	 * List of callback functions for filling constant values
 	 * @var array
 	 */
-	private static $callbackConstants = array();
+	private static $callbackConstants = [];
 
 	/**
 	 *
@@ -89,7 +89,7 @@ class Hooks {
 	 * @param string $key
 	 */
 	public static function addCallbackConstantValues( $callback, $key ) {
-		self::$callbackConstants[] = array( $callback, $key );
+		self::$callbackConstants[] = [ $callback, $key ];
 	}
 
 	/**
@@ -98,7 +98,7 @@ class Hooks {
 	 * @param string $key
 	 */
 	public static function addJsonFile( $file, $key = '' ) {
-		self::$jsonFiles[] = array( $file, $key . filemtime( $file ) );
+		self::$jsonFiles[] = [ $file, $key . filemtime( $file ) ];
 	}
 
 	/**
@@ -139,7 +139,7 @@ class Hooks {
 	 * @return array
 	 */
 	private static function loadConstantValues() {
-		$return = array();
+		$return = [];
 		foreach ( self::$callbackConstants as $value ) {
 			$return = call_user_func( $value[0] ) + $return;
 		}
@@ -207,7 +207,7 @@ class Hooks {
 	 * @throws PhpTagsException
 	 */
 	private static function getFunctionCallable( $funcKey ) {
-		static $functions = array(); // cache of functions
+		static $functions = []; // cache of functions
 
 		if ( !isset( $functions[$funcKey] ) ) {
 			// it does not exist in cache
@@ -269,7 +269,7 @@ class Hooks {
 	}
 
 	private static function checkPermission( $hookType, $objectName, $methodName, $values ) {
-		if ( \Hooks::run( 'PhpTagsBeforeCallRuntimeHook', array($hookType, $objectName, $methodName, $values) ) ) {
+		if ( \Hooks::run( 'PhpTagsBeforeCallRuntimeHook', [ $hookType, $objectName, $methodName, $values ] ) ) {
 			return true;
 		}
 
@@ -284,7 +284,7 @@ class Hooks {
 	 * @throws PhpTagsException
 	 */
 	private static function callGetConstant( $name ) {
-		static $constants = array(); // cache of called constants
+		static $constants = []; // cache of called constants
 
 		if ( isset ( self::$constants[$name] ) ) {
 			$className = 'PhpTagsObjects\\' . self::$constants[$name];
@@ -352,7 +352,7 @@ class Hooks {
 		if ( !self::checkPermission( Runtime::H_OBJECT_METHOD, $objectKey, $methodKey, $arguments ) ) {
 			return self::getCallInfo( self::INFO_RETURNS_ON_FAILURE );
 		}
-		return call_user_func_array( array($object, "m_$methodKey"), $arguments );
+		return call_user_func_array( [ $object, "m_$methodKey" ], $arguments );
 	}
 
 	/**
@@ -376,7 +376,7 @@ class Hooks {
 		if ( !self::checkPermission( Runtime::H_STATIC_METHOD, $objectKey, $methodKey, $arguments ) ) {
 			return self::getCallInfo( self::INFO_RETURNS_ON_FAILURE );
 		}
-		return call_user_func_array( array($className, "s_$methodKey"), $arguments );
+		return call_user_func_array( [ $className, "s_$methodKey" ], $arguments );
 	}
 
 	/**
@@ -451,12 +451,11 @@ class Hooks {
 	 */
 	public static function callSetObjectsProperty( $name, $object, $value ) {
 		$oldValue = self::$value;
-		self::$value = array(
+		self::$value = [
 			Runtime::B_HOOK_TYPE => Runtime::H_SET_OBJECT_PROPERTY,
 			Runtime::B_METHOD => $name,
 			Runtime::B_METHOD_KEY => null,
-			Runtime::B_OBJECT => $object,
-		);
+			Runtime::B_OBJECT => $object, ];
 
 		$return = self::callSetObjectProperty( $value, strtolower( $name ), $object );
 
@@ -524,14 +523,13 @@ class Hooks {
 		}
 
 		$oldValue = self::$value;
-		self::$value = array(
+		self::$value = [
 			Runtime::B_HOOK_TYPE => Runtime::H_NEW_OBJECT,
 			Runtime::B_METHOD => '__construct',
 			Runtime::B_METHOD_KEY => '__construct',
 			Runtime::B_PARAM_2 => $arguments,
 			Runtime::B_OBJECT => $calledObjectName,
-			Runtime::B_OBJECT_KEY => $objectKey,
-			);
+			Runtime::B_OBJECT_KEY => $objectKey, ];
 
 		$className = self::getClassNameByObjectName( $objectKey );
 		$newObject = new $className( self::getCallInfo( self::INFO_ORIGINAL_OBJECT_NAME ), $objectKey );
@@ -542,7 +540,7 @@ class Hooks {
 			if ( !self::checkPermission( Runtime::H_SET_STATIC_PROPERTY, $objectKey, '__construct', $arguments ) ) {
 				throw new PhpTagsException( PhpTagsException::FATAL_OBJECT_NOT_CREATED, '' );
 			}
-			call_user_func_array( array($newObject, 'm___construct'), $arguments );
+			call_user_func_array( [ $newObject, 'm___construct' ], $arguments );
 		} catch ( \PhpTags\PhpTagsException $exc) {
 			throw $exc;
 		} catch ( \Exception $exc ) {
@@ -562,7 +560,7 @@ class Hooks {
 	 * @throws PhpTagsException
 	 */
 	private static function getClassNameByObjectName( $objectKey ) {
-		static $cache = array();
+		static $cache = [];
 
 		if ( isset( $cache[$objectKey] ) ) {
 			return $cache[$objectKey];
@@ -648,14 +646,14 @@ class Hooks {
 	private static function checkArguments( array $expects, array $arguments ) {
 		$argCount = count( $arguments );
 		if( true === isset( $expects[self::EXPECTS_EXACTLY_PARAMETERS] ) && $argCount != $expects[self::EXPECTS_EXACTLY_PARAMETERS] ) {
-			throw new PhpTagsException( PhpTagsException::WARNING_EXPECTS_EXACTLY_PARAMETER, array($expects[self::EXPECTS_EXACTLY_PARAMETERS], $argCount) );
+			throw new PhpTagsException( PhpTagsException::WARNING_EXPECTS_EXACTLY_PARAMETER, [ $expects[self::EXPECTS_EXACTLY_PARAMETERS], $argCount ] );
 		} else {
 			if ( true == isset( $expects[self::EXPECTS_MAXIMUM_PARAMETERS] ) && $argCount > $expects[self::EXPECTS_MAXIMUM_PARAMETERS] ) {
 				throw new PhpTagsException(
-					PhpTagsException::WARNING_EXPECTS_AT_MOST_PARAMETERS, array($expects[self::EXPECTS_MAXIMUM_PARAMETERS], $argCount) );
+					PhpTagsException::WARNING_EXPECTS_AT_MOST_PARAMETERS, [ $expects[self::EXPECTS_MAXIMUM_PARAMETERS], $argCount ] );
 			}
 			if ( true == isset( $expects[self::EXPECTS_MINIMUM_PARAMETERS] ) && $argCount < $expects[self::EXPECTS_MINIMUM_PARAMETERS] ) {
-				throw new PhpTagsException( PhpTagsException::WARNING_EXPECTS_AT_LEAST_PARAMETER, array($expects[self::EXPECTS_MINIMUM_PARAMETERS], $argCount) );
+				throw new PhpTagsException( PhpTagsException::WARNING_EXPECTS_AT_LEAST_PARAMETER, [ $expects[self::EXPECTS_MINIMUM_PARAMETERS], $argCount ] );
 			}
 		}
 
@@ -720,7 +718,7 @@ class Hooks {
 			$type = $arguments[$i] instanceof GenericObject ? $arguments[$i]->getName() : gettype( $arguments[$i] );
 			throw new PhpTagsException(
 					PhpTagsException::WARNING_EXPECTS_PARAMETER,
-					array( $i+1, $error, $type )
+					[ $i+1, $error, $type ]
 				);
 		}
 		return true;
@@ -795,7 +793,7 @@ class Hooks {
 		}
 
 		if ( $error !== false ) {
-			throw new PhpTagsException( PhpTagsException::NOTICE_EXPECTS_PROPERTY, array($error, gettype( $value )) );
+			throw new PhpTagsException( PhpTagsException::NOTICE_EXPECTS_PROPERTY, [ $error, gettype( $value ) ] );
 		}
 		return $value;
 	}
@@ -924,7 +922,7 @@ class Hooks {
 				break;
 		}
 
-		return array(
+		return [
 			self::INFO_HOOK_TYPE => $hookType,
 			self::INFO_CALLED_HOOK_NAME => $calledHookName,
 			self::INFO_ORIGINAL_HOOK_NAME => $originalHookName,
@@ -932,8 +930,7 @@ class Hooks {
 			self::INFO_ORIGINAL_OBJECT_NAME => $originalObjectName,
 			self::INFO_ORIGINAL_FULL_NAME => $originalFullName,
 			self::INFO_RETURNS_ON_FAILURE => $returnsOnFailure,
-			self::INFO_HOOK_TYPE_STRING => $hookTypeString,
-		);
+			self::INFO_HOOK_TYPE_STRING => $hookTypeString, ];
 	}
 
 }

@@ -49,11 +49,11 @@ class Runtime {
 
 	public static $loopsLimit = 0;
 
-	private static $variables = array();
-	private static $staticVariables = array();
-	private static $globalVariables = array();
+	private static $variables = [];
+	private static $staticVariables = [];
+	private static $globalVariables = [];
 	private static $ignoreErrors = false;
-	private static $stack = array();
+	private static $stack = [];
 
 	# self::$stack indexes
 	const S_RETURN = 0;
@@ -68,7 +68,7 @@ class Runtime {
 	const R_ARRAY = 'Array';
 	const R_DUMP_OBJECT = 'object';
 
-	private static $operators = array(
+	private static $operators = [
 		self::T_QUOTE => 'doQuote',
 		self::T_CONCAT => 'doConcat',
 		self::T_PLUS => 'doPlus',
@@ -135,8 +135,7 @@ class Runtime {
 		self::T_OR_EQUAL => 'doSetOrVal',
 		self::T_XOR_EQUAL => 'doSetXorVal',
 		self::T_SL_EQUAL => 'doSetShiftLeftVal',
-		self::T_SR_EQUAL => 'doSetShiftRightVal',
-	);
+		self::T_SR_EQUAL => 'doSetShiftRightVal', ];
 
 	/**
 	 *
@@ -144,9 +143,9 @@ class Runtime {
 	public static function reset() {
 		global $wgPhpTagsMaxLoops;
 
-		self::$variables = array();
-		self::$staticVariables = array();
-		self::$globalVariables = array();
+		self::$variables = [];
+		self::$staticVariables = [];
+		self::$globalVariables = [];
 		self::$loopsLimit = $wgPhpTagsMaxLoops;
 		self::$ignoreErrors = false;
 	}
@@ -159,7 +158,7 @@ class Runtime {
 	 * @throws PhpTagsException
 	 * @throws Exception
 	 */
-	public static function runSource( $code, array $args = array(), $scope = '' ) {
+	public static function runSource( $code, array $args = [], $scope = '' ) {
 		return self::run( Compiler::compile( $code ), $args, $scope );
 	}
 
@@ -170,7 +169,7 @@ class Runtime {
 	 */
 	private static function pushDown( $newCode, $newLoopsOwner, &$refReturn ) {
 		$stack =& self::$stack[0];
-		$stack[self::S_MEMORY][] = array( &$refReturn, $stack[self::S_RUNNING], $stack[self::S_RUN_INDEX], $stack[self::S_COUNT], $stack[self::S_LOOPS_OWNER] );
+		$stack[self::S_MEMORY][] = [ &$refReturn, $stack[self::S_RUNNING], $stack[self::S_RUN_INDEX], $stack[self::S_COUNT], $stack[self::S_LOOPS_OWNER] ];
 		$stack[self::S_RUNNING] = $newCode;
 		$stack[self::S_RUN_INDEX] = -1;
 		$stack[self::S_COUNT] = count( $newCode );
@@ -192,7 +191,7 @@ class Runtime {
 	 * @throws PhpTagsException
 	 */
 	private static function doQuote ( &$value ) {
-		$implode = array();
+		$implode = [];
 		foreach ( $value[self::B_PARAM_1] as $v ) {
 			if ( $v === null || is_scalar( $v ) ) {
 				$implode[] = $v;
@@ -1097,7 +1096,7 @@ class Runtime {
 	}
 
 	private static function checkStringParams( &$v1, &$v2, &$flags ) {
-		$return = array( $v1, $v2 );
+		$return = [ $v1, $v2 ];
 
 		if ( $v1 !== null && !is_scalar( $v1 ) ) {
 			if ( is_array( $v1 ) ) {
@@ -1166,11 +1165,11 @@ class Runtime {
 	}
 
 	private static function checkObjectParams( &$v1, &$v2, $to = 'int' ) {
-		$return = array( $v1, $v2 );
+		$return = [ $v1, $v2 ];
 
 		if ( is_object( $v1 ) ) {
 			if ( $v1 instanceof GenericObject ) {
-				self::pushException( new PhpTagsException( PhpTagsException::NOTICE_OBJECT_CONVERTED, array($v1->getName(), $to) ) );
+				self::pushException( new PhpTagsException( PhpTagsException::NOTICE_OBJECT_CONVERTED, [ $v1->getName(), $to ] ) );
 				$return[0] = 1;
 			} else {
 				throw new PhpTagsException( PhpTagsException::FATAL_INTERNAL_ERROR, __LINE__ );
@@ -1178,7 +1177,7 @@ class Runtime {
 		}
 		if ( is_object( $v2 ) ) {
 			if ( $v2 instanceof GenericObject ) {
-				self::pushException( new PhpTagsException( PhpTagsException::NOTICE_OBJECT_CONVERTED, array($v2->getName(), $to) ) );
+				self::pushException( new PhpTagsException( PhpTagsException::NOTICE_OBJECT_CONVERTED, [ $v2->getName(), $to ] ) );
 				$return[1] = 1;
 			} else {
 				throw new PhpTagsException( PhpTagsException::FATAL_INTERNAL_ERROR, __LINE__ );
@@ -1203,7 +1202,7 @@ class Runtime {
 			foreach ( $var[self::B_ARRAY_INDEX] as $v ) {
 				if ( $ref === true || $ref === false ) {
 					if ( $v === INF ) { // Example: $foo[]
-						$ref = array();
+						$ref = [];
 					}
 				} else if ( is_scalar( $ref ) ) {
 					self::pushException( new PhpTagsException( PhpTagsException::WARNING_SCALAR_VALUE_AS_ARRAY, null ) );
@@ -1251,18 +1250,17 @@ class Runtime {
 	 */
 	public static function run( array $code, array $args, $scope = '' ) {
 		if ( false === isset( self::$variables[$scope] ) ) {
-			self::$variables[$scope] = array();
+			self::$variables[$scope] = [];
 		}
-		$stack = array(
-			self::S_RETURN => array(),
+		$stack = [
+			self::S_RETURN => [],
 			self::S_RUNNING => $code,
 			self::S_RUN_INDEX => -1,
 			self::S_COUNT => count( $code ),
 			self::S_LOOPS_OWNER => null,
-			self::S_MEMORY => array(),
+			self::S_MEMORY => [],
 			self::S_PLACE => isset( $args[0] ) ? $args[0] : '', // Page name for static variables and error messages
-			self::S_VARIABLES => & self::$variables[$scope],
-		);
+			self::S_VARIABLES => & self::$variables[$scope], ];
 		$stack[self::S_VARIABLES]['argv'] = $args;
 		$stack[self::S_VARIABLES]['argc'] = count( $args );
 		$stack[self::S_VARIABLES]['GLOBALS'] =& self::$globalVariables;
@@ -1310,7 +1308,7 @@ doit:
 	}
 
 	private static function fillList( &$values, &$parameters, $offset = false ) {
-		$return = array();
+		$return = [];
 
 		for ( $pkey = count( $parameters ) - 1; $pkey >= 0; --$pkey ) {
 			$param = $parameters[$pkey];
@@ -1321,7 +1319,7 @@ doit:
 				if ( is_array($values) && isset($values[$pkey]) ) {
 					$return[$pkey] = self::fillList( $values[$pkey], $param[self::B_PARAM_1] );
 				} else { // list() works with array only @todo support strings
-					static $emptyArray=array();
+					static $emptyArray= [];
 					$return[$pkey] = self::fillList( $emptyArray, $param[self::B_PARAM_1], $pkey );
 				}
 				continue;

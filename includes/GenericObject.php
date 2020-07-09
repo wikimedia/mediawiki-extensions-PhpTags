@@ -127,7 +127,7 @@ class GenericObject implements \Iterator {
 	 */
 	public function toString() {
 		// By default PhpTags objects have no __toString() method
-		throw new PhpTagsException( PhpTagsException::FATAL_OBJECT_COULD_NOT_BE_CONVERTED, array($this->objectName, 'string') );
+		throw new PhpTagsException( PhpTagsException::FATAL_OBJECT_COULD_NOT_BE_CONVERTED, [ $this->objectName, 'string' ] );
 	}
 
 	/**
@@ -146,7 +146,7 @@ class GenericObject implements \Iterator {
 	 */
 	protected static function pushExceptionExpectsParameter( $index, $expect, $value) {
 		$type = $value instanceof self ? $value->getName() : gettype( $value );
-		Runtime::pushException(	new PhpTagsException( PhpTagsException::WARNING_EXPECTS_PARAMETER, array($index, $expect, $type) ) );
+		Runtime::pushException(	new PhpTagsException( PhpTagsException::WARNING_EXPECTS_PARAMETER, [ $index, $expect, $type ] ) );
 		return Hooks::getCallInfo( Hooks::INFO_RETURNS_ON_FAILURE );
 	}
 

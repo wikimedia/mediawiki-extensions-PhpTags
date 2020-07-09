@@ -7,11 +7,10 @@
  * @author Pavel Astakhov <pastakhov@yandex.ru>
  */
 
-$magicWords = array();
+$magicWords = [];
 
 /** English
  * @author pastakhov
  */
-$magicWords['en'] = array(
-	'phptag' => array( 0, 'phptag' ),
-);
+$magicWords['en'] = [
+	'phptag' => [ 0, 'phptag' ], ];

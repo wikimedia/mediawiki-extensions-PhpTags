@@ -25,9 +25,9 @@ class outPrint implements iRawOutput {
 	 * @param string|false $element
 	 * @param array $attribs
 	 */
-	public function __construct( $returnValue, $content, $raw=false, $element='pre', $attribs = array() ) {
+	public function __construct( $returnValue, $content, $raw=false, $element='pre', $attribs = [] ) {
 		$this->returnValue = $returnValue;
-		$this->content = $raw ? (string)$content : strtr( $content, array('&'=>'&amp;', '<'=>'&lt;') );
+		$this->content = $raw ? (string)$content : strtr( $content, [ '&'=>'&amp;', '<'=>'&lt;' ] );
 		$this->element = $element;
 		$this->attribs = $attribs;
 	}

@@ -24,13 +24,13 @@ class Renderer {
 	static $compileHit = 0;
 	static $needInitRuntime = true;
 
-	private static $scopes = array();
+	private static $scopes = [];
 	private static $nextScopeID = 0;
 	/**
 	 * Array of PPFrame
 	 * @var array
 	 */
-	private static $frame = array();
+	private static $frame = [];
 
 	/**
 	 * Parser
@@ -38,9 +38,9 @@ class Renderer {
 	 */
 	private static $parser;
 
-	private static $bytecodeNeedsUpdate = array();
-	private static $bytecodeCache = array();
-	private static $bytecodeLoaded = array();
+	private static $bytecodeNeedsUpdate = [];
+	private static $bytecodeCache = [];
+	private static $bytecodeLoaded = [];
 	private static $parserCacheDisabled = false;
 	private static $errorCategoryAdded = false;
 	public static $globalVariablesScript = [];
@@ -66,7 +66,7 @@ class Renderer {
 
 		$frameTitle = $frame->getTitle();
 		$frameTitleText = $frameTitle->getPrefixedText();
-		$arguments = array( $frameTitleText ) + $frame->getArguments();
+		$arguments = [ $frameTitleText ] + $frame->getArguments();
 		$scope = self::getScopeID( $frame );
 
 		try {
@@ -92,7 +92,7 @@ class Renderer {
 
 		$frameTitle = $frame->getTitle();
 		$frameTitleText = $frameTitle->getPrefixedText();
-		$arguments = array( $frameTitleText ) + $frame->getArguments();
+		$arguments = [ $frameTitleText ] + $frame->getArguments();
 		$scope = self::getScopeID( $frame );
 
 		try {
@@ -100,12 +100,12 @@ class Renderer {
 			$result = Runtime::run( $bytecode, $arguments, $scope );
 			array_shift( self::$frame );
 		} catch ( PhpTagsException $exc ) {
-			$result = array( (string) $exc );
+			$result = [ (string) $exc ];
 			$parser->addTrackingCategory( 'phptags-compiler-error-category' );
 		} catch ( \MWException $exc ) {
 			throw $exc;
 		} catch ( \Exception $exc ) {
-			$result = array( $exc->getTraceAsString() );
+			$result = [ $exc->getTraceAsString() ];
 		}
 
 		Timer::stop( $parser );
@@ -201,10 +201,10 @@ class Renderer {
 		$cache = wfGetCache( CACHE_ANYTHING );
 		foreach ( self::$bytecodeNeedsUpdate as $revID => $data ) {
 			$key = wfMemcKey( 'PhpTags', $revID );
-			$cache->set( $key, array(Runtime::VERSION, $data), $wgPhpTagsBytecodeExptime );
+			$cache->set( $key, [ Runtime::VERSION, $data ], $wgPhpTagsBytecodeExptime );
 			wfDebugLog( 'PhpTags', 'Save compiled bytecode to cache with key ' . $revID );
 		}
-		self::$bytecodeNeedsUpdate = array();
+		self::$bytecodeNeedsUpdate = [];
 	}
 
 	public static function reset() {
@@ -215,11 +215,11 @@ class Renderer {
 
 		Runtime::reset();
 		Timer::reset();
-		self::$bytecodeCache = array();
-		self::$bytecodeLoaded = array();
+		self::$bytecodeCache = [];
+		self::$bytecodeLoaded = [];
 		self::$parserCacheDisabled = false;
 		self::$errorCategoryAdded = false;
-		self::$scopes = array();
+		self::$scopes = [];
 		self::$nextScopeID = 0;
 	}
 
@@ -239,7 +239,7 @@ class Renderer {
 				return $value[1];
 			}
 		}
-		self::$scopes[] = array( $frame, self::$nextScopeID );
+		self::$scopes[] = [ $frame, self::$nextScopeID ];
 		return self::$nextScopeID++;
 	}
 
@@ -273,7 +273,7 @@ Total   : %.3f sec
 		$scriptVariables = self::getScriptVariable();
 
 		if ( $scriptVariables ) {
-			$vars = array();
+			$vars = [];
 			foreach ( $scriptVariables as $key => $value ) {
 				$vars["ext.phptags.$key"] = $value;
 			}
