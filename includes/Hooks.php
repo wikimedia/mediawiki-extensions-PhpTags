@@ -206,27 +206,27 @@ class Hooks {
 	 * @return string
 	 * @throws PhpTagsException
 	 */
-	private static function getFunctionClass( $funcKey ) {
+	private static function getFunctionCallable( $funcKey ) {
 		static $functions = array(); // cache of functions
 
-		if ( true === isset( $functions[$funcKey] ) ) { // it is exists in cache
-			return $functions[$funcKey];
-		}
+		if ( !isset( $functions[$funcKey] ) ) {
+			// it does not exist in cache
+			if ( !isset( self::$functions[ $funcKey ][2] ) ) {
+				throw new PhpTagsException( PhpTagsException::FATAL_CALL_TO_UNDEFINED_FUNCTION );
+			}
 
-		if ( false === isset( self::$functions[$funcKey][2] ) ) {
-			throw new PhpTagsException( PhpTagsException::FATAL_CALL_TO_UNDEFINED_FUNCTION );
-		}
+			$functionClassName = 'PhpTagsObjects\\' . self::$functions[ $funcKey ][2];
+			if ( !class_exists( $functionClassName ) ) {
+				throw new PhpTagsException( PhpTagsException::FATAL_NONEXISTENT_HOOK_CLASS, $functionClassName );
+			}
+			if ( !is_subclass_of( $functionClassName, 'PhpTags\\GenericObject' ) ) {
+				throw new PhpTagsException( PhpTagsException::FATAL_INVALID_HOOK_CLASS, $functionClassName );
+			}
 
-		$functionClassName = 'PhpTagsObjects\\' . self::$functions[$funcKey][2];
-		if ( false === class_exists( $functionClassName ) ) {
-			throw new PhpTagsException( PhpTagsException::FATAL_NONEXISTENT_HOOK_CLASS, $functionClassName );
+			$functionMethodName = 'f_' . self::$functions[ $funcKey ][4];
+			$functions[ $funcKey ] = [ $functionClassName, $functionMethodName ];
 		}
-		if ( false === is_subclass_of( $functionClassName, 'PhpTags\\GenericObject' ) ) {
-			throw new PhpTagsException( PhpTagsException::FATAL_INVALID_HOOK_CLASS, $functionClassName );
-		}
-
-		$functions[$funcKey] = $functionClassName;
-		return $functionClassName;
+		return $functions[$funcKey];
 	}
 
 	/**
@@ -324,14 +324,14 @@ class Hooks {
 	 * @throws PhpTagsException
 	 */
 	private static function callFunction( $arguments, $funcKey = null ) {
-		$funcClass = self::getFunctionClass( $funcKey );
+		$functionCallable = self::getFunctionCallable( $funcKey );
 		ksort( $arguments );
 		self::checkFunctionArguments( $funcKey, $arguments );
 
 		if ( !self::checkPermission( Runtime::H_FUNCTION, null, $funcKey, $arguments ) ) {
 			return self::getCallInfo( self::INFO_RETURNS_ON_FAILURE );
 		}
-		return call_user_func_array( array($funcClass, "f_$funcKey"), $arguments );
+		return call_user_func_array( $functionCallable, $arguments );
 	}
 
 	/**

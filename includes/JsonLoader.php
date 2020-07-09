@@ -181,7 +181,8 @@ class JsonLoader {
 			$class = $value['class'];
 			$expects = self::getExpects( $value, 'function' );
 			$onFailure = self::getReturnsOnFailure( $value );
-			$functions[strtolower($key)] = array( $expects, $key, $class, $onFailure );
+			$lcKey = strtolower( $key );
+			$functions[$lcKey] = array( $expects, $key, $class, $onFailure, $lcKey );
 		}
 	}
 
