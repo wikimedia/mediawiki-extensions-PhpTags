@@ -127,8 +127,8 @@ class Hooks {
 			$data['JSONLOADER'] = JsonLoader::VERSION;
 			$cache->set( $key, $data );
 		}
-		self::$jsonFiles = null;
-		self::$callbackConstants = null;
+		self::$jsonFiles = [];
+		self::$callbackConstants = [];
 		self::$objects = $data['objects'];
 		self::$functions = $data['functions'];
 		self::$constants = $data['constants'];
