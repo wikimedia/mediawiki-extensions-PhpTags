@@ -219,6 +219,9 @@ class PhpTagsException extends \Exception {
 			case self::WARNING_NON_NUMERIC_VALUE:
 				$message = 'A non-numeric value encountered';
 				break;
+			case self::DEPRECATED_INVALID_CHARACTERS:
+				$message= 'Invalid characters passed for attempted conversion, these have been ignored';
+				break;
 			default:
 				$message = "Undefined error, code {$this->code}";
 				$this->code = self::EXCEPTION_FATAL * 1000;
@@ -247,6 +250,9 @@ class PhpTagsException extends \Exception {
 				break;
 			case self::EXCEPTION_PARSE:
 				$messageType = 'Parse error';
+				break;
+			case self::EXCEPTION_DEPRECATED:
+				$messageType = 'Deprecated';
 				break;
 			default:
 				$messageType = 'Undefined error';
@@ -326,6 +332,9 @@ class PhpTagsException extends \Exception {
 	const EXCEPTION_PARSE = 6;
 	const PARSE_SYNTAX_ERROR_UNEXPECTED = 6001;  // PHP Parse error:  syntax error, unexpected $end, expecting ',' or ';' in Command line code on line 1
 	const PARSE_ERROR_EXPRESSION_IN_STATIC = 6100; // syntax error, expressions are not permitted if you declare static variable
+
+	const EXCEPTION_DEPRECATED = 7;
+	const DEPRECATED_INVALID_CHARACTERS = 7001;
 
 // PHP Fatal error:  Allowed memory size of 134217728 bytes exhausted (tried to allocate 73 bytes)
 // PHP Fatal error:  Maximum execution time of 30 seconds exceeded

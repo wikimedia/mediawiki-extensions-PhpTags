@@ -1,6 +1,6 @@
 {
 	"name": "PhpTags",
-	"version": "5.11",
+	"version": "5.12",
 	"author": "[https://www.mediawiki.org/wiki/User:Pastakhov Pavel Astakhov]",
 	"url": "https://www.mediawiki.org/wiki/Extension:PhpTags",
 	"descriptionmsg": "phptags-desc",

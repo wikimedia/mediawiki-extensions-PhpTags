@@ -81,7 +81,8 @@ class PhpTagsHooks {
 		$wgPhpTagsCallsCounter = 0;
 
 		define ( 'PHPTAGS_HOOK_RELEASE', 8 );
-		define ( 'PHPTAGS_VERSION', '5.11' ); //@todo remove later, it is for backward compatibility only
+		// @todo remove later, it is for backward compatibility only
+		define ( 'PHPTAGS_VERSION', ExtensionRegistry::getInstance()->getAllThings()['PhpTags']['version'] );
 	}
 
 }
