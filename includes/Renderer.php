@@ -143,8 +143,8 @@ class Renderer {
 		}
 
 		if ( $wgPhpTagsBytecodeExptime > 0 && $revID > 0 && false === isset( self::$bytecodeLoaded[$revID] ) ) {
-			$cache = \wfGetCache( CACHE_ANYTHING );
-			$key = \wfMemcKey( 'PhpTags', $revID );
+			$cache = \ObjectCache::getInstance( CACHE_ANYTHING );
+			$key = $cache->makeKey( 'PhpTags', $revID );
 			$data = $cache->get( $key );
 			self::$bytecodeLoaded[$revID] = true;
 			if ( $data !== false && $data[0] === Runtime::VERSION ) {
@@ -198,9 +198,9 @@ class Renderer {
 	private static function updateBytecodeCache() {
 		global $wgPhpTagsBytecodeExptime;
 
-		$cache = wfGetCache( CACHE_ANYTHING );
+		$cache = \ObjectCache::getInstance( CACHE_ANYTHING );
 		foreach ( self::$bytecodeNeedsUpdate as $revID => $data ) {
-			$key = wfMemcKey( 'PhpTags', $revID );
+			$key = $cache->makeKey( 'PhpTags', $revID );
 			$cache->set( $key, [ Runtime::VERSION, $data ], $wgPhpTagsBytecodeExptime );
 			wfDebugLog( 'PhpTags', 'Save compiled bytecode to cache with key ' . $revID );
 		}

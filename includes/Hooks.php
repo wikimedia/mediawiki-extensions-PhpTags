@@ -107,8 +107,8 @@ class Hooks {
 	public static function loadData() {
 		$data = false;
 
-		$cache = wfGetCache( CACHE_ANYTHING );
-		$key = wfMemcKey( 'phptags', 'loadJsonFiles' );
+		$cache = \ObjectCache::getInstance( CACHE_ANYTHING );
+		$key = $cache->makeKey( 'phptags', 'loadJsonFiles' );
 		$cached = $cache->get( $key );
 		if ( $cached !== false &&
 				$cached['JSONLOADER'] === JsonLoader::VERSION &&
