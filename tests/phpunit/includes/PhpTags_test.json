@@ -26,18 +26,18 @@
 				"__construct": {
 					"parameters": []
 				},
-				"myMethod" : {
+				"myMethod": {
 					"parameters": []
 				},
-				"myMethod_BANNED" : {
+				"myMethod_BANNED": {
 					"parameters": []
 				}
 			},
 			"STATIC METHODS": {
-				"myStaticMethod" : {
+				"myStaticMethod": {
 					"parameters": []
 				},
-				"myStaticMethod_BANNED" : {
+				"myStaticMethod_BANNED": {
 					"parameters": []
 				}
 			},
