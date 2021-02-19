@@ -360,7 +360,7 @@ Total   : %.3f sec
 		}
 		$rnd = \Parser::MARKER_PREFIX . "-phptags-{$parser->mMarkerIndex}-" . \Parser::MARKER_SUFFIX;
 		$parser->mMarkerIndex++;
-		$parser->mStripState->addNoWiki( $rnd, $text );
+		$parser->getStripState()->addNoWiki( $rnd, $text );
 		return $rnd;
 	}
 
