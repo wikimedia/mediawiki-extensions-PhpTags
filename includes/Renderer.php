@@ -438,12 +438,12 @@ class Timer {
 	private static $reset = false; // allows to make a postponed reset
 
 	public static function start( $parser ) {
-		array_unshift( self::$times, $parser->mOutput->getTimeSinceStart( 'cpu' ) );
+		array_unshift( self::$times, $parser->getOutput()->getTimeSinceStart( 'cpu' ) );
 	}
 
 	public static function stop( $parser ) {
 		if ( !isset( self::$times[1] ) ) { // count the latest stop calling only
-			self::$runTime += $parser->mOutput->getTimeSinceStart( 'cpu' ) - self::$times[0];
+			self::$runTime += $parser->getOutput()->getTimeSinceStart( 'cpu' ) - self::$times[0];
 		}
 		array_shift( self::$times );
 
@@ -455,7 +455,7 @@ class Timer {
 	}
 
 	public static function addCompileTime( $parser ) {
-		self::$compile += $parser->mOutput->getTimeSinceStart( 'cpu' ) - self::$times[0];
+		self::$compile += $parser->getOutput()->getTimeSinceStart( 'cpu' ) - self::$times[0];
 	}
 
 	public static function getRunTime() {
