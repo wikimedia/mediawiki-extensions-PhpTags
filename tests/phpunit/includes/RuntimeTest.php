@@ -3,11 +3,11 @@ namespace PhpTags;
 
 use ExtensionRegistry;
 use Hooks as MWHooks;
-use MediaWikiTestCase;
+use MediaWikiIntegrationTestCase;
 use PhpTags\Hooks as PhpTagsHooks;
 use PhpTags\HookException as PhpTagsHookException;
 
-class RuntimeTest extends MediaWikiTestCase {
+class RuntimeTest extends MediaWikiIntegrationTestCase {
 
 	protected function setUp(): void {
 		parent::setUp();
