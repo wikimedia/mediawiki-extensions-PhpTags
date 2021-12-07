@@ -1,7 +1,8 @@
 {
 	"@metadata": {
 		"authors": [
-			"Liuxinyu970226"
+			"Liuxinyu970226",
+			"Xiplus"
 		]
 	},
 	"phptags-compiler-error-category": "带有无效PHP标签代码的页面",
@@ -9,6 +10,6 @@
 	"phptags-runtime-error-category": "带PHP标签错误的页面",
 	"phptags-runtime-error-category-desc": "处理页面上的PHP标签代码时出错。",
 	"phptags-desc": "允许用户使用带PHP语法的魔术字扩展",
-	"phptags-disabled-for-namespace": "扩展PhpTags在“$1”名字空间禁用。",
+	"phptags-disabled-for-namespace": "扩展PhpTags在“$1”命名空间禁用。",
 	"phptags-extension-type": "PHP标签扩展"
 }
