@@ -322,7 +322,7 @@ Total   : %.3f sec
 		global $wgOut;
 
 		self::$parser->disableCache();
-		$wgOut->enableClientCache( false );
+		$wgOut->disableClientCache();
 		self::$parserCacheDisabled = true;
 	}
 
