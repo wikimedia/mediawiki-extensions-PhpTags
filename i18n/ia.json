@@ -4,6 +4,11 @@
 			"McDutchie"
 		]
 	},
+	"phptags-compiler-error-category": "Paginas con codice PhpTags non valide",
+	"phptags-compiler-error-category-desc": "Le codice PhpTags contine un error.",
+	"phptags-runtime-error-category": "Paginas con errores de PhpTags",
+	"phptags-runtime-error-category-desc": "Un error se produceva durante le processamento del codice PhpTags sur le pagina.",
 	"phptags-desc": "Permitte al usatores de usar le expressiones Magic con le syntaxe del linguage PHP",
-	"phptags-disabled-for-namespace": "Le extension PhpTags ha essite disactivate pro le spatio de nomines \"$1\"."
+	"phptags-disabled-for-namespace": "Le extension PhpTags ha essite disactivate pro le spatio de nomines \"$1\".",
+	"phptags-extension-type": "Extensiones PhpTags"
 }
