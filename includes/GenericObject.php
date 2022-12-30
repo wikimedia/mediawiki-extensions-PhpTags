@@ -151,10 +151,15 @@ class GenericObject implements \Iterator {
 	}
 
 	// It doesn't allow illegal access to public properties inside phptags code through using foreach operator
+	#[\ReturnTypeWillChange]
 	public function current() {}
+	#[\ReturnTypeWillChange]
 	public function key() {}
+	#[\ReturnTypeWillChange]
 	public function next() {}
+	#[\ReturnTypeWillChange]
 	public function rewind() {}
+	#[\ReturnTypeWillChange]
 	public function valid() { return false; }
 
 }
