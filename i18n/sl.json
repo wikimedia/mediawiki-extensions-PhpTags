@@ -1,0 +1,14 @@
+{
+	"@metadata": {
+		"authors": [
+			"Eleassar"
+		]
+	},
+	"phptags-compiler-error-category": "Strani z neveljavno kodo PhpTags",
+	"phptags-compiler-error-category-desc": "V kodi PhpTags je napaka.",
+	"phptags-runtime-error-category": "Strani z napakami PhpTags",
+	"phptags-runtime-error-category-desc": "Pri obdelavi kode PhpTags na tej strani je prišlo do napake.",
+	"phptags-desc": "Uporabnikom omogoča uporabo izrazov Magic s skladnjo jezika PHP",
+	"phptags-disabled-for-namespace": "Razširitev PhpTags je za imenski prostor »$1« onemogočena.",
+	"phptags-extension-type": "Razširitve PhpTags"
+}
