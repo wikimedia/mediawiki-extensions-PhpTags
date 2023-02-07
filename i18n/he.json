@@ -1,0 +1,14 @@
+{
+	"@metadata": {
+		"authors": [
+			"Amire80"
+		]
+	},
+	"phptags-compiler-error-category": "דפים עם קוד PhpTags בלתי־תקין",
+	"phptags-compiler-error-category-desc": "בקוד PhpTags יש שגיאה.",
+	"phptags-runtime-error-category": "דפים עם שגיאות PhpTags",
+	"phptags-runtime-error-category-desc": "אירעה שגיאה בעת עיבוד קוד PhpTags בדף.",
+	"phptags-desc": "מתן אפשרות למשתמשים להשתמש בביטויי הקסם עם תחביר שפת PHP",
+	"phptags-disabled-for-namespace": "ההרחבה PhpTags מושבתת עבור מרחב השמות \"$1\".",
+	"phptags-extension-type": "הרחבות PhpTags"
+}
