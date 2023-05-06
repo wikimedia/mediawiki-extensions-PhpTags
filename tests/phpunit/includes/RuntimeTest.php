@@ -2,8 +2,8 @@
 namespace PhpTags;
 
 use ExtensionRegistry;
-use Hooks as MWHooks;
 use MediaWikiIntegrationTestCase;
+use MediaWiki\MediaWikiServices;
 use PhpTags\Hooks as PhpTagsHooks;
 use PhpTags\HookException as PhpTagsHookException;
 
@@ -28,7 +28,7 @@ class RuntimeTest extends MediaWikiIntegrationTestCase {
 			define( 'PHPTAGS_TEST_BANNED', 'Test' );
 
 			wfDebug( 'PHPTags: run hook PhpTagsRuntimeFirstInit ' . __FILE__ );
-			MWHooks::run( 'PhpTagsRuntimeFirstInit' );
+			MediaWikiServices::getInstance()->getHookContainer()->run( 'PhpTagsRuntimeFirstInit' );
 			PhpTagsHooks::loadData();
 			Runtime::$loopsLimit = 1000;
 		}
