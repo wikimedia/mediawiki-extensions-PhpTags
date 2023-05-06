@@ -1,6 +1,7 @@
 <?php
 namespace PhpTags;
 
+use MediaWiki\MediaWikiServices;
 use MWException;
 
 /**
@@ -269,7 +270,7 @@ class Hooks {
 	}
 
 	private static function checkPermission( $hookType, $objectName, $methodName, $values ) {
-		if ( \Hooks::run( 'PhpTagsBeforeCallRuntimeHook', [ $hookType, $objectName, $methodName, $values ] ) ) {
+		if ( MediaWikiServices::getInstance()->getHookContainer()->run( 'PhpTagsBeforeCallRuntimeHook', [ $hookType, $objectName, $methodName, $values ] ) ) {
 			return true;
 		}
 

@@ -11,6 +11,7 @@ namespace PhpTags;
  */
 
 use Exception;
+use MediaWiki\MediaWikiServices;
 use MWException;
 use Parser;
 use PPFrame;
@@ -185,7 +186,7 @@ class Renderer {
 
 		if ( true === self::$needInitRuntime ) {
 			wfDebug( 'PhpTags: Run hook PhpTagsRuntimeFirstInit' );
-			\Hooks::run( 'PhpTagsRuntimeFirstInit' );
+			MediaWikiServices::getInstance()->getHookContainer()->run( 'PhpTagsRuntimeFirstInit' );
 			Hooks::loadData();
 			Runtime::$loopsLimit = $wgPhpTagsMaxLoops;
 			self::$needInitRuntime = false;
