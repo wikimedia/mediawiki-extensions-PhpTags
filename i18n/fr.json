@@ -3,14 +3,15 @@
 		"authors": [
 			"Element303",
 			"SnowedEarth",
+			"Verdy p",
 			"Wladek92"
 		]
 	},
-	"phptags-compiler-error-category": "Pages avec un code PhpTags incorrect",
+	"phptags-compiler-error-category": "Pages avec un code PhpTags non valide",
 	"phptags-compiler-error-category-desc": "Le code PhpTags contient une erreur.",
 	"phptags-runtime-error-category": "Pages avec des erreurs de PhpTags",
-	"phptags-runtime-error-category-desc": "Il y a eu une erreur lors du traitement du code PhpTags sur la page.",
+	"phptags-runtime-error-category-desc": "Une erreur s’est produite lors du traitement du code PhpTags sur la page.",
 	"phptags-desc": "Autorise les utilisateurs à utiliser les expressions Magic avec la syntaxe du langage PHP",
-	"phptags-disabled-for-namespace": "L'extension PhpTags est désactivée pour l'espace de noms «$1».",
-	"phptags-extension-type": "Extensions des PhpTags"
+	"phptags-disabled-for-namespace": "L’extension PhpTags est désactivée pour l’espace de noms « $1 ».",
+	"phptags-extension-type": "Extensions de PhpTags"
 }
