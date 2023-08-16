@@ -1,0 +1,13 @@
+{
+	"@metadata": {
+		"authors": [
+			"Nokeoo"
+		]
+	},
+	"phptags-compiler-error-category": "Puslapiai su netinkamu PhpTags kodu",
+	"phptags-compiler-error-category-desc": "PhpTags kodas turi klaidą.",
+	"phptags-runtime-error-category": "Puslapiai su PhpTags klaidomis",
+	"phptags-runtime-error-category-desc": "Įvyko klaida apdorojant PhpTags kodą šiame puslapyje.",
+	"phptags-disabled-for-namespace": "PhpTags plėtinys išjungtas vardų sričiai „$1“.",
+	"phptags-extension-type": "PhpTags plėtiniai"
+}
