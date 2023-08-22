@@ -110,7 +110,7 @@ class PhpTagsException extends \Exception {
 			case self::NOTICE_EXPECTS_PROPERTY:
 				$message = "$originalFullName expects property to be {$arguments[0]}, {$arguments[1]} given";
 				break;
-			case self::FATAL_UNEXPECTED_OBJECT_TYPE; // = 4021; // Fatal error: Unexpected object type stdClass. in
+			case self::FATAL_UNEXPECTED_OBJECT_TYPE: // = 4021; // Fatal error: Unexpected object type stdClass. in
 				$message = "$originalFullName Unexpected object type {$arguments[0]}";
 				break;
 			case self::WARNING_EXPECTS_EXACTLY_PARAMETERS:
@@ -125,7 +125,7 @@ class PhpTagsException extends \Exception {
 			case self::WARNING_EXPECTS_AT_LEAST_PARAMETER:
 				$message = "$originalFullName expects at least {$arguments[0]} parameter, {$arguments[1]} given";
 				break;
-			case self::WARNING_TOO_MANY_ARGUMENTS; //Warning: Too many arguments for date_format(), expected 2
+			case self::WARNING_TOO_MANY_ARGUMENTS: //Warning: Too many arguments for date_format(), expected 2
 				$message = "Too many arguments for $originalFullName, expected $arguments";
 				break;
 			case self::NOTICE_OBJECT_CONVERTED:
@@ -192,7 +192,7 @@ class PhpTagsException extends \Exception {
 			case self::WARNING_ATTEMPT_TO_ASSIGN_PROPERTY:
 				$message = 'Attempt to assign property ' . $this->hookCallInfo[Hooks::INFO_ORIGINAL_HOOK_NAME] . ' of non-object';
 				break;
-			case self::FATAL_CALL_FUNCTION_ON_NON_OBJECT;
+			case self::FATAL_CALL_FUNCTION_ON_NON_OBJECT:
 				$message = 'Call to a member function ' . $this->hookCallInfo[Hooks::INFO_ORIGINAL_HOOK_NAME] . '() on a non-object';
 				break;
 			case self::FATAL_ACCESS_TO_UNDECLARED_STATIC_PROPERTY:
