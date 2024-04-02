@@ -1,0 +1,14 @@
+{
+	"@metadata": {
+		"authors": [
+			"Joao Xavier"
+		]
+	},
+	"phptags-compiler-error-category": "Pagini kun nevalida kodexi PhpTags",
+	"phptags-compiler-error-category-desc": "La kodexo PhpTags havas eroro.",
+	"phptags-runtime-error-category": "Pagini kun erori pri PhpTags",
+	"phptags-runtime-error-category-desc": "Eventis eroro dum traktado di kodexo PhpTags en la pagino.",
+	"phptags-desc": "Permisar uzeri uzar 'magiala frazi' (''Magic expressions'') kun sintaxo di PHP",
+	"phptags-disabled-for-namespace": "Utensilo PhpTags deskapabligesis por ''namespace'' \"$1\".",
+	"phptags-extension-type": "Utensili PhpTags"
+}
