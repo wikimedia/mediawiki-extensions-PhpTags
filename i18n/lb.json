@@ -1,9 +1,15 @@
 {
 	"@metadata": {
 		"authors": [
-			"Robby"
+			"Robby",
+			"Volvox"
 		]
 	},
+	"phptags-compiler-error-category": "Säite mat ongültegem PhpTags-Code",
+	"phptags-compiler-error-category-desc": "Am PhpTags-Code ass e Feeler dran.",
+	"phptags-runtime-error-category": "Säite mat PhpTags-Feeler",
+	"phptags-runtime-error-category-desc": "Beim Verschaffe vum PhpTags-Code op der Säit gouf et ee Feeler.",
 	"phptags-desc": "Erlaabt et de Benotzer fir Magesch Wierder mat der PHP-Sproochsyntax ze benotzen",
-	"phptags-disabled-for-namespace": "Erweiderung PhpTags ass fir den Nummraum \"$1\" ausgeschalt."
+	"phptags-disabled-for-namespace": "Erweiderung PhpTags ass fir den Nummraum \"$1\" ausgeschalt.",
+	"phptags-extension-type": "PhpTags-Erweiderungen"
 }
