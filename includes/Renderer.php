@@ -439,12 +439,24 @@ class Timer {
 	private static $reset = false; // allows to make a postponed reset
 
 	public static function start( $parser ) {
-		array_unshift( self::$times, $parser->getOutput()->getTimeSinceStart( 'cpu' ) );
+		array_unshift( self::$times, self::getTime( $parser->getOutput() ) );
+	}
+
+	private static function getTime( $parserOutput ) {
+		if ( method_exists( $parserOutput, 'getTimeProfile') ) {
+			// MediaWiki 1.42+
+			// This can get called multiple times per parse. Since the method is documented
+			// as idempotent (doing nothing if already called) this is fine
+			$parserOutput->recordTimeProfile();
+			return $parserOutput->getTimeProfile( 'cpu' );
+		} else {
+			return $parserOutput->getTimeSinceStart( 'cpu' );
+		}
 	}
 
 	public static function stop( $parser ) {
 		if ( !isset( self::$times[1] ) ) { // count the latest stop calling only
-			self::$runTime += $parser->getOutput()->getTimeSinceStart( 'cpu' ) - self::$times[0];
+			self::$runTime += self::getTime( $parser->getOutput() ) - self::$times[0];
 		}
 		array_shift( self::$times );
 
@@ -456,7 +468,7 @@ class Timer {
 	}
 
 	public static function addCompileTime( $parser ) {
-		self::$compile += $parser->getOutput()->getTimeSinceStart( 'cpu' ) - self::$times[0];
+		self::$compile += self::getTime( $parser->getOutput() ) - self::$times[0];
 	}
 
 	public static function getRunTime() {
