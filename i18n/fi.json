@@ -2,7 +2,8 @@
 	"@metadata": {
 		"authors": [
 			"MrTapsa",
-			"Valtlait"
+			"Valtlait",
+			"Valtlai"
 		]
 	},
 	"phptags-desc": "Mahdollistaa Magic-lausekkeiden käytön PHP-kielen syntaksin kanssa",
