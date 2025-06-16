@@ -1,7 +1,7 @@
 <?php
 namespace PhpTags;
 
-use Html;
+use MediaWiki\Html\Html;
 
 /**
  * The error exception class of the extension PHP Tags.
