@@ -14,56 +14,49 @@ use PhpTags\Renderer;
 class PhpTagsHooks {
 
 	/**
-	 *
-	 * @return boolean
+	 * @return void
 	 */
 	public static function onPhpTagsRuntimeFirstInit() {
 		$version = ExtensionRegistry::getInstance()->getAllThings()['PhpTags']['version'];
 		\PhpTags\Hooks::addJsonFile( __DIR__ . '/PhpTags.json', $version );
-		return true;
 	}
 
 	/**
-	 *
 	 * @param Parser $parser
-	 * @return boolean
+	 * @return void
 	 */
 	public static function onParserFirstCallInit( Parser &$parser ) {
 		$parser->setFunctionHook( 'phptag', 'PhpTags\\Renderer::runParserFunction', Parser::SFH_OBJECT_ARGS );
 		$parser->setHook( 'phptag', 'PhpTags\\Renderer::runTagHook' );
-		return true;
 	}
 
 	/**
 	 * Register extension type for Special:Version used for PhpTags extensions
 	 * @param array $extTypes
+	 * @return void
 	 */
 	public static function onExtensionTypes( array &$extTypes ) {
 		$extTypes['phptags'] = wfMessage( 'phptags-extension-type' )->text();
-		return true;
 	}
 
 	/**
-	 *
 	 * @global int $wgPhpTagsCallsCounter
 	 * @param Parser $parser
 	 * @param string $text
-	 * @return boolean
+	 * @return void
 	 */
 	public static function onParserAfterTidy( $parser, &$text ) {
 		global $wgPhpTagsCallsCounter;
 		if ( $wgPhpTagsCallsCounter > 0 ) {
 			Renderer::onParserAfterTidy( $parser, $text );
 		}
-		return true;
 	}
 
 	/**
-	 *
 	 * @global boolean $wgPhpTagsLimitReport
 	 * @param Parser $parser
 	 * @param string $limitReport
-	 * @return boolean
+	 * @return void
 	 */
 	public static function onParserLimitReport( $parser, &$limitReport ) {
 		global $wgPhpTagsLimitReport;
@@ -71,7 +64,6 @@ class PhpTagsHooks {
 			$limitReport .= $wgPhpTagsLimitReport;
 			$wgPhpTagsLimitReport = false;
 		}
-		return true;
 	}
 
 	public static function onRegistration() {
